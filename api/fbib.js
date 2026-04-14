@@ -1,3 +1,5 @@
+export const config = { runtime: 'edge' };
+
 export default async function handler(req, res) {
   // Headers CORS — permite peticiones desde cualquier origen
   res.setHeader('Access-Control-Allow-Origin', '*');

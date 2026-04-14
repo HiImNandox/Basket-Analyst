@@ -1,0 +1,9 @@
+import { neon } from '@neondatabase/serverless';
+
+// DATABASE_URL se configura en las variables de entorno de Vercel
+// Formato: postgres://user:password@host/dbname
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL no está definida en las variables de entorno');
+}
+
+export const sql = neon(process.env.DATABASE_URL);
