@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HoopStats · Sa Cabaneta A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #cc1414;
+    --red-dim: #991010;
+    --red-glow: rgba(204,20,20,0.12);
+    --bg: #111111;
+    --panel: #1a1a1a;
+    --panel2: #222222;
+    --panel3: #2a2a2a;
+    --border: #2e2e2e;
+    --border2: #3a3a3a;
+    --text: #f0f0f0;
+    --text2: #aaaaaa;
+    --muted: #666666;
+    --green: #27ae60;
+    --green-dim: rgba(39,174,96,0.15);
+    --green-border: rgba(39,174,96,0.3);
+    --red-border: rgba(204,20,20,0.3);
+    --bebas: 'Bebas Neue', sans-serif;
+    --barlow: 'Barlow Condensed', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --sidebar-w: 230px;
+    --bnav-h: 60px;
+    --radius: 10px;
+  }
+
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--barlow);
+    overflow: hidden;
+  }
+
+  /* ─── LAYOUT ─── */
+  .app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ─── SIDEBAR (desktop) ─── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: relative;
+    z-index: 10;
+  }
+
+  .sidebar-logo {
+    padding: 28px 22px 22px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .logo-eyebrow {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--barlow);
+    margin-bottom: 4px;
+  }
+
+  .logo-name {
+    font-family: var(--bebas);
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .logo-club {
+    font-size: 11px;
+    color: var(--text2);
+    font-family: var(--barlow);
+    font-weight: 600;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .logo-accent {
+    width: 40px;
+    height: 3px;
+    background: var(--red);
+    margin-top: 12px;
+    border-radius: 2px;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 0;
+    overflow-y: auto;
+  }
+
+  .nav-section-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 14px 22px 6px;
+    font-family: var(--barlow);
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 22px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text2);
+    border-left: 3px solid transparent;
+    transition: background 0.15s, color 0.15s;
+    text-decoration: none;
+    font-family: var(--barlow);
+  }
+
+  .nav-item:hover {
+    background: var(--panel2);
+    color: var(--text);
+  }
+
+  .nav-item.active {
+    color: var(--red);
+    border-left-color: var(--red);
+    background: var(--red-glow);
+  }
+
+  .nav-item svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  .nav-item.active svg { opacity: 1; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--red);
+    color: white;
+    font-size: 10px;
+    font-family: var(--mono);
+    padding: 1px 7px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .sidebar-bottom {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .user-card:hover { background: var(--panel3); }
+
+  .user-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--bebas);
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 13px; font-weight: 700; color: var(--text); font-family: var(--barlow); }
+  .user-role { font-size: 11px; color: var(--muted); font-family: var(--barlow); }
+
+  /* ─── MAIN ─── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* ─── TOPBAR ─── */
+  .topbar {
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+
+  .topbar-left { display: flex; flex-direction: column; gap: 2px; }
+
+  .topbar-breadcrumb {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--barlow);
+  }
+
+  .topbar-title {
+    font-family: var(--bebas);
+    font-size: 30px;
+    letter-spacing: 2px;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+  .topbar-pill {
+    background: var(--red-glow);
+    border: 1px solid var(--red-border);
+    color: var(--red);
+    font-size: 11px;
+    font-family: var(--barlow);
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .topbar-season {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  /* ─── CONTENT ─── */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px 32px;
+    scroll-behavior: smooth;
+  }
+
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* ─── STAT CHIPS ROW ─── */
+  .chips-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .stat-chip {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    flex: 1;
+    min-width: 120px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .stat-chip:nth-child(1) { animation-delay: 0.05s; }
+  .stat-chip:nth-child(2) { animation-delay: 0.1s; }
+  .stat-chip:nth-child(3) { animation-delay: 0.15s; }
+  .stat-chip:nth-child(4) { animation-delay: 0.2s; }
+  .stat-chip.accent { border-left: 3px solid var(--red); }
+
+  .chip-label {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--barlow);
+    margin-bottom: 6px;
+  }
+
+  .chip-value {
+    font-family: var(--bebas);
+    font-size: 36px;
+    letter-spacing: 1px;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .chip-sub {
+    font-size: 11px;
+    color: var(--text2);
+    font-family: var(--barlow);
+    margin-top: 4px;
+  }
+
+  .racha-dots {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .rd {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: var(--mono);
+  }
+
+  .rd.v { background: var(--green-dim); border: 1px solid var(--green-border); color: var(--green); }
+  .rd.d { background: var(--red-glow); border: 1px solid var(--red-border); color: #e74c3c; }
+
+  /* ─── GRID PRINCIPAL ─── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 16px;
+  }
+
+  .col-left { display: flex; flex-direction: column; gap: 16px; }
+  .col-right { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .card:nth-child(1) { animation-delay: 0.25s; }
+  .card:nth-child(2) { animation-delay: 0.3s; }
+
+  .card-head {
+    padding: 14px 18px 0;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--barlow);
+  }
+
+  .card-body { padding: 10px 18px 16px; }
+
+  /* ─── PRÓXIMO PARTIDO ─── */
+  .card-next {
+    background: linear-gradient(140deg, #1c0808 0%, var(--panel) 60%);
+    border-color: rgba(204,20,20,0.2);
+  }
+
+  .match-teams {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0 10px;
+  }
+
+  .team-block { text-align: center; flex: 1; }
+
+  .team-abbr {
+    font-family: var(--bebas);
+    font-size: 32px;
+    letter-spacing: 3px;
+    line-height: 1;
+  }
+
+  .team-full {
+    font-size: 10px;
+    color: var(--text2);
+    font-family: var(--barlow);
+    margin-top: 3px;
+    letter-spacing: 0.3px;
+  }
+
+  .vs-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 0 12px;
+  }
+
+  .vs-text {
+    font-family: var(--bebas);
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--muted);
+  }
+
+  .vs-line { width: 1px; height: 20px; background: var(--border2); }
+
+  .match-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 4px;
+  }
+
+  .meta-tag {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 9px;
+    font-size: 11px;
+    color: var(--text2);
+    font-family: var(--mono);
+    letter-spacing: 0.3px;
+  }
+
+  /* ─── ÚLTIMO RESULTADO ─── */
+  .result-badge {
+    display: inline-block;
+    font-family: var(--bebas);
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    padding: 2px 10px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+  }
+
+  .result-badge.win {
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid var(--green-border);
+  }
+
+  .result-badge.loss {
+    background: var(--red-glow);
+    color: #e74c3c;
+    border: 1px solid var(--red-border);
+  }
+
+  .score-display {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .score-us {
+    font-family: var(--bebas);
+    font-size: 46px;
+    letter-spacing: 1px;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .score-sep {
+    font-family: var(--bebas);
+    font-size: 28px;
+    color: var(--muted);
+  }
+
+  .score-them {
+    font-family: var(--bebas);
+    font-size: 46px;
+    letter-spacing: 1px;
+    line-height: 1;
+    color: var(--muted);
+  }
+
+  .result-vs {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--barlow);
+    margin-bottom: 12px;
+  }
+
+  .quarters {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .q-block {
+    flex: 1;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 4px;
+    text-align: center;
+  }
+
+  .q-label {
+    font-size: 8px;
+    color: var(--muted);
+    font-family: var(--barlow);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .q-score {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 3px;
+  }
+
+  .q-score.win { color: var(--green); }
+  .q-score.loss { color: #e74c3c; }
+
+  /* ─── CLASIFICACIÓN ─── */
+  .standing-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .standing-table th {
+    font-size: 8px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: right;
+    padding: 0 6px 10px;
+    font-family: var(--barlow);
+    font-weight: 600;
+  }
+
+  .standing-table th:first-child { text-align: left; }
+
+  .standing-table td {
+    padding: 8px 6px;
+    border-top: 1px solid var(--border);
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .standing-table td:first-child {
+    text-align: left;
+    font-family: var(--barlow);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .standing-table tr.my-team { background: rgba(204,20,20,0.06); }
+  .standing-table tr.my-team td { color: var(--text); }
+  .standing-table tr.my-team td:first-child { color: var(--red); }
+
+  .pos-num {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    display: inline-block;
+    width: 16px;
+    margin-right: 2px;
+  }
+
+  .table-footer {
+    padding: 10px 18px 12px;
+    text-align: right;
+    font-size: 11px;
+    color: var(--red);
+    font-family: var(--barlow);
+    font-weight: 600;
+    cursor: pointer;
+    border-top: 1px solid var(--border);
+    transition: opacity 0.15s;
+  }
+
+  .table-footer:hover { opacity: 0.7; }
+
+  /* ─── RATIO BAR ─── */
+  .ratio-wrap {
+    height: 3px;
+    background: var(--panel2);
+    border-radius: 2px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+
+  .ratio-fill {
+    height: 100%;
+    background: var(--red);
+    border-radius: 2px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ─── ANIMACIONES ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── BOTTOM NAV (móvil) ─── */
+  .bnav-label {
+    display: none;
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    font-family: var(--barlow);
+    font-weight: 700;
+    color: var(--muted);
+    line-height: 1;
+  }
+  .bnav-item.active .bnav-label { color: var(--red); }
+
+  @media (min-width: 360px) {
+    .bnav-label { display: block; }
+    .bottom-nav { height: 66px; }
+  }
+
+  .bottom-nav {
+    display: none;
+    height: 56px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .bnav-inner {
+    display: flex;
+    height: 100%;
+  }
+
+  .bnav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s;
+  }
+
+  .bnav-item:active { background: var(--panel2); }
+
+  .bnav-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bnav-icon svg { width: 22px; height: 22px; }
+
+  .bnav-item.active .bnav-icon svg { stroke: var(--red); }
+  .bnav-item:not(.active) .bnav-icon svg { stroke: var(--muted); }
+
+  .bnav-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--red);
+  }
+
+  /* ─── MOBILE TOPBAR ─── */
+  .mobile-topbar {
+    display: none;
+    padding: 14px 18px 10px;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+
+  .mob-logo {
+    font-family: var(--bebas);
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+
+  .mob-logo span { color: var(--red); }
+
+  .mob-right { display: flex; align-items: center; gap: 10px; }
+
+  .mob-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--bebas);
+    font-size: 12px;
+    color: white;
+  }
+
+  .mob-jornada {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    html, body {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .app {
+      flex-direction: column;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .main {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .sidebar { display: none; }
+    .mobile-topbar { display: flex; width: 100%; }
+    .bottom-nav { display: flex; width: 100%; }
+    .topbar { display: none; }
+
+    .content {
+      padding: 14px 14px 16px;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .chips-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+      width: 100%;
+    }
+
+    .stat-chip { min-width: unset; width: 100%; }
+    .chip-value { font-size: 28px; }
+
+    .main-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .col-left, .col-right { width: 100%; }
+
+    .card { width: 100%; }
+
+    .team-abbr { font-size: 26px; }
+    .score-us, .score-them { font-size: 38px; }
+
+    .bottom-nav { width: 100%; }
+    .bnav-inner { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══ SIDEBAR (desktop) ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-eyebrow">Temporada 2025–26</div>
+      <div class="logo-name">HoopStats</div>
+      <div class="logo-club">Sa Cabaneta A · Fontaneria Jose Puerta</div>
+      <div class="logo-accent"></div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+
+      <a href="index.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        Inicio
+      </a>
+
+      <a href="liga.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+        </svg>
+        Liga
+        <span class="nav-badge">J8</span>
+      </a>
+
+      <a href="partido.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 8v4l3 3"/>
+        </svg>
+        Partidos
+      </a>
+
+      <a href="player_stats.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="7" r="4"/>
+          <path d="M5.5 21a8.38 8.38 0 0 1 13 0"/>
+        </svg>
+        Jugadores
+      </a>
+
+      <div class="nav-section-label">Equipo</div>
+
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Mi equipo
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">JP</div>
+        <div class="user-info">
+          <div class="user-name">Jordi P.</div>
+          <div class="user-role">Entrenador</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+        </svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+
+    <!-- Mobile topbar -->
+    <div class="mobile-topbar">
+      <div class="mob-logo">Hoop<span>Stats</span></div>
+      <div class="mob-right">
+        <div class="mob-jornada">J8</div>
+        <div class="mob-avatar">JP</div>
+      </div>
+    </div>
+
+    <!-- Desktop topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-breadcrumb">Sa Cabaneta A · Temporada 2025–26</div>
+        <div class="topbar-title">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-season">Jornada 8 de 18</div>
+        <div class="topbar-pill">▶ Próx. J9 · 19 ABR</div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- CHIPS de resumen -->
+      <div class="chips-row">
+        <div class="stat-chip accent">
+          <div class="chip-label">Posición</div>
+          <div class="chip-value">4º</div>
+          <div class="chip-sub">de 10 equipos</div>
+          <div class="racha-dots">
+            <div class="rd d">D</div>
+            <div class="rd v">V</div>
+            <div class="rd v">V</div>
+            <div class="rd d">D</div>
+            <div class="rd v">V</div>
+          </div>
+        </div>
+        <div class="stat-chip">
+          <div class="chip-label">Balance</div>
+          <div class="chip-value" style="color: var(--green)">5–3</div>
+          <div class="chip-sub">victorias – derrotas</div>
+          <div class="ratio-wrap">
+            <div class="ratio-fill" style="width: 62.5%"></div>
+          </div>
+        </div>
+        <div class="stat-chip">
+          <div class="chip-label">PIR medio</div>
+          <div class="chip-value">68.4</div>
+          <div class="chip-sub" style="color: var(--green)">↑ +6.4% temporada</div>
+        </div>
+        <div class="stat-chip">
+          <div class="chip-label">Pts/partido</div>
+          <div class="chip-value">71.2</div>
+          <div class="chip-sub">67.8 en contra</div>
+        </div>
+      </div>
+
+      <!-- Grid principal -->
+      <div class="main-grid">
+
+        <!-- Columna izquierda -->
+        <div class="col-left">
+
+          <!-- Próximo partido -->
+          <div class="card card-next">
+            <div class="card-head">Próximo partido · Jornada 9</div>
+            <div class="card-body">
+              <div class="match-teams">
+                <div class="team-block">
+                  <div class="team-abbr" style="color: var(--red)">CAB</div>
+                  <div class="team-full">Sa Cabaneta A</div>
+                </div>
+                <div class="vs-block">
+                  <div class="vs-line"></div>
+                  <div class="vs-text">VS</div>
+                  <div class="vs-line"></div>
+                </div>
+                <div class="team-block">
+                  <div class="team-abbr">PER</div>
+                  <div class="team-full">CB Perelló</div>
+                </div>
+              </div>
+              <div class="match-meta">
+                <span class="meta-tag">Sáb 19 ABR</span>
+                <span class="meta-tag">18:00h</span>
+                <span class="meta-tag">Pav. Sa Cabaneta</span>
+                <span class="meta-tag">Casa</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Último resultado -->
+          <div class="card">
+            <div class="card-head">Último resultado · J8</div>
+            <div class="card-body">
+              <div class="result-badge loss">DERROTA</div>
+              <div class="score-display">
+                <span class="score-us">51</span>
+                <span class="score-sep">–</span>
+                <span class="score-them">66</span>
+              </div>
+              <div class="result-vs">vs Joventut Mariana · 27 marzo 2026</div>
+              <div class="quarters">
+                <div class="q-block">
+                  <div class="q-label">C1</div>
+                  <div class="q-score win">15–12</div>
+                </div>
+                <div class="q-block">
+                  <div class="q-label">C2</div>
+                  <div class="q-score loss">9–18</div>
+                </div>
+                <div class="q-block">
+                  <div class="q-label">C3</div>
+                  <div class="q-score loss">13–20</div>
+                </div>
+                <div class="q-block">
+                  <div class="q-label">C4</div>
+                  <div class="q-score loss">14–16</div>
+                </div>
+              </div>
+            </div>
+            <div class="table-footer" onclick="window.location='partido.html'">Ver ficha completa →</div>
+          </div>
+
+        </div>
+
+        <!-- Columna derecha: Clasificación -->
+        <div class="col-right">
+          <div class="card" style="height: 100%;">
+            <div class="card-head" style="padding-bottom: 12px;">Clasificación · Jornada 8</div>
+            <div style="padding: 0 18px;">
+              <table class="standing-table">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>PJ</th>
+                    <th>V</th>
+                    <th>D</th>
+                    <th>Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="pos-num">1</span>CB Molinar</td>
+                    <td>8</td><td>7</td><td>1</td><td>15</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pos-num">2</span>J. Mariana</td>
+                    <td>8</td><td>6</td><td>2</td><td>14</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pos-num">3</span>CB Perelló</td>
+                    <td>8</td><td>5</td><td>3</td><td>13</td>
+                  </tr>
+                  <tr class="my-team">
+                    <td><span class="pos-num" style="color:var(--red)">4</span>Sa Cabaneta</td>
+                    <td>8</td><td>5</td><td>3</td><td>13</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pos-num">5</span>CB Palma B</td>
+                    <td>8</td><td>4</td><td>4</td><td>12</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pos-num">6</span>Espanyolet</td>
+                    <td>8</td><td>3</td><td>5</td><td>11</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pos-num">7</span>CB Arenal</td>
+                    <td>8</td><td>3</td><td>5</td><td>11</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pos-num">8</span>CB Calvià</td>
+                    <td>8</td><td>2</td><td>6</td><td>10</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pos-num">9</span>Son Rapinya</td>
+                    <td>8</td><td>1</td><td>7</td><td>9</td>
+                  </tr>
+                  <tr>
+                    <td><span class="pos-num">10</span>CB Binissalem</td>
+                    <td>8</td><td>0</td><td>8</td><td>8</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="table-footer" onclick="window.location='liga_v2.html'">Ver clasificación completa →</div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /content -->
+
+    <!-- Bottom nav (móvil) -->
+    <nav class="bottom-nav">
+      <div class="bnav-inner">
+
+        <a href="dashboard.html" class="bnav-item active">
+          <div class="bnav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Inicio</div>
+          <div class="bnav-dot"></div>
+        </a>
+
+        <a href="liga_v2.html" class="bnav-item">
+          <div class="bnav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Liga</div>
+        </a>
+
+        <a href="partido.html" class="bnav-item">
+          <div class="bnav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 8v4l3 3"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Partidos</div>
+        </a>
+
+        <a href="player_stats.html" class="bnav-item">
+          <div class="bnav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="7" r="4"/>
+              <path d="M5.5 21a8.38 8.38 0 0 1 13 0"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Jugadores</div>
+        </a>
+
+        <a href="#" class="bnav-item">
+          <div class="bnav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Equipo</div>
+        </a>
+
+      </div>
+    </nav>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+</body>
+</html>

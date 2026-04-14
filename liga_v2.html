@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Liga 2025–26</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a14;color:#f1f5f9;font-family:'DM Sans',sans-serif;min-height:100vh}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#0f0f1e,#141428);border-bottom:1px solid #1e1e2e;padding:18px 20px 0;position:sticky;top:0;z-index:200}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.header-title{font-size:21px;font-weight:900;letter-spacing:-0.5px;background:linear-gradient(90deg,#facc15,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-sub{font-size:11px;color:#4b5563;font-weight:500;margin-top:2px}
+.header-badge{background:#1e1e2e;border-radius:10px;padding:5px 12px;font-size:12px;font-weight:700;color:#facc15;border:none}
+.nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-btn{padding:8px 12px;background:none;border:none;border-bottom:2px solid transparent;font-size:12px;font-weight:700;color:#4b5563;transition:all .15s;white-space:nowrap}
+.nav-btn.active{color:#facc15;border-bottom-color:#facc15}
+
+/* CONTENT */
+.content{padding:24px 16px;max-width:980px;margin:0 auto}
+section{margin-bottom:44px}
+.sec-title{font-size:19px;font-weight:900;color:#f1f5f9;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.sec-sub{font-size:12px;color:#4b5563;font-weight:500;margin-left:28px;margin-bottom:18px}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;justify-content:center;border-radius:8px;font-weight:800;color:#fff;letter-spacing:-0.5px;flex-shrink:0}
+
+/* TABLE BASE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{padding:9px 10px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#6b7280;text-transform:uppercase;border-bottom:2px solid #2a2a3a}
+.tbl td{padding:11px 10px;font-size:13px;color:#9ca3af;border-bottom:1px solid #1a1a28}
+.tbl tbody tr:hover{background:rgba(255,255,255,.03)}
+.tbl tbody tr:nth-child(even){background:rgba(255,255,255,.01)}
+
+/* STANDINGS */
+.pos-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;font-size:11px;font-weight:800}
+.team-cell{display:flex;align-items:center;gap:9px}
+.team-name{font-weight:600;color:#f1f5f9;font-size:14px}
+.pts-chip{border-radius:6px;padding:3px 9px;font-size:13px;font-weight:800}
+.racha{display:flex;gap:3px;align-items:center}
+.racha-dot{width:10px;height:10px;border-radius:50%}
+.legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280}
+.legend-dot{width:10px;height:10px;border-radius:3px}
+
+/* JORNADA */
+.jtabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.jtab{padding:7px 16px;border-radius:10px;border:none;font-size:13px;font-weight:700;transition:all .15s}
+.jtab.active{background:#facc15;color:#0a0a14}
+.jtab:not(.active){background:#1e1e2e;color:#9ca3af}
+.game-card{background:#13131f;border:1px solid #2a2a3a;border-radius:14px;overflow:hidden;margin-bottom:10px}
+.game-hdr{width:100%;background:none;border:none;padding:14px 18px;display:flex;align-items:center;gap:10px}
+.game-hdr:hover{background:rgba(255,255,255,.02)}
+.team-side{flex:1;display:flex;align-items:center;gap:8px}
+.team-side.right{justify-content:flex-end}
+.score-block{display:flex;align-items:center;gap:6px;min-width:100px;justify-content:center}
+.score{font-size:24px;font-weight:900;font-variant-numeric:tabular-nums}
+.score-sep{color:#3a3a4a;font-size:18px}
+.game-players{border-top:1px solid #2a2a3a;display:grid;grid-template-columns:1fr 1fr}
+.team-box{padding:14px 12px}
+.team-box:first-child{border-right:1px solid #2a2a3a}
+.team-box-hdr{display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.ptbl{width:100%;border-collapse:collapse;font-size:11px}
+.ptbl th{padding:3px 4px;font-size:9px;font-weight:700;letter-spacing:.06em;color:#4b5563;border-bottom:1px solid #2a2a3a;text-transform:uppercase}
+.ptbl td{padding:5px 4px;border-bottom:1px solid #1a1a28;color:#9ca3af}
+.ptbl .pname{color:#cbd5e1;font-weight:500;cursor:pointer}
+.ptbl .pname:hover{color:#facc15;text-decoration:underline}
+
+/* LÍDERES */
+.stat-tabs{display:flex;gap:5px;margin-bottom:18px;flex-wrap:wrap}
+.stab{padding:6px 12px;border-radius:10px;border:none;font-size:12px;font-weight:700;transition:all .15s;display:flex;gap:4px;align-items:center}
+.stab.active{background:#1d4ed8;color:#fff}
+.stab:not(.active){background:#1e1e2e;color:#6b7280}
+.leaders-wrap{background:#13131f;border-radius:14px;border:1px solid #2a2a3a;overflow:hidden}
+.ltbl{width:100%;border-collapse:collapse}
+.ltbl th{padding:10px 14px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#4b5563;text-transform:uppercase;background:#0f0f1c;border-bottom:2px solid #2a2a3a}
+.ltbl td{padding:10px 10px;font-size:13px}
+.ltbl tbody tr{border-bottom:1px solid #1a1a28;transition:background .1s}
+.ltbl tbody tr:nth-child(even){background:rgba(255,255,255,.01)}
+.ltbl tbody tr:hover{background:rgba(255,255,255,.03)}
+.bar-track{height:6px;border-radius:3px;background:#1e1e2e;overflow:hidden;min-width:70px}
+.bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.search-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.search-input{background:#1e1e2e;border:1px solid #2a2a3a;border-radius:10px;padding:8px 14px;color:#f1f5f9;font-size:13px;flex:1;min-width:160px;outline:none}
+.search-input::placeholder{color:#4b5563}
+.search-input:focus{border-color:#4b5563}
+.team-filter{display:flex;gap:5px;flex-wrap:wrap}
+.tfbtn{padding:5px 10px;border-radius:8px;border:none;font-size:11px;font-weight:700;transition:all .15s}
+.tfbtn.active{color:#fff}
+.tfbtn:not(.active){background:#1e1e2e;color:#6b7280}
+
+/* HEAD TO HEAD */
+.h2h-selectors{display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.h2h-select{background:#1e1e2e;border:1px solid #2a2a3a;border-radius:10px;padding:8px 14px;color:#f1f5f9;font-size:13px;font-weight:600;outline:none;cursor:pointer}
+.h2h-vs{font-size:16px;font-weight:900;color:#4b5563}
+.h2h-summary{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;margin-bottom:20px;text-align:center}
+.h2h-team-col{background:#13131f;border:1px solid #2a2a3a;border-radius:12px;padding:16px 10px}
+.h2h-wins{font-size:36px;font-weight:900}
+.h2h-label{font-size:11px;color:#4b5563;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.h2h-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.h2h-game{background:#13131f;border:1px solid #2a2a3a;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:6px}
+
+/* EVOLUCIÓN */
+.chart-wrap{background:#13131f;border:1px solid #2a2a3a;border-radius:14px;padding:20px;overflow-x:auto}
+svg text{font-family:'DM Sans',sans-serif}
+
+/* PLAYER MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#13131f;border:1px solid #2a2a3a;border-radius:20px 20px 0 0;width:100%;max-width:640px;max-height:85vh;overflow-y:auto;padding:20px}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-close{background:#1e1e2e;border:none;color:#9ca3af;width:32px;height:32px;border-radius:8px;font-size:18px;display:flex;align-items:center;justify-content:center}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.stat-card{background:#0f0f1c;border-radius:10px;padding:12px;text-align:center}
+.stat-card-val{font-size:22px;font-weight:900;color:#f1f5f9}
+.stat-card-lbl{font-size:10px;color:#4b5563;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.stat-card-sub{font-size:11px;color:#6b7280;margin-top:2px}
+.dd-badge{display:inline-flex;align-items:center;gap:5px;background:#7c3aed22;color:#a78bfa;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;margin-bottom:14px}
+
+/* UTIL */
+.tc{text-align:center}.tr{text-align:right}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}.gray{color:#6b7280}
+.fw8{font-weight:800}.fw6{font-weight:600}
+.hidden{display:none!important}
+@media(max-width:600px){
+  .game-players{grid-template-columns:1fr}
+  .team-box:first-child{border-right:none;border-bottom:1px solid #2a2a3a}
+  .score{font-size:20px}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .h2h-summary{grid-template-columns:1fr auto 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-title">LIGA 2025–26</div>
+      <div class="header-sub">Jornada 8 · 6 equipos</div>
+    </div>
+    <div class="header-badge">🏆 Raptors BC lidera</div>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn active"  onclick="showSection('all',this)">◉ Todo</button>
+    <button class="nav-btn" onclick="showSection('tabla',this)">🏆 Clasificación</button>
+    <button class="nav-btn" onclick="showSection('jornada',this)">🏀 Jornadas</button>
+    <button class="nav-btn" onclick="showSection('lideres',this)">📊 Líderes</button>
+    <button class="nav-btn" onclick="showSection('evolucion',this)">📈 Evolución</button>
+    <button class="nav-btn" onclick="showSection('h2h',this)">⚔️ H2H</button>
+  </nav>
+</div>
+
+<div class="content">
+  <section id="sec-tabla"></section>
+  <section id="sec-jornada"></section>
+  <section id="sec-lideres"></section>
+  <section id="sec-evolucion"></section>
+  <section id="sec-h2h"></section>
+</div>
+
+<!-- PLAYER MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════ DATA
+
+const TEAMS = [
+  {id:1,name:"Raptors BC",short:"RAP",color:"#CE1141"},
+  {id:2,name:"Thunder HC",short:"THU",color:"#007AC1"},
+  {id:3,name:"Lions Club", short:"LIO",color:"#F9A01B"},
+  {id:4,name:"Wolves BC",  short:"WOL",color:"#005083"},
+  {id:5,name:"Eagles HC",  short:"EAG",color:"#00843D"},
+  {id:6,name:"Phoenix BC", short:"PHX",color:"#E56020"},
+];
+
+// pos by jornada: [j1..j8]
+const EVOLUCION = [
+  {teamId:1, positions:[3,3,2,1,1,1,1,1]},
+  {teamId:2, positions:[1,2,3,4,4,4,3,4]},
+  {teamId:3, positions:[2,1,1,2,2,2,2,2]},
+  {teamId:4, positions:[5,5,5,5,6,6,6,6]},
+  {teamId:5, positions:[4,4,4,3,3,3,4,3]},
+  {teamId:6, positions:[6,6,6,6,5,5,5,5]},
+];
+
+const STANDINGS = [
+  {pos:1,teamId:1,pj:14,pg:11,pp:3, pf:1342,pc:1198,dif:+144,pts:25,racha:[1,1,0,1,1]},
+  {pos:2,teamId:3,pj:14,pg:10,pp:4, pf:1280,pc:1210,dif:+70, pts:24,racha:[1,1,1,0,0]},
+  {pos:3,teamId:5,pj:14,pg:9, pp:5, pf:1260,pc:1230,dif:+30, pts:23,racha:[0,1,1,0,1]},
+  {pos:4,teamId:2,pj:14,pg:7, pp:7, pf:1210,pc:1240,dif:-30, pts:21,racha:[1,0,1,0,0]},
+  {pos:5,teamId:6,pj:14,pg:4, pp:10,pf:1150,pc:1290,dif:-140,pts:18,racha:[0,0,0,1,0]},
+  {pos:6,teamId:4,pj:14,pg:3, pp:11,pf:1100,pc:1320,dif:-220,pts:17,racha:[0,0,1,0,0]},
+];
+
+// PIR = PTS + REB + AST - (att - made on t2) - (att - made on t3) - (att - made on t1)
+function calcPIR(p){
+  const [m2,a2]=p.t2.split('/').map(Number);
+  const [m3,a3]=p.t3.split('/').map(Number);
+  const [m1,a1]=p.t1.split('/').map(Number);
+  return p.pts + p.reb + p.ast - (a2-m2) - (a3-m3) - (a1-m1);
+}
+function calcPM(p){ return p.pm ?? 0; }
+
+const JORNADAS = [
+  {id:8,label:"J8",games:[
+    {id:"g1",homeId:1,homeScore:88,awayId:3,awayScore:74,players:{
+      1:[
+        {name:"Carlos Ruiz",  pts:24,reb:6,ast:4,t3:"3/5",t2:"4/7",t1:"7/8", pm:+14},
+        {name:"Marco López",  pts:18,reb:9,ast:2,t3:"1/3",t2:"6/9",t1:"3/4", pm:+10},
+        {name:"Javi Sánchez", pts:15,reb:3,ast:8,t3:"2/4",t2:"3/5",t1:"4/5", pm:+8},
+        {name:"Pablo Torres", pts:12,reb:5,ast:1,t3:"0/2",t2:"5/7",t1:"2/2", pm:+6},
+        {name:"Rubén Gil",    pts:10,reb:4,ast:3,t3:"1/2",t2:"3/6",t1:"2/3", pm:+4},
+      ],
+      3:[
+        {name:"Andrés Mora",  pts:20,reb:5,ast:3,t3:"2/5",t2:"5/8",t1:"4/5", pm:-8},
+        {name:"Luis Castro",  pts:16,reb:7,ast:2,t3:"1/4",t2:"4/6",t1:"6/7", pm:-6},
+        {name:"Diego Vega",   pts:13,reb:4,ast:5,t3:"3/6",t2:"1/3",t1:"3/4", pm:-4},
+        {name:"Fran Blanco",  pts:11,reb:8,ast:1,t3:"0/1",t2:"4/8",t1:"3/3", pm:-10},
+        {name:"Sergio Iborra",pts:9, reb:2,ast:4,t3:"1/3",t2:"2/4",t1:"2/2", pm:-5},
+      ],
+    }},
+    {id:"g2",homeId:5,homeScore:71,awayId:2,awayScore:80,players:{
+      5:[
+        {name:"Nacho Pérez",  pts:22,reb:4,ast:6,t3:"4/7",t2:"3/5",t1:"4/4", pm:-9},
+        {name:"Tomás Ríos",   pts:17,reb:8,ast:1,t3:"1/3",t2:"6/8",t1:"2/3", pm:-6},
+        {name:"Emilio Font",  pts:12,reb:3,ast:4,t3:"2/5",t2:"2/4",t1:"4/6", pm:-5},
+        {name:"David Soler",  pts:10,reb:6,ast:2,t3:"0/2",t2:"4/7",t1:"2/2", pm:-3},
+        {name:"Mario Clot",   pts:8, reb:5,ast:3,t3:"1/3",t2:"2/5",t1:"1/2", pm:-7},
+      ],
+      2:[
+        {name:"Álvaro Diez",  pts:25,reb:3,ast:7,t3:"5/9",t2:"2/4",t1:"6/7", pm:+12},
+        {name:"Borja Mas",    pts:19,reb:6,ast:3,t3:"2/4",t2:"5/7",t1:"5/6", pm:+8},
+        {name:"Rafa Leal",    pts:14,reb:5,ast:2,t3:"1/2",t2:"5/9",t1:"1/2", pm:+6},
+        {name:"Iñaki Urra",   pts:11,reb:9,ast:1,t3:"0/1",t2:"4/6",t1:"3/3", pm:+10},
+        {name:"Mikel Osa",    pts:9, reb:4,ast:5,t3:"2/5",t2:"1/3",t1:"2/3", pm:+5},
+      ],
+    }},
+    {id:"g3",homeId:6,homeScore:65,awayId:4,awayScore:69,players:{
+      6:[
+        {name:"Santi Llull",  pts:21,reb:3,ast:5,t3:"3/6",t2:"4/7",t1:"4/4", pm:-4},
+        {name:"Omar Sy",      pts:15,reb:7,ast:2,t3:"1/3",t2:"5/8",t1:"2/3", pm:-2},
+        {name:"Ivan Cruz",    pts:12,reb:4,ast:3,t3:"2/4",t2:"2/5",t1:"4/5", pm:-5},
+        {name:"Pol Vidal",    pts:9, reb:6,ast:1,t3:"0/2",t2:"3/6",t1:"3/4", pm:-6},
+        {name:"Carles Bach",  pts:7, reb:3,ast:4,t3:"1/4",t2:"1/3",t1:"2/2", pm:-3},
+      ],
+      4:[
+        {name:"Bruno Serra",  pts:23,reb:5,ast:4,t3:"4/8",t2:"3/5",t1:"5/6", pm:+4},
+        {name:"Nico Alves",   pts:17,reb:8,ast:2,t3:"1/2",t2:"6/9",t1:"3/4", pm:+6},
+        {name:"Joel Prat",    pts:13,reb:3,ast:6,t3:"2/5",t2:"2/4",t1:"5/6", pm:+5},
+        {name:"Arnau Vila",   pts:10,reb:7,ast:1,t3:"0/1",t2:"4/8",t1:"2/2", pm:+3},
+        {name:"Xavi Plana",   pts:6, reb:4,ast:3,t3:"1/3",t2:"1/4",t1:"1/2", pm:+2},
+      ],
+    }},
+  ]},
+  {id:7,label:"J7",games:[
+    {id:"g4",homeId:2,homeScore:92,awayId:1,awayScore:85,players:{
+      2:[
+        {name:"Álvaro Diez",  pts:28,reb:4,ast:9,t3:"6/10",t2:"3/5",t1:"7/8", pm:+7},
+        {name:"Borja Mas",    pts:21,reb:5,ast:2,t3:"3/6", t2:"4/6",t1:"5/6", pm:+5},
+        {name:"Rafa Leal",    pts:16,reb:3,ast:4,t3:"2/4", t2:"4/7",t1:"2/3", pm:+4},
+        {name:"Iñaki Urra",   pts:13,reb:10,ast:1,t3:"0/1",t2:"5/8",t1:"3/3", pm:+8},
+        {name:"Mikel Osa",    pts:11,reb:2,ast:6,t3:"3/6", t2:"1/2",t1:"2/3", pm:+3},
+      ],
+      1:[
+        {name:"Carlos Ruiz",  pts:26,reb:5,ast:5,t3:"4/7",t2:"4/6",t1:"6/8", pm:-5},
+        {name:"Marco López",  pts:20,reb:8,ast:1,t3:"2/4",t2:"6/9",t1:"4/5", pm:-4},
+        {name:"Javi Sánchez", pts:17,reb:2,ast:7,t3:"3/5",t2:"3/5",t1:"3/4", pm:-6},
+        {name:"Pablo Torres", pts:13,reb:6,ast:2,t3:"1/3",t2:"4/6",t1:"3/3", pm:-3},
+        {name:"Rubén Gil",    pts:9, reb:3,ast:4,t3:"2/5",t2:"2/4",t1:"1/2", pm:-4},
+      ],
+    }},
+    {id:"g5",homeId:3,homeScore:78,awayId:5,awayScore:70,players:{
+      3:[
+        {name:"Andrés Mora",  pts:22,reb:6,ast:4,t3:"3/6",t2:"4/7",t1:"5/6", pm:+8},
+        {name:"Luis Castro",  pts:18,reb:8,ast:2,t3:"2/4",t2:"5/8",t1:"3/4", pm:+5},
+        {name:"Diego Vega",   pts:14,reb:3,ast:6,t3:"4/7",t2:"0/2",t1:"4/5", pm:+6},
+        {name:"Fran Blanco",  pts:12,reb:10,ast:1,t3:"0/1",t2:"5/9",t1:"2/3",pm:+7},
+        {name:"Sergio Iborra",pts:8, reb:2,ast:5,t3:"1/3",t2:"2/4",t1:"1/2", pm:+4},
+      ],
+      5:[
+        {name:"Nacho Pérez",  pts:20,reb:4,ast:5,t3:"3/7",t2:"3/5",t1:"4/5", pm:-7},
+        {name:"Tomás Ríos",   pts:15,reb:7,ast:1,t3:"1/3",t2:"5/7",t1:"2/3", pm:-5},
+        {name:"Emilio Font",  pts:11,reb:3,ast:3,t3:"2/4",t2:"2/4",t1:"3/4", pm:-4},
+        {name:"David Soler",  pts:9, reb:5,ast:2,t3:"1/3",t2:"3/6",t1:"1/2", pm:-3},
+        {name:"Mario Clot",   pts:7, reb:4,ast:2,t3:"0/2",t2:"2/5",t1:"3/4", pm:-6},
+      ],
+    }},
+  ]},
+  {id:6,label:"J6",games:[
+    {id:"g6",homeId:1,homeScore:95,awayId:6,awayScore:72,players:{
+      1:[
+        {name:"Carlos Ruiz",  pts:28,reb:7,ast:5,t3:"5/8",t2:"4/6",t1:"6/7", pm:+23},
+        {name:"Marco López",  pts:22,reb:11,ast:2,t3:"2/4",t2:"7/10",t1:"4/5",pm:+18},
+        {name:"Javi Sánchez", pts:18,reb:3,ast:9,t3:"3/5",t2:"3/5",t1:"4/5", pm:+15},
+        {name:"Pablo Torres", pts:14,reb:6,ast:2,t3:"1/2",t2:"5/7",t1:"3/3", pm:+12},
+        {name:"Rubén Gil",    pts:11,reb:4,ast:4,t3:"2/4",t2:"3/5",t1:"2/3", pm:+10},
+      ],
+      6:[
+        {name:"Santi Llull",  pts:18,reb:3,ast:4,t3:"2/5",t2:"4/7",t1:"4/5", pm:-20},
+        {name:"Omar Sy",      pts:14,reb:6,ast:1,t3:"1/3",t2:"4/7",t1:"2/3", pm:-15},
+        {name:"Ivan Cruz",    pts:10,reb:4,ast:2,t3:"1/3",t2:"2/5",t1:"3/4", pm:-18},
+        {name:"Pol Vidal",    pts:8, reb:5,ast:1,t3:"0/2",t2:"3/6",t1:"2/3", pm:-14},
+        {name:"Carles Bach",  pts:6, reb:2,ast:3,t3:"1/3",t2:"1/4",t1:"1/2", pm:-12},
+      ],
+    }},
+  ]},
+];
+
+// Season player stats aggregated
+const PLAYER_STATS = {
+  "Carlos Ruiz":  {team:1,pj:14,pts:21.8,reb:5.8,ast:4.6,pir:24.2,pm:+6.2,t3:"41%",t2:"58%",t1:"91%",dd:3,td:0},
+  "Marco López":  {team:1,pj:14,pts:16.2,reb:8.2,ast:1.8,pir:19.8,pm:+4.8,t3:"32%",t2:"61%",t1:"82%",dd:5,td:0},
+  "Javi Sánchez": {team:1,pj:14,pts:14.6,reb:2.6,ast:6.8,pir:17.2,pm:+3.4,t3:"38%",t2:"56%",t1:"90%",dd:1,td:0},
+  "Pablo Torres": {team:1,pj:14,pts:11.4,reb:5.2,ast:1.6,pir:13.6,pm:+2.8,t3:"28%",t2:"59%",t1:"88%",dd:2,td:0},
+  "Rubén Gil":    {team:1,pj:14,pts:9.4, reb:3.8,ast:3.2,pir:11.4,pm:+1.6,t3:"35%",t2:"52%",t1:"80%",dd:0,td:0},
+  "Álvaro Diez":  {team:2,pj:14,pts:22.4,reb:3.2,ast:7.2,pir:26.8,pm:+5.6,t3:"44%",t2:"52%",t1:"90%",dd:2,td:1},
+  "Borja Mas":    {team:2,pj:14,pts:16.8,reb:5.8,ast:2.8,pir:19.2,pm:+3.4,t3:"38%",t2:"57%",t1:"86%",dd:3,td:0},
+  "Rafa Leal":    {team:2,pj:14,pts:13.6,reb:4.2,ast:3.4,pir:15.8,pm:+2.2,t3:"35%",t2:"55%",t1:"87%",dd:1,td:0},
+  "Iñaki Urra":   {team:2,pj:14,pts:10.8,reb:9.8,ast:1.2,pir:18.6,pm:+4.6,t3:"18%",t2:"61%",t1:"91%",dd:6,td:0},
+  "Mikel Osa":    {team:2,pj:14,pts:9.2, reb:3.4,ast:5.6,pir:12.4,pm:+1.8,t3:"39%",t2:"48%",t1:"83%",dd:0,td:0},
+  "Andrés Mora":  {team:3,pj:14,pts:18.9,reb:5.4,ast:3.2,pir:21.6,pm:+2.8,t3:"36%",t2:"59%",t1:"88%",dd:2,td:0},
+  "Luis Castro":  {team:3,pj:14,pts:15.4,reb:7.2,ast:2.0,pir:18.4,pm:+2.2,t3:"28%",t2:"58%",t1:"86%",dd:4,td:0},
+  "Diego Vega":   {team:3,pj:14,pts:12.8,reb:3.8,ast:4.8,pir:14.6,pm:+1.6,t3:"40%",t2:"46%",t1:"84%",dd:0,td:0},
+  "Fran Blanco":  {team:3,pj:14,pts:10.6,reb:8.4,ast:1.2,pir:15.8,pm:+1.8,t3:"22%",t2:"57%",t1:"82%",dd:5,td:0},
+  "Sergio Iborra":{team:3,pj:14,pts:8.4, reb:2.2,ast:4.2,pir:10.2,pm:+0.8,t3:"36%",t2:"50%",t1:"80%",dd:0,td:0},
+  "Bruno Serra":  {team:4,pj:14,pts:20.1,reb:5.0,ast:3.8,pir:22.6,pm:-2.4,t3:"42%",t2:"57%",t1:"86%",dd:2,td:0},
+  "Nico Alves":   {team:4,pj:14,pts:15.6,reb:7.9,ast:1.8,pir:18.2,pm:-1.8,t3:"30%",t2:"60%",t1:"84%",dd:4,td:0},
+  "Joel Prat":    {team:4,pj:14,pts:12.4,reb:3.2,ast:6.1,pir:16.2,pm:-2.0,t3:"32%",t2:"52%",t1:"91%",dd:1,td:0},
+  "Arnau Vila":   {team:4,pj:14,pts:9.8, reb:9.1,ast:1.0,pir:15.4,pm:-1.4,t3:"14%",t2:"57%",t1:"88%",dd:5,td:0},
+  "Xavi Plana":   {team:4,pj:14,pts:6.2, reb:3.8,ast:5.2,pir:9.6, pm:-1.2,t3:"28%",t2:"46%",t1:"78%",dd:0,td:0},
+  "Nacho Pérez":  {team:5,pj:14,pts:19.6,reb:4.2,ast:5.9,pir:22.8,pm:-1.8,t3:"43%",t2:"54%",t1:"89%",dd:1,td:0},
+  "Tomás Ríos":   {team:5,pj:14,pts:15.2,reb:8.7,ast:1.2,pir:18.6,pm:-1.4,t3:"28%",t2:"59%",t1:"82%",dd:4,td:0},
+  "Emilio Font":  {team:5,pj:14,pts:11.4,reb:3.2,ast:3.8,pir:13.2,pm:-1.2,t3:"34%",t2:"51%",t1:"85%",dd:0,td:0},
+  "David Soler":  {team:5,pj:14,pts:9.6, reb:5.6,ast:2.0,pir:11.8,pm:-0.8,t3:"24%",t2:"56%",t1:"84%",dd:1,td:0},
+  "Mario Clot":   {team:5,pj:14,pts:7.8, reb:4.8,ast:2.8,pir:9.6, pm:-1.0,t3:"26%",t2:"48%",t1:"76%",dd:0,td:0},
+  "Santi Llull":  {team:6,pj:14,pts:17.3,reb:3.2,ast:4.6,pir:18.6,pm:-3.8,t3:"38%",t2:"56%",t1:"89%",dd:1,td:0},
+  "Omar Sy":      {team:6,pj:14,pts:13.8,reb:7.3,ast:1.8,pir:16.2,pm:-3.2,t3:"26%",t2:"58%",t1:"82%",dd:3,td:0},
+  "Ivan Cruz":    {team:6,pj:14,pts:11.2,reb:4.0,ast:3.0,pir:12.8,pm:-3.0,t3:"32%",t2:"53%",t1:"83%",dd:0,td:0},
+  "Pol Vidal":    {team:6,pj:14,pts:8.6, reb:5.8,ast:1.2,pir:11.0,pm:-2.6,t3:"18%",t2:"52%",t1:"80%",dd:1,td:0},
+  "Carles Bach":  {team:6,pj:14,pts:6.4, reb:3.0,ast:3.8,pir:8.4, pm:-2.2,t3:"24%",t2:"46%",t1:"78%",dd:0,td:0},
+};
+
+const STATS_LEADERS = {
+  puntos:     {label:"Puntos",     unit:"PPJ",  isShot:false, key:"pts"},
+  pir:        {label:"Valoración", unit:"PIR",  isShot:false, key:"pir"},
+  triples:    {label:"Triples %",  unit:"%",    isShot:true,  key:"t3"},
+  dobles:     {label:"T. de 2 %",  unit:"%",    isShot:true,  key:"t2"},
+  libres:     {label:"T. de 1 %",  unit:"%",    isShot:true,  key:"t1"},
+  rebotes:    {label:"Rebotes",    unit:"RPJ",  isShot:false, key:"reb"},
+  asistencias:{label:"Asistencias",unit:"APJ",  isShot:false, key:"ast"},
+  plusminus:  {label:"+/-",        unit:"+/-",  isShot:false, key:"pm"},
+};
+
+const STAT_TABS_ORDER = [
+  {key:"puntos",      icon:"🔥"},
+  {key:"pir",         icon:"⭐"},
+  {key:"triples",     icon:"🎯"},
+  {key:"dobles",      icon:"💪"},
+  {key:"libres",      icon:"🏹"},
+  {key:"rebotes",     icon:"🧱"},
+  {key:"asistencias", icon:"🎪"},
+  {key:"plusminus",   icon:"📉"},
+];
+
+// H2H history
+const H2H_HISTORY = [
+  {j:1,homeId:1,awayId:2,homeScore:82,awayScore:78},
+  {j:2,homeId:2,awayId:3,homeScore:70,awayScore:74},
+  {j:3,homeId:1,awayId:3,homeScore:88,awayScore:80},
+  {j:4,homeId:4,awayId:1,homeScore:65,awayScore:72},
+  {j:5,homeId:3,awayId:4,homeScore:85,awayScore:71},
+  {j:6,homeId:2,awayId:4,homeScore:90,awayScore:82},
+  {j:7,homeId:2,awayId:1,homeScore:92,awayScore:85},
+  {j:8,homeId:1,awayId:3,homeScore:88,awayScore:74},
+];
+
+// ═══════════════════════════════════════════════════════════════════ HELPERS
+
+const getTeam = id => TEAMS.find(t=>t.id===id);
+
+function pctColor(pct){
+  if(pct>=50)return"#4ade80";
+  if(pct>=35)return"#facc15";
+  return"#f87171";
+}
+function pmColor(v){ return v>0?"#4ade80":v<0?"#f87171":"#9ca3af"; }
+
+function badgeHTML(teamId,size=32){
+  const t=getTeam(teamId);
+  return `<div class="badge" style="width:${size}px;height:${size}px;background:${t.color};font-size:${Math.round(size*.32)}px">${t.short}</div>`;
+}
+
+function shotPct(str){ const[m,a]=str.split('/').map(Number); return a>0?Math.round(m/a*100):0; }
+
+// ═══════════════════════════════════════════════════════════════════ STANDINGS
+
+function renderStandings(){
+  document.getElementById('sec-tabla').innerHTML=`
+    <div class="sec-title">🏆 Tabla General</div>
+    <div class="sec-sub">Temporada 2025–26</div>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr>
+          <th style="text-align:left;width:32px">#</th>
+          <th style="text-align:left">Equipo</th>
+          <th class="tc">PJ</th><th class="tc">PG</th><th class="tc">PP</th>
+          <th class="tc">PF</th><th class="tc">PC</th><th class="tc">DIF</th>
+          <th class="tc">PTS</th><th style="text-align:left">Racha</th>
+        </tr></thead>
+        <tbody>${STANDINGS.map((row,idx)=>{
+          const t=getTeam(row.teamId);
+          const isTop=idx<2, isLast=idx>=STANDINGS.length-2;
+          const posBg=isTop?'#facc15':isLast?'#ef4444':'#2a2a3a';
+          const posClr=isTop?'#0a0a14':'#fff';
+          const difStr=row.dif>0?`+${row.dif}`:row.dif;
+          const difClr=row.dif>0?'#4ade80':row.dif<0?'#f87171':'#9ca3af';
+          const rachaHTML=row.racha.map(w=>`<div class="racha-dot" style="background:${w?'#4ade80':'#ef4444'}"></div>`).join('');
+          return`<tr>
+            <td><span class="pos-badge" style="background:${posBg};color:${posClr}">${row.pos}</span></td>
+            <td><div class="team-cell">${badgeHTML(row.teamId,28)}<span class="team-name">${t.name}</span></div></td>
+            <td class="tc">${row.pj}</td><td class="tc">${row.pg}</td><td class="tc">${row.pp}</td>
+            <td class="tc">${row.pf}</td><td class="tc">${row.pc}</td>
+            <td class="tc fw8" style="color:${difClr}">${difStr}</td>
+            <td class="tc"><span class="pts-chip" style="background:${t.color}22;color:${t.color}">${row.pts}</span></td>
+            <td><div class="racha">${rachaHTML}</div></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#facc15"></div>Playoffs</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Descenso</div>
+      <div class="legend-item"><div class="racha-dot" style="width:8px;height:8px;background:#4ade80;border-radius:50%;display:inline-block"></div>&nbsp;Victoria (racha)</div>
+      <div class="legend-item"><div class="racha-dot" style="width:8px;height:8px;background:#ef4444;border-radius:50%;display:inline-block"></div>&nbsp;Derrota (racha)</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════ JORNADAS
+
+let curJornada=JORNADAS[0].id, expandedGame=null;
+
+function renderJornada(){
+  const tabsHTML=JORNADAS.map(j=>`
+    <button class="jtab ${j.id===curJornada?'active':''}" onclick="selectJornada(${j.id})">${j.label}</button>
+  `).join('');
+  const jornada=JORNADAS.find(j=>j.id===curJornada);
+  const gamesHTML=jornada.games.map(game=>{
+    const home=getTeam(game.homeId), away=getTeam(game.awayId);
+    const homeWin=game.homeScore>game.awayScore, isExp=expandedGame===game.id;
+    const playersHTML=isExp?`
+      <div class="game-players">
+        ${[game.homeId,game.awayId].map(tid=>{
+          const t=getTeam(tid), players=game.players[tid];
+          return`<div class="team-box">
+            <div class="team-box-hdr">${badgeHTML(tid,20)}<span style="font-size:11px;font-weight:700;color:${t.color};text-transform:uppercase;letter-spacing:.04em">${t.name}</span></div>
+            <table class="ptbl">
+              <thead><tr>
+                <th style="text-align:left">Jugador</th>
+                <th class="tc">PTS</th><th class="tc">REB</th><th class="tc">AST</th>
+                <th class="tc">T3</th><th class="tc">T2</th><th class="tc">T1</th>
+                <th class="tc">PIR</th><th class="tc">+/-</th>
+              </tr></thead>
+              <tbody>${players.map(p=>{
+                const pir=calcPIR(p);
+                const pmStr=p.pm>0?`+${p.pm}`:p.pm;
+                return`<tr>
+                  <td class="pname" onclick="openPlayer('${p.name}')">${p.name}</td>
+                  <td style="text-align:center;font-weight:800;color:#facc15">${p.pts}</td>
+                  <td class="tc">${p.reb}</td><td class="tc">${p.ast}</td>
+                  <td class="tc" style="color:${pctColor(shotPct(p.t3))};font-weight:600">${p.t3}</td>
+                  <td class="tc" style="color:${pctColor(shotPct(p.t2))};font-weight:600">${p.t2}</td>
+                  <td class="tc" style="color:${pctColor(shotPct(p.t1))};font-weight:600">${p.t1}</td>
+                  <td class="tc fw8" style="color:${pir>=20?'#a78bfa':pir>=12?'#f1f5f9':'#9ca3af'}">${pir}</td>
+                  <td class="tc fw8" style="color:${pmColor(p.pm)}">${pmStr}</td>
+                </tr>`}).join('')}
+              </tbody>
+            </table>
+          </div>`;
+        }).join('')}
+      </div>`:'';
+    return`<div class="game-card">
+      <button class="game-hdr" onclick="toggleGame('${game.id}')">
+        <div class="team-side right">
+          <span class="team-name" style="font-weight:${homeWin?800:500};color:${homeWin?'#f1f5f9':'#6b7280'}">${home.name}</span>
+          ${badgeHTML(game.homeId,32)}
+        </div>
+        <div class="score-block">
+          <span class="score" style="color:${homeWin?'#f1f5f9':'#6b7280'}">${game.homeScore}</span>
+          <span class="score-sep">–</span>
+          <span class="score" style="color:${!homeWin?'#f1f5f9':'#6b7280'}">${game.awayScore}</span>
+        </div>
+        <div class="team-side">
+          ${badgeHTML(game.awayId,32)}
+          <span class="team-name" style="font-weight:${!homeWin?800:500};color:${!homeWin?'#f1f5f9':'#6b7280'}">${away.name}</span>
+        </div>
+        <span style="color:#3a3a4a;font-size:14px;margin-left:4px">${isExp?'▲':'▼'}</span>
+      </button>
+      ${playersHTML}
+    </div>`;
+  }).join('');
+  document.getElementById('sec-jornada').innerHTML=`
+    <div class="sec-title">🏀 Resultados por Jornada</div>
+    <div class="sec-sub">Top 5 jugadores · Haz clic en un nombre para ver su ficha</div>
+    <div class="jtabs">${tabsHTML}</div>
+    <div>${gamesHTML}</div>`;
+}
+function selectJornada(id){curJornada=id;expandedGame=null;renderJornada();}
+function toggleGame(id){expandedGame=expandedGame===id?null:id;renderJornada();}
+
+// ═══════════════════════════════════════════════════════════════════ LEADERS
+
+let curStat='puntos', searchVal='', filterTeam=0;
+
+function getLeaderRows(){
+  const cfg=STATS_LEADERS[curStat];
+  return Object.entries(PLAYER_STATS)
+    .filter(([name,s])=>{
+      if(filterTeam && s.team!==filterTeam)return false;
+      if(searchVal && !name.toLowerCase().includes(searchVal.toLowerCase()))return false;
+      return true;
+    })
+    .map(([name,s])=>({name,...s,sortVal:cfg.isShot?parseFloat(s[cfg.key]):s[cfg.key]}))
+    .sort((a,b)=>b.sortVal-a.sortVal)
+    .slice(0,10);
+}
+
+function renderLeaders(){
+  const cfg=STATS_LEADERS[curStat];
+  const rows=getLeaderRows();
+  const maxVal=rows.length?Math.max(...rows.map(r=>r.sortVal)):1;
+  const tabsHTML=STAT_TABS_ORDER.map(t=>`
+    <button class="stab ${t.key===curStat?'active':''}" onclick="selectStat('${t.key}')">${t.icon} ${STATS_LEADERS[t.key].label}</button>
+  `).join('');
+  const teamFilters=`<div class="team-filter">
+    <button class="tfbtn ${filterTeam===0?'active':''}" style="${filterTeam===0?'background:#1d4ed8':''}" onclick="setTeamFilter(0)">Todos</button>
+    ${TEAMS.map(t=>`<button class="tfbtn ${filterTeam===t.id?'active':''}" style="${filterTeam===t.id?'background:'+t.color:''}" onclick="setTeamFilter(${t.id})">${t.short}</button>`).join('')}
+  </div>`;
+  const bodyHTML=rows.map((row,i)=>{
+    const t=getTeam(row.team);
+    const v=row.sortVal;
+    const barW=maxVal?((Math.abs(v)/Math.max(...rows.map(r=>Math.abs(r.sortVal))))*100):0;
+    const barColor=i===0?'#facc15':t.color+'cc';
+    const valColor=cfg.isShot?pctColor(v):cfg.key==='pm'?pmColor(v):'#f1f5f9';
+    const valStr=cfg.key==='pm'?(v>0?`+${v}`:v):cfg.isShot?`${v}%`:v;
+    return`<tr>
+      <td style="padding:10px 14px;color:${i===0?'#facc15':'#4b5563'};font-weight:800">${i===0?'★':i+1}</td>
+      <td style="padding:10px 10px;color:#f1f5f9;font-weight:600;cursor:pointer" onclick="openPlayer('${row.name}')">${row.name}</td>
+      <td style="padding:10px 10px">
+        <div style="display:flex;align-items:center;gap:6px">${badgeHTML(row.team,20)}<span style="color:#6b7280;font-size:12px">${t.short}</span></div>
+      </td>
+      <td style="padding:10px 10px;text-align:center;font-weight:800;color:${valColor};font-variant-numeric:tabular-nums">${valStr}</td>
+      <td style="padding:10px 14px"><div class="bar-track"><div class="bar-fill" style="width:${barW}%;background:${barColor}"></div></div></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('sec-lideres').innerHTML=`
+    <div class="sec-title">📊 Líderes Estadísticos</div>
+    <div class="sec-sub">Temporada 2025–26 · Clic en un jugador para ver su ficha</div>
+    <div class="stat-tabs">${tabsHTML}</div>
+    <div class="search-row">
+      <input class="search-input" placeholder="🔍 Buscar jugador..." oninput="setSearch(this.value)" value="${searchVal}"/>
+      ${teamFilters}
+    </div>
+    <div class="leaders-wrap">
+      <table class="ltbl">
+        <thead><tr>
+          <th style="text-align:left;width:32px">#</th>
+          <th style="text-align:left">Jugador</th>
+          <th style="text-align:left">Equipo</th>
+          <th class="tc">${cfg.unit}</th>
+          <th style="text-align:left;min-width:90px">Barra</th>
+        </tr></thead>
+        <tbody>${bodyHTML||'<tr><td colspan="5" style="text-align:center;padding:20px;color:#4b5563">Sin resultados</td></tr>'}</tbody>
+      </table>
+    </div>`;
+}
+function selectStat(k){curStat=k;renderLeaders();}
+function setSearch(v){searchVal=v;renderLeaders();}
+function setTeamFilter(id){filterTeam=id;renderLeaders();}
+
+// ═══════════════════════════════════════════════════════════════════ EVOLUCIÓN
+
+function renderEvolucion(){
+  const W=Math.min(window.innerWidth-60,900), H=280;
+  const PAD={t:20,r:20,b:40,l:36};
+  const innerW=W-PAD.l-PAD.r, innerH=H-PAD.t-PAD.b;
+  const jCount=8;
+  const xStep=innerW/(jCount-1);
+  const yStep=innerH/(TEAMS.length-1);
+
+  // grid lines
+  let gridLines='';
+  for(let i=0;i<jCount;i++){
+    const x=PAD.l+i*xStep;
+    gridLines+=`<line x1="${x}" y1="${PAD.t}" x2="${x}" y2="${PAD.t+innerH}" stroke="#1e1e2e" stroke-width="1"/>`;
+    gridLines+=`<text x="${x}" y="${H-8}" text-anchor="middle" fill="#4b5563" font-size="11" font-weight="600">J${i+1}</text>`;
+  }
+  for(let p=1;p<=6;p++){
+    const y=PAD.t+(p-1)*yStep;
+    gridLines+=`<line x1="${PAD.l}" y1="${y}" x2="${PAD.l+innerW}" y2="${y}" stroke="#1e1e2e" stroke-width="1"/>`;
+    gridLines+=`<text x="${PAD.l-6}" y="${y+4}" text-anchor="end" fill="#4b5563" font-size="11" font-weight="600">${p}º</text>`;
+  }
+
+  const lines=EVOLUCION.map(ev=>{
+    const t=getTeam(ev.teamId);
+    const pts=ev.positions.map((pos,i)=>{
+      const x=PAD.l+i*xStep;
+      const y=PAD.t+(pos-1)*yStep;
+      return`${x},${y}`;
+    });
+    const d='M'+pts.join(' L');
+    const circles=ev.positions.map((pos,i)=>{
+      const x=PAD.l+i*xStep;
+      const y=PAD.t+(pos-1)*yStep;
+      return`<circle cx="${x}" cy="${y}" r="5" fill="${t.color}" stroke="#0a0a14" stroke-width="2"/>`;
+    }).join('');
+    return`<polyline points="${pts.join(' ')}" fill="none" stroke="${t.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>${circles}`;
+  }).join('');
+
+  const legendHTML=TEAMS.map(t=>`
+    <div style="display:flex;align-items:center;gap:5px">
+      <div style="width:20px;height:3px;border-radius:2px;background:${t.color}"></div>
+      <span style="font-size:11px;color:#9ca3af">${t.name}</span>
+    </div>`).join('');
+
+  document.getElementById('sec-evolucion').innerHTML=`
+    <div class="sec-title">📈 Evolución de la Clasificación</div>
+    <div class="sec-sub">Posición por jornada · Arriba = mejor posición</div>
+    <div class="chart-wrap">
+      <svg width="${W}" height="${H}" style="display:block">
+        ${gridLines}${lines}
+      </svg>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:14px">${legendHTML}</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════ HEAD TO HEAD
+
+let h2hTeam1=1, h2hTeam2=2;
+
+function renderH2H(){
+  const games=H2H_HISTORY.filter(g=>
+    (g.homeId===h2hTeam1&&g.awayId===h2hTeam2)||(g.homeId===h2hTeam2&&g.awayId===h2hTeam1)
+  );
+  let t1wins=0, t2wins=0, t1pts=0, t2pts=0;
+  games.forEach(g=>{
+    const t1home=g.homeId===h2hTeam1;
+    const t1score=t1home?g.homeScore:g.awayScore;
+    const t2score=t1home?g.awayScore:g.homeScore;
+    if(t1score>t2score)t1wins++;else t2wins++;
+    t1pts+=t1score; t2pts+=t2score;
+  });
+
+  const selectOpts=id=>TEAMS.map(t=>`<option value="${t.id}" ${t.id===id?'selected':''}>${t.name}</option>`).join('');
+  const t1=getTeam(h2hTeam1), t2=getTeam(h2hTeam2);
+
+  const gamesHTML=games.length?games.map(g=>{
+    const t1home=g.homeId===h2hTeam1;
+    const t1score=t1home?g.homeScore:g.awayScore;
+    const t2score=t1home?g.awayScore:g.homeScore;
+    const t1win=t1score>t2score;
+    return`<div class="h2h-game">
+      <div style="display:flex;align-items:center;gap:6px;flex:1;justify-content:flex-end">
+        ${badgeHTML(h2hTeam1,24)}
+        <span style="font-weight:${t1win?800:500};color:${t1win?'#f1f5f9':'#6b7280'};font-size:13px">${t1score}</span>
+      </div>
+      <span style="color:#4b5563;font-size:12px">J${g.j}</span>
+      <div style="display:flex;align-items:center;gap:6px;flex:1">
+        <span style="font-weight:${!t1win?800:500};color:${!t1win?'#f1f5f9':'#6b7280'};font-size:13px">${t2score}</span>
+        ${badgeHTML(h2hTeam2,24)}
+      </div>
+    </div>`;
+  }).join(''):`<div style="text-align:center;padding:24px;color:#4b5563;font-size:13px">No hay enfrentamientos entre estos equipos</div>`;
+
+  document.getElementById('sec-h2h').innerHTML=`
+    <div class="sec-title">⚔️ Head to Head</div>
+    <div class="sec-sub">Historial de enfrentamientos directos</div>
+    <div class="h2h-selectors">
+      <select class="h2h-select" onchange="setH2H(1,parseInt(this.value))">${selectOpts(h2hTeam1)}</select>
+      <span class="h2h-vs">VS</span>
+      <select class="h2h-select" onchange="setH2H(2,parseInt(this.value))">${selectOpts(h2hTeam2)}</select>
+    </div>
+    ${games.length?`<div class="h2h-summary">
+      <div class="h2h-team-col">
+        ${badgeHTML(h2hTeam1,36)}
+        <div class="h2h-wins" style="color:${t1.color}">${t1wins}</div>
+        <div class="h2h-label">victorias</div>
+        <div style="font-size:12px;color:#4b5563;margin-top:6px">${games.length>0?Math.round(t1pts/games.length):0} ppj</div>
+      </div>
+      <div class="h2h-mid">
+        <div style="font-size:12px;color:#4b5563;font-weight:700">${games.length} partidos</div>
+        <div style="font-size:11px;color:#2a2a3a">———</div>
+        <div style="font-size:12px;color:#4b5563">${t1pts} – ${t2pts}</div>
+      </div>
+      <div class="h2h-team-col">
+        ${badgeHTML(h2hTeam2,36)}
+        <div class="h2h-wins" style="color:${t2.color}">${t2wins}</div>
+        <div class="h2h-label">victorias</div>
+        <div style="font-size:12px;color:#4b5563;margin-top:6px">${games.length>0?Math.round(t2pts/games.length):0} ppj</div>
+      </div>
+    </div>`:''}
+    <div>${gamesHTML}</div>`;
+}
+
+function setH2H(pos,id){
+  if(pos===1){if(id===h2hTeam2)h2hTeam2=h2hTeam1;h2hTeam1=id;}
+  else{if(id===h2hTeam1)h2hTeam1=h2hTeam2;h2hTeam2=id;}
+  renderH2H();
+}
+
+// ═══════════════════════════════════════════════════════════════════ PLAYER MODAL
+
+function openPlayer(name){
+  const s=PLAYER_STATS[name]; if(!s)return;
+  const t=getTeam(s.team);
+  const pmStr=s.pm>0?`+${s.pm}`:s.pm;
+  const ddBadge=s.dd>0||s.td>0?`
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      ${s.dd>0?`<div class="dd-badge">🎯 ${s.dd} doble-doble${s.dd>1?'s':''}</div>`:''}
+      ${s.td>0?`<div class="dd-badge" style="background:#f9731622;color:#fb923c">🔥 ${s.td} triple-doble${s.td>1?'s':''}</div>`:''}
+    </div>`:'';
+  document.getElementById('modal-content').innerHTML=`
+    <div class="modal-hdr">
+      <div style="display:flex;align-items:center;gap:12px">
+        ${badgeHTML(s.team,40)}
+        <div>
+          <div style="font-size:18px;font-weight:900;color:#f1f5f9">${name}</div>
+          <div style="font-size:12px;color:${t.color};font-weight:700">${t.name}</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    ${ddBadge}
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-card-val yellow">${s.pts}</div><div class="stat-card-lbl">Puntos</div><div class="stat-card-sub">ppj</div></div>
+      <div class="stat-card"><div class="stat-card-val">${s.reb}</div><div class="stat-card-lbl">Rebotes</div><div class="stat-card-sub">rpj</div></div>
+      <div class="stat-card"><div class="stat-card-val">${s.ast}</div><div class="stat-card-lbl">Asistencias</div><div class="stat-card-sub">apj</div></div>
+      <div class="stat-card"><div class="stat-card-val" style="color:#a78bfa">${s.pir}</div><div class="stat-card-lbl">Valoración</div><div class="stat-card-sub">PIR ppj</div></div>
+      <div class="stat-card"><div class="stat-card-val" style="color:${pmColor(s.pm)}">${pmStr}</div><div class="stat-card-lbl">Plus/Minus</div><div class="stat-card-sub">ppj</div></div>
+      <div class="stat-card"><div class="stat-card-val">${s.pj}</div><div class="stat-card-lbl">Partidos</div><div class="stat-card-sub">jugados</div></div>
+    </div>
+    <div style="background:#0f0f1c;border-radius:10px;padding:14px">
+      <div style="font-size:11px;font-weight:700;color:#4b5563;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Eficiencia de tiro</div>
+      ${[['Triples (T3)',s.t3,'#facc15'],['Tiros de 2 (T2)',s.t2,'#60a5fa'],['Tiros libres (T1)',s.t1,'#4ade80']].map(([lbl,pct,clr])=>{
+        const v=parseInt(pct);
+        return`<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:12px;color:#9ca3af">${lbl}</span>
+            <span style="font-size:12px;font-weight:800;color:${clr}">${pct}</span>
+          </div>
+          <div class="bar-track" style="height:8px">
+            <div class="bar-fill" style="width:${v}%;background:${clr}"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(e){
+  if(!e||e.target===document.getElementById('modal'))
+    document.getElementById('modal').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════════════ NAV
+
+function showSection(id,btn){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  ['tabla','jornada','lideres','evolucion','h2h'].forEach(s=>{
+    document.getElementById('sec-'+s).style.display=(id==='all'||id===s)?'':'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════ INIT
+
+renderStandings();
+renderJornada();
+renderLeaders();
+renderEvolucion();
+renderH2H();
+</script>
+</body>
+</html>
