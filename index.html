@@ -820,10 +820,10 @@
           <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
         </svg>
         Liga
-        <span class="nav-badge">J8</span>
+        <span class="nav-badge" id="nav-jornada-badge">J8</span>
       </a>
 
-      <a href="partido.html" class="nav-item">
+      <a href="partidos.html" class="nav-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
           <path d="M12 8v4l3 3"/>
@@ -872,7 +872,7 @@
     <div class="mobile-topbar">
       <div class="mob-logo">Hoop<span>Stats</span></div>
       <div class="mob-right">
-        <div class="mob-jornada">J8</div>
+        <div class="mob-jornada" id="mob-jornada">J8</div>
         <div class="mob-avatar">JP</div>
       </div>
     </div>
@@ -884,8 +884,8 @@
         <div class="topbar-title">Dashboard</div>
       </div>
       <div class="topbar-right">
-        <div class="topbar-season">Jornada 8 de 18</div>
-        <div class="topbar-pill">▶ Próx. J9 · 19 ABR</div>
+        <div class="topbar-season" id="topbar-season">Jornada 8 de 18</div>
+        <div class="topbar-pill" id="topbar-pill">▶ Próx. J9 · 19 ABR</div>
       </div>
     </div>
 
@@ -893,7 +893,7 @@
     <div class="content">
 
       <!-- CHIPS de resumen -->
-      <div class="chips-row">
+      <div class="chips-row" id="chips-row">
         <div class="stat-chip accent">
           <div class="chip-label">Posición</div>
           <div class="chip-value">4º</div>
@@ -934,8 +934,8 @@
 
           <!-- Próximo partido -->
           <div class="card card-next">
-            <div class="card-head">Próximo partido · Jornada 9</div>
-            <div class="card-body">
+            <div class="card-head" id="next-match-head">Próximo partido · Jornada 9</div>
+            <div class="card-body" id="next-match-body">
               <div class="match-teams">
                 <div class="team-block">
                   <div class="team-abbr" style="color: var(--red)">CAB</div>
@@ -962,8 +962,8 @@
 
           <!-- Último resultado -->
           <div class="card">
-            <div class="card-head">Último resultado · J8</div>
-            <div class="card-body">
+            <div class="card-head" id="last-result-head">Último resultado · J8</div>
+            <div class="card-body" id="last-result-body">
               <div class="result-badge loss">DERROTA</div>
               <div class="score-display">
                 <span class="score-us">51</span>
@@ -1010,7 +1010,7 @@
                     <th>Pts</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody id="standing-tbody">
                   <tr>
                     <td><span class="pos-num">1</span>CB Molinar</td>
                     <td>8</td><td>7</td><td>1</td><td>15</td>
@@ -1076,7 +1076,7 @@
           <div class="bnav-dot"></div>
         </a>
 
-        <a href="liga_v2.html" class="bnav-item">
+        <a href="partidos.html" class="bnav-item">
           <div class="bnav-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
@@ -1122,5 +1122,7 @@
   </div><!-- /main -->
 </div><!-- /app -->
 
+
+<script src="/js/dashboard.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HoopStats · Partidos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red:#cc1414; --red-dim:#991010; --red-glow:rgba(204,20,20,0.12);
+    --bg:#111111; --panel:#1a1a1a; --panel2:#222222; --panel3:#2a2a2a;
+    --border:#2e2e2e; --border2:#3a3a3a;
+    --text:#f0f0f0; --text2:#aaaaaa; --muted:#666666;
+    --green:#27ae60; --green-dim:rgba(39,174,96,0.15); --green-border:rgba(39,174,96,0.3);
+    --red-border:rgba(204,20,20,0.3);
+    --bebas:'Bebas Neue',sans-serif; --barlow:'Barlow Condensed',sans-serif; --mono:'JetBrains Mono',monospace;
+    --sidebar-w:230px; --radius:10px;
+  }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:var(--barlow); overflow:hidden; }
+
+  /* ─── LAYOUT ─── */
+  .app { display:flex; height:100vh; overflow:hidden; }
+  .sidebar { width:var(--sidebar-w); min-width:var(--sidebar-w); background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; height:100vh; }
+  .sidebar-logo { padding:28px 22px 22px; border-bottom:1px solid var(--border); }
+  .logo-eyebrow { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); font-family:var(--barlow); margin-bottom:4px; }
+  .logo-name { font-family:var(--bebas); font-size:28px; letter-spacing:3px; color:var(--text); line-height:1; }
+  .logo-club { font-size:11px; color:var(--text2); font-family:var(--barlow); font-weight:600; margin-top:4px; }
+  .logo-accent { width:40px; height:3px; background:var(--red); margin-top:12px; border-radius:2px; }
+  .sidebar-nav { flex:1; padding:16px 0; overflow-y:auto; }
+  .nav-section-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:14px 22px 6px; }
+  .nav-item { display:flex; align-items:center; gap:12px; padding:11px 22px; cursor:pointer; font-size:14px; font-weight:600; letter-spacing:0.5px; color:var(--text2); border-left:3px solid transparent; transition:background .15s,color .15s; text-decoration:none; }
+  .nav-item:hover { background:var(--panel2); color:var(--text); }
+  .nav-item.active { color:var(--red); border-left-color:var(--red); background:var(--red-glow); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; opacity:.7; }
+  .nav-item.active svg { opacity:1; }
+  .nav-badge { margin-left:auto; background:var(--red); color:white; font-size:10px; font-family:var(--mono); padding:1px 7px; border-radius:20px; }
+  .sidebar-bottom { padding:16px; border-top:1px solid var(--border); }
+  .user-card { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; cursor:pointer; }
+  .user-avatar { width:34px; height:34px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:13px; color:white; flex-shrink:0; }
+  .user-info { flex:1; min-width:0; }
+  .user-name { font-size:13px; font-weight:700; color:var(--text); }
+  .user-role { font-size:11px; color:var(--muted); }
+
+  /* ─── MAIN ─── */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+  .topbar { padding:20px 28px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:var(--bg); }
+  .topbar-left { display:flex; flex-direction:column; gap:2px; }
+  .topbar-breadcrumb { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+  .topbar-title { font-family:var(--bebas); font-size:30px; letter-spacing:2px; line-height:1; }
+
+  /* ─── CONTENT ─── */
+  .content { flex:1; overflow-y:auto; padding:24px 28px 32px; }
+  .content::-webkit-scrollbar { width:4px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+  /* ─── JORNADAS ─── */
+  .jornadas-list { display:flex; flex-direction:column; gap:12px; }
+
+  .jornada-block { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+
+  .jornada-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 18px; cursor:pointer;
+    border-bottom:1px solid var(--border);
+    transition:background .15s;
+  }
+  .jornada-header:hover { background:var(--panel2); }
+  .jornada-header.open  { background:var(--panel2); }
+
+  .jornada-title { font-family:var(--bebas); font-size:18px; letter-spacing:2px; color:var(--text); }
+  .jornada-meta  { font-size:11px; color:var(--muted); font-family:var(--mono); }
+  .jornada-chevron { font-size:10px; color:var(--muted); transition:transform .2s; }
+  .jornada-header.open .jornada-chevron { transform:rotate(180deg); }
+
+  .jornada-matches { display:none; }
+  .jornada-matches.open { display:block; }
+
+  /* ─── MATCH ROW ─── */
+  .match-row {
+    display:grid;
+    grid-template-columns: 1fr auto auto auto 1fr;
+    align-items:center;
+    gap:8px;
+    padding:10px 18px;
+    border-top:1px solid var(--border);
+    font-family:var(--barlow);
+    font-size:13px;
+  }
+  .match-row.sac-match { background:rgba(204,20,20,0.04); }
+
+  .team-name { font-weight:600; color:var(--text2); font-size:13px; }
+  .team-name.home { text-align:right; }
+  .team-name.away { text-align:left; }
+  .team-name.sac  { color:var(--red); font-weight:700; }
+
+  .score-box {
+    display:flex; align-items:center; gap:6px;
+    font-family:var(--mono); font-size:15px; font-weight:500;
+    padding:4px 12px; border-radius:5px;
+    background:var(--panel2); border:1px solid var(--border);
+  }
+  .score-box .sep { color:var(--muted); }
+
+  .result-dot {
+    width:22px; height:22px; border-radius:4px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:10px; font-weight:700;
+  }
+  .result-dot.v { background:var(--green-dim); border:1px solid var(--green-border); color:var(--green); }
+  .result-dot.d { background:var(--red-glow);  border:1px solid var(--red-border);  color:#e74c3c; }
+
+  .match-fecha { font-size:10px; color:var(--muted); font-family:var(--mono); white-space:nowrap; }
+
+  /* ─── LOADING / ERROR ─── */
+  .loading { padding:40px; text-align:center; color:var(--muted); font-family:var(--barlow); font-size:14px; }
+
+  /* ─── MOBILE TOPBAR ─── */
+  .mobile-topbar { display:none; padding:14px 18px 10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg); }
+  .mob-logo { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
+  .mob-logo span { color:var(--red); }
+  .mob-right { display:flex; align-items:center; gap:10px; }
+  .mob-avatar { width:32px; height:32px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:12px; color:white; }
+
+  /* ─── BOTTOM NAV ─── */
+  .bottom-nav { display:none; height:56px; background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
+  .bnav-inner { display:flex; height:100%; }
+  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; cursor:pointer; text-decoration:none; }
+  .bnav-icon { width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
+  .bnav-icon svg { width:22px; height:22px; }
+  .bnav-item.active .bnav-icon svg { stroke:var(--red); }
+  .bnav-item:not(.active) .bnav-icon svg { stroke:var(--muted); }
+  .bnav-label { display:none; font-size:11px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); }
+  .bnav-item.active .bnav-label { color:var(--red); }
+  .bnav-dot { width:4px; height:4px; border-radius:50%; background:var(--red); }
+
+  @media (min-width:360px) { .bnav-label { display:block; } .bottom-nav { height:66px; } }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width:768px) {
+    .app { flex-direction:column; }
+    .sidebar { display:none; }
+    .mobile-topbar { display:flex; }
+    .bottom-nav { display:flex; }
+    .topbar { display:none; }
+    .content { padding:14px 14px 16px; }
+    .match-row { grid-template-columns:1fr auto auto 1fr; gap:4px; }
+    .match-fecha { display:none; }
+    .score-box { padding:4px 8px; font-size:13px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-eyebrow">Temporada 2025–26</div>
+      <div class="logo-name">HoopStats</div>
+      <div class="logo-club">Sa Cabaneta A · Fontaneria Jose Puerta</div>
+      <div class="logo-accent"></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        Inicio
+      </a>
+      <a href="liga.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+        </svg>
+        Liga
+        <span class="nav-badge" id="nav-jornada-badge">—</span>
+      </a>
+      <a href="partidos.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+        </svg>
+        Partidos
+      </a>
+      <a href="player_stats.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/>
+        </svg>
+        Jugadores
+      </a>
+      <div class="nav-section-label">Equipo</div>
+      <a href="#" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Mi equipo
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">JP</div>
+        <div class="user-info">
+          <div class="user-name">Jordi P.</div>
+          <div class="user-role">Entrenador</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+
+    <!-- Mobile topbar -->
+    <div class="mobile-topbar">
+      <div class="mob-logo">Hoop<span>Stats</span></div>
+      <div class="mob-right">
+        <div class="mob-avatar">JP</div>
+      </div>
+    </div>
+
+    <!-- Desktop topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-breadcrumb">Sa Cabaneta A · Temporada 2025–26</div>
+        <div class="topbar-title">Partidos</div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="jornadas-list" id="jornadas-list">
+        <div class="loading">Cargando partidos…</div>
+      </div>
+    </div>
+
+    <!-- Bottom nav (móvil) -->
+    <nav class="bottom-nav">
+      <div class="bnav-inner">
+        <a href="index.html" class="bnav-item">
+          <div class="bnav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Inicio</div>
+        </a>
+        <a href="liga.html" class="bnav-item">
+          <div class="bnav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Liga</div>
+        </a>
+        <a href="partidos.html" class="bnav-item active">
+          <div class="bnav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Partidos</div>
+          <div class="bnav-dot"></div>
+        </a>
+        <a href="player_stats.html" class="bnav-item">
+          <div class="bnav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Jugadores</div>
+        </a>
+        <a href="#" class="bnav-item">
+          <div class="bnav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Equipo</div>
+        </a>
+      </div>
+    </nav>
+  </div>
+</div>
+
+<script>
+const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+function fmt(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${d.getDate()} ${MESES[d.getMonth()]}`;
+}
+
+function renderJornadas(partidos, ultimaJornada) {
+  // Agrupar por jornada
+  const map = {};
+  for (const p of partidos) {
+    if (!map[p.jornada]) map[p.jornada] = [];
+    map[p.jornada].push(p);
+  }
+
+  const jNums = Object.keys(map).map(Number).sort((a,b) => b - a); // Más reciente primero
+  const container = document.getElementById('jornadas-list');
+  container.innerHTML = '';
+
+  for (const jNum of jNums) {
+    const matches = map[jNum];
+    const isLast  = jNum === ultimaJornada;
+    const fechas  = matches.map(m => m.fecha).filter(Boolean);
+    const fechaStr = fechas.length ? fmt(fechas[0]) : '';
+
+    const block = document.createElement('div');
+    block.className = 'jornada-block';
+
+    const header = document.createElement('div');
+    header.className = `jornada-header${isLast ? ' open' : ''}`;
+    header.innerHTML = `
+      <div>
+        <span class="jornada-title">Jornada ${jNum}</span>
+        ${isLast ? '<span style="margin-left:8px;font-size:10px;color:var(--red);font-family:var(--mono);background:var(--red-glow);border:1px solid var(--red-border);padding:1px 7px;border-radius:3px;">ÚLTIMA</span>' : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="jornada-meta">${fechaStr}</span>
+        <span class="jornada-chevron">▼</span>
+      </div>
+    `;
+
+    const matchesDiv = document.createElement('div');
+    matchesDiv.className = `jornada-matches${isLast ? ' open' : ''}`;
+
+    for (const p of matches.sort((a,b) => (p.esCabaneta ? -1 : 0))) {
+      const row = document.createElement('div');
+      const isSac = p.esCabaneta;
+      row.className = `match-row${isSac ? ' sac-match' : ''}`;
+
+      const localCls = `team-name home${p.local.shortName === 'SAC' ? ' sac' : ''}`;
+      const visitCls = `team-name away${p.visit.shortName === 'SAC' ? ' sac' : ''}`;
+
+      const resultHtml = isSac
+        ? `<div class="result-dot ${p.resultado === 'V' ? 'v' : 'd'}">${p.resultado}</div>`
+        : '<div style="width:22px"></div>';
+
+      row.innerHTML = `
+        <div class="${localCls}">${p.local.nombre}</div>
+        <div class="score-box">
+          <span>${p.local.puntos}</span>
+          <span class="sep">–</span>
+          <span>${p.visit.puntos}</span>
+        </div>
+        ${resultHtml}
+        <div class="${visitCls}">${p.visit.nombre}</div>
+        <div class="match-fecha">${fmt(p.fecha)}</div>
+      `;
+      matchesDiv.appendChild(row);
+    }
+
+    header.addEventListener('click', () => {
+      header.classList.toggle('open');
+      matchesDiv.classList.toggle('open');
+    });
+
+    block.appendChild(header);
+    block.appendChild(matchesDiv);
+    container.appendChild(block);
+  }
+}
+
+async function init() {
+  try {
+    const res  = await fetch('/api/matches');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (document.getElementById('nav-jornada-badge')) {
+      document.getElementById('nav-jornada-badge').textContent = `J${data.sac.ultimaJornada}`;
+    }
+    renderJornadas(data.partidos, data.sac.ultimaJornada);
+  } catch(e) {
+    document.getElementById('jornadas-list').innerHTML =
+      `<div class="loading">Error al cargar los partidos: ${e.message}</div>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
