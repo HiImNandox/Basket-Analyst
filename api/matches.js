@@ -98,15 +98,16 @@ function calcularClasificacion(partidos) {
 
   for (const p of partidos) {
     for (const [side, opp] of [['local', 'visit'], ['visit', 'local']]) {
-      const t = p[side];
-      if (!equipos[t.id]) {
-        equipos[t.id] = {
-          id: t.id, nombre: t.nombre, shortName: t.shortName,
+      const t   = p[side];
+      const key = t.shortName; // shortName es estable entre partidos; t.id varía por partido
+      if (!equipos[key]) {
+        equipos[key] = {
+          shortName: t.shortName, nombre: t.nombre,
           esSac: t.shortName === SAC_SHORT,
           pj: 0, v: 0, d: 0, pf: 0, pc: 0
         };
       }
-      const eq  = equipos[t.id];
+      const eq  = equipos[key];
       const pts = p[side].puntos, opts = p[opp].puntos;
       eq.pj++;
       eq.pf += pts;
