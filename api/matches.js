@@ -33,6 +33,46 @@ function cleanName(fullName = '') {
   return titled.slice(0, 3).join(' ');
 }
 
+// "VICTOR HUGO LASTRA" → "Victor Hugo Lastra"
+function cleanPlayerName(fullName = '') {
+  return fullName.trim().toLowerCase().split(/\s+/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+// Extrae estadísticas individuales de cada equipo (están en teams[i].players, NO en json.players)
+function extractPlayers(teams) {
+  const result = {};
+  for (const team of teams) {
+    if (!team.players?.length || !team.shortName) continue;
+    result[team.shortName] = team.players
+      .filter(p => p.gamePlayed)
+      .map(p => {
+        const d = p.data || {};
+        return {
+          actorId: p.actorId,
+          name:    cleanPlayerName(p.name),
+          dorsal:  p.dorsal || '?',
+          min:     p.timePlayed || 0,
+          pts:     d.score || 0,
+          reb:     (d.offensiveRebound || 0) + (d.defensiveRebound || 0),
+          ast:     d.assists  || 0,
+          stl:     d.steals   || 0,
+          blk:     d.block    || 0,
+          to:      d.lost     || 0,
+          pf:      d.personal || 0,
+          t1:      `${d.shotsOfOneSuccessful   || 0}/${d.shotsOfOneAttempted   || 0}`,
+          t2:      `${d.shotsOfTwoSuccessful   || 0}/${d.shotsOfTwoAttempted   || 0}`,
+          t3:      `${d.shotsOfThreeSuccessful || 0}/${d.shotsOfThreeAttempted || 0}`,
+          pm:      p.inOut || 0,
+          pir:     d.valoration || 0,
+        };
+      })
+      .sort((a, b) => b.pts - a.pts);
+  }
+  return result;
+}
+
 function parseMatch(json, jornada) {
   const teams  = json.teams  || [];
   const scores = json.score  || [];
@@ -53,13 +93,16 @@ function parseMatch(json, jornada) {
     ? (sacPuntos > rivalPuntos ? 'V' : 'D')
     : null;
 
-  // Valoración media del equipo Sa Cabaneta en este partido
+  // Estadísticas individuales por equipo (shortName → array de jugadores)
+  const players = extractPlayers(teams);
+
+  // Valoración total del equipo Sa Cabaneta en este partido (desde teams[i].players)
   let sacValoracion = null;
-  if (esCabaneta && json.players) {
-    const sacTeamId  = esCasa ? json.localId : json.visitId;
-    const sacPlayers = json.players.filter(p => p.teamId === sacTeamId && p.data);
+  if (esCabaneta) {
+    const sacShort   = esCasa ? localTeam.shortName : visitTeam.shortName;
+    const sacPlayers = players[sacShort] || [];
     if (sacPlayers.length > 0) {
-      sacValoracion = sacPlayers.reduce((s, p) => s + (p.data.valoration || 0), 0);
+      sacValoracion = sacPlayers.reduce((s, p) => s + p.pir, 0);
     }
   }
 
@@ -83,6 +126,7 @@ function parseMatch(json, jornada) {
       puntos:    final.visit
     },
     cuartos,
+    players,      // { shortName: [{ name, pts, reb, ast, t1, t2, t3, pm, pir, ... }] }
     esCabaneta,
     esCasa,
     esVisita,

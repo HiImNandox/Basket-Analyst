@@ -346,15 +346,15 @@
 let TEAMS=[], EVOLUCION=[], STANDINGS=[], JORNADAS=[], PLAYER_STATS={}, H2H_HISTORY=[];
 
 function calcPIR(p){
+  // Usa la valoración pre-calculada de la API (incluye robos, tapones, pérdidas, etc.)
+  if(p.pir!==undefined) return p.pir;
   const[m2,a2]=p.t2.split('/').map(Number);
   const[m3,a3]=p.t3.split('/').map(Number);
   const[m1,a1]=p.t1.split('/').map(Number);
   return p.pts+p.reb+p.ast-(a2-m2)-(a3-m3)-(a1-m1);
 }
 
-// JORNADAS se carga dinámicamente en initLiga()
-
-// PLAYER_STATS se carga dinámicamente (actualmente vacío - datos no disponibles en los JSON)
+// JORNADAS y PLAYER_STATS se cargan dinámicamente en initLiga()
 
 const STATS_LEADERS={
   puntos:     {label:"Puntos",     unit:"PPJ", isShot:false,key:"pts"},
@@ -520,7 +520,7 @@ function renderJornada(){
   }).join('');
   document.getElementById('sec-jornada').innerHTML=`
     <div class="sec-title">Resultados por Jornada</div>
-    <div class="sec-sub">Haz clic en un partido para ver el detalle</div>
+    <div class="sec-sub">Haz clic en un partido para ver las estadísticas individuales</div>
     <div class="jtabs">${tabsHTML}</div>
     <div>${gamesHTML}</div>`;
 }
@@ -827,7 +827,11 @@ async function initLiga() {
           homeScore: p.local.puntos,
           awayId:    s2id[p.visit.shortName],
           awayScore: p.visit.puntos,
-          players:   {}   // estadísticas individuales no disponibles en los JSON
+          // Mapea shortName → id entero para que badgeHTML() y getTeam() funcionen
+          players: {
+            [s2id[p.local.shortName]]:  (p.players || {})[p.local.shortName]  || [],
+            [s2id[p.visit.shortName]]:  (p.players || {})[p.visit.shortName]  || []
+          }
         }))
       }));
 
@@ -851,8 +855,45 @@ async function initLiga() {
       awayScore: p.visit.puntos
     }));
 
-    // 6. PLAYER_STATS ─ vacío (los JSON no contienen datos de jugadores)
+    // 6. PLAYER_STATS ─ medias por partido acumulando todos los partidos de la temporada
+    const accum = {};
+    for (const p of partidos) {
+      if (!p.players) continue;
+      for (const [short, players] of Object.entries(p.players)) {
+        const tid = s2id[short];
+        for (const pl of players) {
+          if (!accum[pl.name]) accum[pl.name] = {
+            team: tid, pj:0, pts:0, reb:0, ast:0, pir:0, pm:0,
+            t1m:0,t1a:0, t2m:0,t2a:0, t3m:0,t3a:0, dd:0, td:0
+          };
+          const s = accum[pl.name];
+          s.pj++; s.pts+=pl.pts; s.reb+=pl.reb; s.ast+=pl.ast;
+          s.pir+=pl.pir; s.pm+=pl.pm;
+          const[t1m,t1a]=pl.t1.split('/').map(Number);
+          const[t2m,t2a]=pl.t2.split('/').map(Number);
+          const[t3m,t3a]=pl.t3.split('/').map(Number);
+          s.t1m+=t1m; s.t1a+=t1a; s.t2m+=t2m; s.t2a+=t2a; s.t3m+=t3m; s.t3a+=t3a;
+          const cats=(pl.pts>=10?1:0)+(pl.reb>=10?1:0)+(pl.ast>=10?1:0);
+          if(cats>=2) s.dd++; if(cats>=3) s.td++;
+        }
+      }
+    }
     PLAYER_STATS = {};
+    for (const [name, s] of Object.entries(accum)) {
+      if(s.pj===0) continue;
+      PLAYER_STATS[name] = {
+        team: s.team, pj: s.pj,
+        pts:  Math.round(s.pts/s.pj*10)/10,
+        reb:  Math.round(s.reb/s.pj*10)/10,
+        ast:  Math.round(s.ast/s.pj*10)/10,
+        pir:  Math.round(s.pir/s.pj*10)/10,
+        pm:   Math.round(s.pm /s.pj*10)/10,
+        t1:   s.t1a>0?`${Math.round(s.t1m/s.t1a*100)}%`:'0%',
+        t2:   s.t2a>0?`${Math.round(s.t2m/s.t2a*100)}%`:'0%',
+        t3:   s.t3a>0?`${Math.round(s.t3m/s.t3a*100)}%`:'0%',
+        dd: s.dd, td: s.td
+      };
+    }
 
     // Inicializa controles con valores reales
     curJornada  = JORNADAS[0]?.id ?? null;
