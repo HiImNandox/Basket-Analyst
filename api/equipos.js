@@ -18,7 +18,8 @@ export default async function handler(req, res) {
 
     const equipos = temporada
       ? await sql`
-          SELECT e.*, COUNT(j.id) AS num_jugadores
+          SELECT e.id, e.nombre, e.temporada, e.short_name,
+                 COUNT(j.id) AS num_jugadores
           FROM equipos e
           LEFT JOIN jugadores j ON j.equipo_id = e.id
           WHERE e.temporada = ${temporada}
@@ -26,7 +27,8 @@ export default async function handler(req, res) {
           ORDER BY e.nombre
         `
       : await sql`
-          SELECT e.*, COUNT(j.id) AS num_jugadores
+          SELECT e.id, e.nombre, e.temporada, e.short_name,
+                 COUNT(j.id) AS num_jugadores
           FROM equipos e
           LEFT JOIN jugadores j ON j.equipo_id = e.id
           GROUP BY e.id

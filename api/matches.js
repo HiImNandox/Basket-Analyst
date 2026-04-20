@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { setCors, handleOptions } from './lib/cors.js';
+import { sql } from './lib/db.js';
 
 const SAC_SHORT = 'SAC';
 
@@ -73,7 +74,12 @@ function extractPlayers(teams) {
   return result;
 }
 
-function parseMatch(json, jornada) {
+// Devuelve el nombre oficial desde la BD; si no está mapeado, usa cleanName()
+function teamName(shortName, rawName, dbNameMap) {
+  return dbNameMap[shortName] || cleanName(rawName);
+}
+
+function parseMatch(json, jornada, dbNameMap = {}) {
   const teams  = json.teams  || [];
   const scores = json.score  || [];
   const final  = scores[scores.length - 1] || { local: 0, visit: 0 };
@@ -115,13 +121,13 @@ function parseMatch(json, jornada) {
     fecha:         isNaN(fechaRaw) ? null : fechaRaw.toISOString(),
     local: {
       id:        json.localId,
-      nombre:    cleanName(localTeam.name),
+      nombre:    teamName(localTeam.shortName, localTeam.name, dbNameMap),
       shortName: localTeam.shortName || '???',
       puntos:    final.local
     },
     visit: {
       id:        json.visitId,
-      nombre:    cleanName(visitTeam.name),
+      nombre:    teamName(visitTeam.shortName, visitTeam.name, dbNameMap),
       shortName: visitTeam.shortName || '???',
       puntos:    final.visit
     },
@@ -178,6 +184,20 @@ export default async function handler(req, res) {
   try {
     const dataDir = join(process.cwd(), 'data');
 
+    // Carga nombres oficiales de la BD (short_name → nombre)
+    // Si la columna aún no existe o la BD falla, se usa cleanName() como fallback
+    let dbNameMap = {};
+    try {
+      const rows = await sql`
+        SELECT short_name, nombre
+        FROM   equipos
+        WHERE  short_name IS NOT NULL
+      `;
+      for (const row of rows) dbNameMap[row.short_name] = row.nombre;
+    } catch (_) {
+      // fallback silencioso: se usará cleanName()
+    }
+
     const jornadaDirs = readdirSync(dataDir, { withFileTypes: true })
       .filter(d => d.isDirectory() && /^J\d+$/i.test(d.name))
       .sort((a, b) => parseInt(a.name.slice(1)) - parseInt(b.name.slice(1)));
@@ -192,7 +212,7 @@ export default async function handler(req, res) {
       for (const file of files) {
         const raw  = readFileSync(join(dirPath, file), 'utf8');
         const json = JSON.parse(raw);
-        partidos.push(parseMatch(json, jNum));
+        partidos.push(parseMatch(json, jNum, dbNameMap));
       }
     }
 

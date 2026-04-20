@@ -37,9 +37,10 @@ CREATE TABLE IF NOT EXISTS competiciones (
 -- 4. EQUIPOS
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS equipos (
-    id        SERIAL PRIMARY KEY,
-    nombre    TEXT NOT NULL,
-    temporada TEXT NOT NULL
+    id         SERIAL PRIMARY KEY,
+    nombre     TEXT NOT NULL,
+    temporada  TEXT NOT NULL,
+    short_name TEXT UNIQUE   -- abreviatura FBIB (ej: SAC, CLU, CBP…)
 );
 
 -- ------------------------------------------------------------
