@@ -287,7 +287,7 @@
       </div>
       <div class="topbar-right">
         <div class="topbar-season">Jornada 8 de 18</div>
-        <div class="topbar-pill">Raptors BC lidera</div>
+        <div class="topbar-pill" id="leader-pill">—</div>
       </div>
     </div>
 
@@ -342,19 +342,105 @@
 </div>
 
 <script>
-// Datos cargados dinámicamente desde /api/matches
-let TEAMS=[], EVOLUCION=[], STANDINGS=[], JORNADAS=[], PLAYER_STATS={}, H2H_HISTORY=[];
+const TEAMS = [
+  {id:1,name:"Raptors BC",  short:"RAP",color:"#CE1141"},
+  {id:2,name:"Thunder HC",  short:"THU",color:"#007AC1"},
+  {id:3,name:"Lions Club",  short:"LIO",color:"#F9A01B"},
+  {id:4,name:"Wolves BC",   short:"WOL",color:"#005083"},
+  {id:5,name:"Eagles HC",   short:"EAG",color:"#00843D"},
+  {id:6,name:"Phoenix BC",  short:"PHX",color:"#E56020"},
+];
+
+const EVOLUCION = [
+  {teamId:1,positions:[3,3,2,1,1,1,1,1]},
+  {teamId:2,positions:[1,2,3,4,4,4,3,4]},
+  {teamId:3,positions:[2,1,1,2,2,2,2,2]},
+  {teamId:4,positions:[5,5,5,5,6,6,6,6]},
+  {teamId:5,positions:[4,4,4,3,3,3,4,3]},
+  {teamId:6,positions:[6,6,6,6,5,5,5,5]},
+];
+
+const STANDINGS = [
+  {pos:1,teamId:1,pj:14,pg:11,pp:3, pf:1342,pc:1198,dif:+144,pts:25,racha:[1,1,0,1,1]},
+  {pos:2,teamId:3,pj:14,pg:10,pp:4, pf:1280,pc:1210,dif:+70, pts:24,racha:[1,1,1,0,0]},
+  {pos:3,teamId:5,pj:14,pg:9, pp:5, pf:1260,pc:1230,dif:+30, pts:23,racha:[0,1,1,0,1]},
+  {pos:4,teamId:2,pj:14,pg:7, pp:7, pf:1210,pc:1240,dif:-30, pts:21,racha:[1,0,1,0,0]},
+  {pos:5,teamId:6,pj:14,pg:4, pp:10,pf:1150,pc:1290,dif:-140,pts:18,racha:[0,0,0,1,0]},
+  {pos:6,teamId:4,pj:14,pg:3, pp:11,pf:1100,pc:1320,dif:-220,pts:17,racha:[0,0,1,0,0]},
+];
 
 function calcPIR(p){
-  // Usa la valoración pre-calculada de la API (incluye robos, tapones, pérdidas, etc.)
-  if(p.pir!==undefined) return p.pir;
   const[m2,a2]=p.t2.split('/').map(Number);
   const[m3,a3]=p.t3.split('/').map(Number);
   const[m1,a1]=p.t1.split('/').map(Number);
   return p.pts+p.reb+p.ast-(a2-m2)-(a3-m3)-(a1-m1);
 }
 
-// JORNADAS y PLAYER_STATS se cargan dinámicamente en initLiga()
+const JORNADAS=[
+  {id:8,label:"J8",games:[
+    {id:"g1",homeId:1,homeScore:88,awayId:3,awayScore:74,players:{
+      1:[{name:"Carlos Ruiz",pts:24,reb:6,ast:4,t3:"3/5",t2:"4/7",t1:"7/8",pm:+14},{name:"Marco López",pts:18,reb:9,ast:2,t3:"1/3",t2:"6/9",t1:"3/4",pm:+10},{name:"Javi Sánchez",pts:15,reb:3,ast:8,t3:"2/4",t2:"3/5",t1:"4/5",pm:+8},{name:"Pablo Torres",pts:12,reb:5,ast:1,t3:"0/2",t2:"5/7",t1:"2/2",pm:+6},{name:"Rubén Gil",pts:10,reb:4,ast:3,t3:"1/2",t2:"3/6",t1:"2/3",pm:+4}],
+      3:[{name:"Andrés Mora",pts:20,reb:5,ast:3,t3:"2/5",t2:"5/8",t1:"4/5",pm:-8},{name:"Luis Castro",pts:16,reb:7,ast:2,t3:"1/4",t2:"4/6",t1:"6/7",pm:-6},{name:"Diego Vega",pts:13,reb:4,ast:5,t3:"3/6",t2:"1/3",t1:"3/4",pm:-4},{name:"Fran Blanco",pts:11,reb:8,ast:1,t3:"0/1",t2:"4/8",t1:"3/3",pm:-10},{name:"Sergio Iborra",pts:9,reb:2,ast:4,t3:"1/3",t2:"2/4",t1:"2/2",pm:-5}],
+    }},
+    {id:"g2",homeId:5,homeScore:71,awayId:2,awayScore:80,players:{
+      5:[{name:"Nacho Pérez",pts:22,reb:4,ast:6,t3:"4/7",t2:"3/5",t1:"4/4",pm:-9},{name:"Tomás Ríos",pts:17,reb:8,ast:1,t3:"1/3",t2:"6/8",t1:"2/3",pm:-6},{name:"Emilio Font",pts:12,reb:3,ast:4,t3:"2/5",t2:"2/4",t1:"4/6",pm:-5},{name:"David Soler",pts:10,reb:6,ast:2,t3:"0/2",t2:"4/7",t1:"2/2",pm:-3},{name:"Mario Clot",pts:8,reb:5,ast:3,t3:"1/3",t2:"2/5",t1:"1/2",pm:-7}],
+      2:[{name:"Álvaro Diez",pts:25,reb:3,ast:7,t3:"5/9",t2:"2/4",t1:"6/7",pm:+12},{name:"Borja Mas",pts:19,reb:6,ast:3,t3:"2/4",t2:"5/7",t1:"5/6",pm:+8},{name:"Rafa Leal",pts:14,reb:5,ast:2,t3:"1/2",t2:"5/9",t1:"1/2",pm:+6},{name:"Iñaki Urra",pts:11,reb:9,ast:1,t3:"0/1",t2:"4/6",t1:"3/3",pm:+10},{name:"Mikel Osa",pts:9,reb:4,ast:5,t3:"2/5",t2:"1/3",t1:"2/3",pm:+5}],
+    }},
+    {id:"g3",homeId:6,homeScore:65,awayId:4,awayScore:69,players:{
+      6:[{name:"Santi Llull",pts:21,reb:3,ast:5,t3:"3/6",t2:"4/7",t1:"4/4",pm:-4},{name:"Omar Sy",pts:15,reb:7,ast:2,t3:"1/3",t2:"5/8",t1:"2/3",pm:-2},{name:"Ivan Cruz",pts:12,reb:4,ast:3,t3:"2/4",t2:"2/5",t1:"4/5",pm:-5},{name:"Pol Vidal",pts:9,reb:6,ast:1,t3:"0/2",t2:"3/6",t1:"3/4",pm:-6},{name:"Carles Bach",pts:7,reb:3,ast:4,t3:"1/4",t2:"1/3",t1:"2/2",pm:-3}],
+      4:[{name:"Bruno Serra",pts:23,reb:5,ast:4,t3:"4/8",t2:"3/5",t1:"5/6",pm:+4},{name:"Nico Alves",pts:17,reb:8,ast:2,t3:"1/2",t2:"6/9",t1:"3/4",pm:+6},{name:"Joel Prat",pts:13,reb:3,ast:6,t3:"2/5",t2:"2/4",t1:"5/6",pm:+5},{name:"Arnau Vila",pts:10,reb:7,ast:1,t3:"0/1",t2:"4/8",t1:"2/2",pm:+3},{name:"Xavi Plana",pts:6,reb:4,ast:3,t3:"1/3",t2:"1/4",t1:"1/2",pm:+2}],
+    }},
+  ]},
+  {id:7,label:"J7",games:[
+    {id:"g4",homeId:2,homeScore:92,awayId:1,awayScore:85,players:{
+      2:[{name:"Álvaro Diez",pts:28,reb:4,ast:9,t3:"6/10",t2:"3/5",t1:"7/8",pm:+7},{name:"Borja Mas",pts:21,reb:5,ast:2,t3:"3/6",t2:"4/6",t1:"5/6",pm:+5},{name:"Rafa Leal",pts:16,reb:3,ast:4,t3:"2/4",t2:"4/7",t1:"2/3",pm:+4},{name:"Iñaki Urra",pts:13,reb:10,ast:1,t3:"0/1",t2:"5/8",t1:"3/3",pm:+8},{name:"Mikel Osa",pts:11,reb:2,ast:6,t3:"3/6",t2:"1/2",t1:"2/3",pm:+3}],
+      1:[{name:"Carlos Ruiz",pts:26,reb:5,ast:5,t3:"4/7",t2:"4/6",t1:"6/8",pm:-5},{name:"Marco López",pts:20,reb:8,ast:1,t3:"2/4",t2:"6/9",t1:"4/5",pm:-4},{name:"Javi Sánchez",pts:17,reb:2,ast:7,t3:"3/5",t2:"3/5",t1:"3/4",pm:-6},{name:"Pablo Torres",pts:13,reb:6,ast:2,t3:"1/3",t2:"4/6",t1:"3/3",pm:-3},{name:"Rubén Gil",pts:9,reb:3,ast:4,t3:"2/5",t2:"2/4",t1:"1/2",pm:-4}],
+    }},
+    {id:"g5",homeId:3,homeScore:78,awayId:5,awayScore:70,players:{
+      3:[{name:"Andrés Mora",pts:22,reb:6,ast:4,t3:"3/6",t2:"4/7",t1:"5/6",pm:+8},{name:"Luis Castro",pts:18,reb:8,ast:2,t3:"2/4",t2:"5/8",t1:"3/4",pm:+5},{name:"Diego Vega",pts:14,reb:3,ast:6,t3:"4/7",t2:"0/2",t1:"4/5",pm:+6},{name:"Fran Blanco",pts:12,reb:10,ast:1,t3:"0/1",t2:"5/9",t1:"2/3",pm:+7},{name:"Sergio Iborra",pts:8,reb:2,ast:5,t3:"1/3",t2:"2/4",t1:"1/2",pm:+4}],
+      5:[{name:"Nacho Pérez",pts:20,reb:4,ast:5,t3:"3/7",t2:"3/5",t1:"4/5",pm:-7},{name:"Tomás Ríos",pts:15,reb:7,ast:1,t3:"1/3",t2:"5/7",t1:"2/3",pm:-5},{name:"Emilio Font",pts:11,reb:3,ast:3,t3:"2/4",t2:"2/4",t1:"3/4",pm:-4},{name:"David Soler",pts:9,reb:5,ast:2,t3:"1/3",t2:"3/6",t1:"1/2",pm:-3},{name:"Mario Clot",pts:7,reb:4,ast:2,t3:"0/2",t2:"2/5",t1:"3/4",pm:-6}],
+    }},
+  ]},
+  {id:6,label:"J6",games:[
+    {id:"g6",homeId:1,homeScore:95,awayId:6,awayScore:72,players:{
+      1:[{name:"Carlos Ruiz",pts:28,reb:7,ast:5,t3:"5/8",t2:"4/6",t1:"6/7",pm:+23},{name:"Marco López",pts:22,reb:11,ast:2,t3:"2/4",t2:"7/10",t1:"4/5",pm:+18},{name:"Javi Sánchez",pts:18,reb:3,ast:9,t3:"3/5",t2:"3/5",t1:"4/5",pm:+15},{name:"Pablo Torres",pts:14,reb:6,ast:2,t3:"1/2",t2:"5/7",t1:"3/3",pm:+12},{name:"Rubén Gil",pts:11,reb:4,ast:4,t3:"2/4",t2:"3/5",t1:"2/3",pm:+10}],
+      6:[{name:"Santi Llull",pts:18,reb:3,ast:4,t3:"2/5",t2:"4/7",t1:"4/5",pm:-20},{name:"Omar Sy",pts:14,reb:6,ast:1,t3:"1/3",t2:"4/7",t1:"2/3",pm:-15},{name:"Ivan Cruz",pts:10,reb:4,ast:2,t3:"1/3",t2:"2/5",t1:"3/4",pm:-18},{name:"Pol Vidal",pts:8,reb:5,ast:1,t3:"0/2",t2:"3/6",t1:"2/3",pm:-14},{name:"Carles Bach",pts:6,reb:2,ast:3,t3:"1/3",t2:"1/4",t1:"1/2",pm:-12}],
+    }},
+  ]},
+];
+
+const PLAYER_STATS={
+  "Carlos Ruiz":  {team:1,pj:14,pts:21.8,reb:5.8,ast:4.6,pir:24.2,pm:+6.2,t3:"41%",t2:"58%",t1:"91%",dd:3,td:0},
+  "Marco López":  {team:1,pj:14,pts:16.2,reb:8.2,ast:1.8,pir:19.8,pm:+4.8,t3:"32%",t2:"61%",t1:"82%",dd:5,td:0},
+  "Javi Sánchez": {team:1,pj:14,pts:14.6,reb:2.6,ast:6.8,pir:17.2,pm:+3.4,t3:"38%",t2:"56%",t1:"90%",dd:1,td:0},
+  "Pablo Torres": {team:1,pj:14,pts:11.4,reb:5.2,ast:1.6,pir:13.6,pm:+2.8,t3:"28%",t2:"59%",t1:"88%",dd:2,td:0},
+  "Rubén Gil":    {team:1,pj:14,pts:9.4, reb:3.8,ast:3.2,pir:11.4,pm:+1.6,t3:"35%",t2:"52%",t1:"80%",dd:0,td:0},
+  "Álvaro Diez":  {team:2,pj:14,pts:22.4,reb:3.2,ast:7.2,pir:26.8,pm:+5.6,t3:"44%",t2:"52%",t1:"90%",dd:2,td:1},
+  "Borja Mas":    {team:2,pj:14,pts:16.8,reb:5.8,ast:2.8,pir:19.2,pm:+3.4,t3:"38%",t2:"57%",t1:"86%",dd:3,td:0},
+  "Rafa Leal":    {team:2,pj:14,pts:13.6,reb:4.2,ast:3.4,pir:15.8,pm:+2.2,t3:"35%",t2:"55%",t1:"87%",dd:1,td:0},
+  "Iñaki Urra":   {team:2,pj:14,pts:10.8,reb:9.8,ast:1.2,pir:18.6,pm:+4.6,t3:"18%",t2:"61%",t1:"91%",dd:6,td:0},
+  "Mikel Osa":    {team:2,pj:14,pts:9.2, reb:3.4,ast:5.6,pir:12.4,pm:+1.8,t3:"39%",t2:"48%",t1:"83%",dd:0,td:0},
+  "Andrés Mora":  {team:3,pj:14,pts:18.9,reb:5.4,ast:3.2,pir:21.6,pm:+2.8,t3:"36%",t2:"59%",t1:"88%",dd:2,td:0},
+  "Luis Castro":  {team:3,pj:14,pts:15.4,reb:7.2,ast:2.0,pir:18.4,pm:+2.2,t3:"28%",t2:"58%",t1:"86%",dd:4,td:0},
+  "Diego Vega":   {team:3,pj:14,pts:12.8,reb:3.8,ast:4.8,pir:14.6,pm:+1.6,t3:"40%",t2:"46%",t1:"84%",dd:0,td:0},
+  "Fran Blanco":  {team:3,pj:14,pts:10.6,reb:8.4,ast:1.2,pir:15.8,pm:+1.8,t3:"22%",t2:"57%",t1:"82%",dd:5,td:0},
+  "Sergio Iborra":{team:3,pj:14,pts:8.4, reb:2.2,ast:4.2,pir:10.2,pm:+0.8,t3:"36%",t2:"50%",t1:"80%",dd:0,td:0},
+  "Bruno Serra":  {team:4,pj:14,pts:20.1,reb:5.0,ast:3.8,pir:22.6,pm:-2.4,t3:"42%",t2:"57%",t1:"86%",dd:2,td:0},
+  "Nico Alves":   {team:4,pj:14,pts:15.6,reb:7.9,ast:1.8,pir:18.2,pm:-1.8,t3:"30%",t2:"60%",t1:"84%",dd:4,td:0},
+  "Joel Prat":    {team:4,pj:14,pts:12.4,reb:3.2,ast:6.1,pir:16.2,pm:-2.0,t3:"32%",t2:"52%",t1:"91%",dd:1,td:0},
+  "Arnau Vila":   {team:4,pj:14,pts:9.8, reb:9.1,ast:1.0,pir:15.4,pm:-1.4,t3:"14%",t2:"57%",t1:"88%",dd:5,td:0},
+  "Xavi Plana":   {team:4,pj:14,pts:6.2, reb:3.8,ast:5.2,pir:9.6, pm:-1.2,t3:"28%",t2:"46%",t1:"78%",dd:0,td:0},
+  "Nacho Pérez":  {team:5,pj:14,pts:19.6,reb:4.2,ast:5.9,pir:22.8,pm:-1.8,t3:"43%",t2:"54%",t1:"89%",dd:1,td:0},
+  "Tomás Ríos":   {team:5,pj:14,pts:15.2,reb:8.7,ast:1.2,pir:18.6,pm:-1.4,t3:"28%",t2:"59%",t1:"82%",dd:4,td:0},
+  "Emilio Font":  {team:5,pj:14,pts:11.4,reb:3.2,ast:3.8,pir:13.2,pm:-1.2,t3:"34%",t2:"51%",t1:"85%",dd:0,td:0},
+  "David Soler":  {team:5,pj:14,pts:9.6, reb:5.6,ast:2.0,pir:11.8,pm:-0.8,t3:"24%",t2:"56%",t1:"84%",dd:1,td:0},
+  "Mario Clot":   {team:5,pj:14,pts:7.8, reb:4.8,ast:2.8,pir:9.6, pm:-1.0,t3:"26%",t2:"48%",t1:"76%",dd:0,td:0},
+  "Santi Llull":  {team:6,pj:14,pts:17.3,reb:3.2,ast:4.6,pir:18.6,pm:-3.8,t3:"38%",t2:"56%",t1:"89%",dd:1,td:0},
+  "Omar Sy":      {team:6,pj:14,pts:13.8,reb:7.3,ast:1.8,pir:16.2,pm:-3.2,t3:"26%",t2:"58%",t1:"82%",dd:3,td:0},
+  "Ivan Cruz":    {team:6,pj:14,pts:11.2,reb:4.0,ast:3.0,pir:12.8,pm:-3.0,t3:"32%",t2:"53%",t1:"83%",dd:0,td:0},
+  "Pol Vidal":    {team:6,pj:14,pts:8.6, reb:5.8,ast:1.2,pir:11.0,pm:-2.6,t3:"18%",t2:"52%",t1:"80%",dd:1,td:0},
+  "Carles Bach":  {team:6,pj:14,pts:6.4, reb:3.0,ast:3.8,pir:8.4, pm:-2.2,t3:"24%",t2:"46%",t1:"78%",dd:0,td:0},
+};
 
 const STATS_LEADERS={
   puntos:     {label:"Puntos",     unit:"PPJ", isShot:false,key:"pts"},
@@ -371,26 +457,18 @@ const STAT_TABS_ORDER=[
   {key:"libres"},{key:"rebotes"},{key:"asistencias"},{key:"plusminus"},
 ];
 
-// H2H_HISTORY se carga dinámicamente en initLiga()
+const H2H_HISTORY=[
+  {j:1,homeId:1,awayId:2,homeScore:82,awayScore:78},
+  {j:2,homeId:2,awayId:3,homeScore:70,awayScore:74},
+  {j:3,homeId:1,awayId:3,homeScore:88,awayScore:80},
+  {j:4,homeId:4,awayId:1,homeScore:65,awayScore:72},
+  {j:5,homeId:3,awayId:4,homeScore:85,awayScore:71},
+  {j:6,homeId:2,awayId:4,homeScore:90,awayScore:82},
+  {j:7,homeId:2,awayId:1,homeScore:92,awayScore:85},
+  {j:8,homeId:1,awayId:3,homeScore:88,awayScore:74},
+];
 
 const getTeam=id=>TEAMS.find(t=>t.id===id);
-
-// Calcula clasificación parcial (hasta cierta jornada) para el gráfico de evolución
-function calcularClasificacionLocal(subset) {
-  const teams = {};
-  for (const p of subset) {
-    for (const [side, opp] of [['local','visit'],['visit','local']]) {
-      const key = p[side].shortName;
-      if (!teams[key]) teams[key] = { short: key, v: 0, d: 0, pf: 0, pc: 0 };
-      teams[key].pf += p[side].puntos;
-      teams[key].pc += p[opp].puntos;
-      p[side].puntos > p[opp].puntos ? teams[key].v++ : teams[key].d++;
-    }
-  }
-  return Object.values(teams)
-    .map(e => ({ ...e, pts: e.v * 2 + e.d }))
-    .sort((a, b) => b.pts - a.pts || b.v - a.v || (b.pf - b.pc) - (a.pf - a.pc));
-}
 
 function pctColor(pct){
   if(pct>=50)return'#27ae60';
@@ -451,25 +529,20 @@ function renderStandings(){
 }
 
 // JORNADAS
-let curJornada=null, expandedGame=null;
+let curJornada=JORNADAS[0].id, expandedGame=null;
 
 function renderJornada(){
-  if(!JORNADAS.length){
-    document.getElementById('sec-jornada').innerHTML=`<div class="sec-title">Resultados por Jornada</div><div style="padding:32px;text-align:center;color:#666666">Cargando datos...</div>`;
-    return;
-  }
   const tabsHTML=JORNADAS.map(j=>`
     <button class="jtab ${j.id===curJornada?'active':''}" onclick="selectJornada(${j.id})">${j.label}</button>
   `).join('');
-  const jornada=JORNADAS.find(j=>j.id===curJornada)||JORNADAS[0];
+  const jornada=JORNADAS.find(j=>j.id===curJornada);
   const gamesHTML=jornada.games.map(game=>{
     const home=getTeam(game.homeId),away=getTeam(game.awayId);
     const homeWin=game.homeScore>game.awayScore,isExp=expandedGame===game.id;
     const playersHTML=isExp?`
       <div class="game-players">
         ${[game.homeId,game.awayId].map(tid=>{
-          const t=getTeam(tid),players=game.players[tid]||[];
-          if(!players.length) return`<div class="team-box"><div class="team-box-hdr">${badgeHTML(tid,20)}<span style="font-size:11px;font-weight:700;color:${t.color};text-transform:uppercase;letter-spacing:.04em">${t.name}</span></div><div style="padding:14px;color:#666666;font-size:12px">Estadísticas individuales no disponibles</div></div>`;
+          const t=getTeam(tid),players=game.players[tid];
           return`<div class="team-box">
             <div class="team-box-hdr">${badgeHTML(tid,20)}<span style="font-size:11px;font-weight:700;color:${t.color};text-transform:uppercase;letter-spacing:.04em">${t.name}</span></div>
             <table class="ptbl">
@@ -520,7 +593,7 @@ function renderJornada(){
   }).join('');
   document.getElementById('sec-jornada').innerHTML=`
     <div class="sec-title">Resultados por Jornada</div>
-    <div class="sec-sub">Haz clic en un partido para ver las estadísticas individuales</div>
+    <div class="sec-sub">Top 5 jugadores · Haz clic en un nombre para ver su ficha</div>
     <div class="jtabs">${tabsHTML}</div>
     <div>${gamesHTML}</div>`;
 }
@@ -601,16 +674,14 @@ function renderEvolucion(){
   const W=Math.min(window.innerWidth-60,900),H=280;
   const PAD={t:20,r:20,b:40,l:36};
   const innerW=W-PAD.l-PAD.r,innerH=H-PAD.t-PAD.b;
-  const jCount=EVOLUCION[0]?.positions.length||1;
-  const xStep=jCount>1?innerW/(jCount-1):0;
-  const yStep=TEAMS.length>1?innerH/(TEAMS.length-1):innerH;
+  const jCount=8,xStep=innerW/(jCount-1),yStep=innerH/(TEAMS.length-1);
   let gridLines='';
   for(let i=0;i<jCount;i++){
     const x=PAD.l+i*xStep;
     gridLines+=`<line x1="${x}" y1="${PAD.t}" x2="${x}" y2="${PAD.t+innerH}" stroke="#2e2e2e" stroke-width="1"/>`;
     gridLines+=`<text x="${x}" y="${H-8}" text-anchor="middle" fill="#666666" font-size="11" font-weight="600">J${i+1}</text>`;
   }
-  for(let p=1;p<=TEAMS.length;p++){
+  for(let p=1;p<=6;p++){
     const y=PAD.t+(p-1)*yStep;
     gridLines+=`<line x1="${PAD.l}" y1="${y}" x2="${PAD.l+innerW}" y2="${y}" stroke="#2e2e2e" stroke-width="1"/>`;
     gridLines+=`<text x="${PAD.l-6}" y="${y+4}" text-anchor="end" fill="#666666" font-size="11" font-weight="600">${p}º</text>`;
@@ -639,7 +710,7 @@ function renderEvolucion(){
 }
 
 // H2H
-let h2hTeam1=null,h2hTeam2=null;
+let h2hTeam1=1,h2hTeam2=2;
 
 function renderH2H(){
   const games=H2H_HISTORY.filter(g=>(g.homeId===h2hTeam1&&g.awayId===h2hTeam2)||(g.homeId===h2hTeam2&&g.awayId===h2hTeam1));
@@ -765,154 +836,20 @@ function showSection(id,btn){
   });
 }
 
-// ─── CARGA DINÁMICA DESDE /api/matches ───────────────────────
-async function initLiga() {
-  // Paleta de colores — SAC siempre en rojo
-  const PALETTE = ['#cc1414','#007AC1','#F9A01B','#005083','#00843D','#E56020',
-                   '#8B5CF6','#EC4899','#14B8A6','#F97316'];
+renderStandings();
+renderJornada();
+renderLeaders();
+renderEvolucion();
+renderH2H();
 
-  try {
-    const data = await fetch('/api/matches').then(r => r.json());
-    const { partidos, clasificacion } = data;
-
-    // 1. TEAMS ─ asigna id numérico; SAC recibe el rojo
-    let colorIdx = 1;
-    TEAMS = clasificacion.map((e, i) => ({
-      id:    i + 1,
-      name:  e.nombre,
-      short: e.shortName,
-      color: e.esSac ? PALETTE[0] : PALETTE[colorIdx++ % PALETTE.length]
-    }));
-
-    // Mapa shortName → id entero para construir los otros objetos
-    const s2id = {};
-    TEAMS.forEach(t => s2id[t.short] = t.id);
-
-    // 2. STANDINGS ─ desde clasificación + racha por equipo
-    STANDINGS = clasificacion.map((e, i) => {
-      const teamParts = partidos
-        .filter(p => p.local.shortName === e.shortName || p.visit.shortName === e.shortName)
-        .sort((a, b) => a.jornada - b.jornada);
-      const racha = teamParts.slice(-5).map(p => {
-        const isLocal = p.local.shortName === e.shortName;
-        const myPts   = isLocal ? p.local.puntos : p.visit.puntos;
-        const theirPts= isLocal ? p.visit.puntos : p.local.puntos;
-        return myPts > theirPts ? 1 : 0;
-      });
-      return {
-        pos: i + 1,
-        teamId: s2id[e.shortName],
-        pj: e.pj, pg: e.v, pp: e.d,
-        pf: e.pf, pc: e.pc,
-        dif: e.pf - e.pc,
-        pts: e.puntos,
-        racha
-      };
-    });
-
-    // 3. JORNADAS ─ agrupa partidos por número de jornada, más reciente primero
-    const jornadaMap = {};
-    for (const p of partidos) {
-      if (!jornadaMap[p.jornada]) jornadaMap[p.jornada] = [];
-      jornadaMap[p.jornada].push(p);
-    }
-    JORNADAS = Object.entries(jornadaMap)
-      .sort((a, b) => parseInt(b[0]) - parseInt(a[0]))
-      .map(([jNum, games]) => ({
-        id:    parseInt(jNum),
-        label: `J${jNum}`,
-        games: games.map((p, gi) => ({
-          id:        `g${jNum}_${gi}`,
-          homeId:    s2id[p.local.shortName],
-          homeScore: p.local.puntos,
-          awayId:    s2id[p.visit.shortName],
-          awayScore: p.visit.puntos,
-          // Mapea shortName → id entero para que badgeHTML() y getTeam() funcionen
-          players: {
-            [s2id[p.local.shortName]]:  (p.players || {})[p.local.shortName]  || [],
-            [s2id[p.visit.shortName]]:  (p.players || {})[p.visit.shortName]  || []
-          }
-        }))
-      }));
-
-    // 4. EVOLUCION ─ posición de cada equipo al cierre de cada jornada
-    const jornadas = [...new Set(partidos.map(p => p.jornada))].sort((a,b)=>a-b);
-    EVOLUCION = TEAMS.map(t => ({ teamId: t.id, positions: [] }));
-    for (const j of jornadas) {
-      const partial = calcularClasificacionLocal(partidos.filter(p => p.jornada <= j));
-      TEAMS.forEach(t => {
-        const pos = partial.findIndex(e => e.short === t.short) + 1;
-        EVOLUCION.find(e => e.teamId === t.id).positions.push(pos || TEAMS.length);
-      });
-    }
-
-    // 5. H2H_HISTORY ─ todos los partidos como enfrentamientos directos
-    H2H_HISTORY = partidos.map(p => ({
-      j:         p.jornada,
-      homeId:    s2id[p.local.shortName],
-      awayId:    s2id[p.visit.shortName],
-      homeScore: p.local.puntos,
-      awayScore: p.visit.puntos
-    }));
-
-    // 6. PLAYER_STATS ─ medias por partido acumulando todos los partidos de la temporada
-    const accum = {};
-    for (const p of partidos) {
-      if (!p.players) continue;
-      for (const [short, players] of Object.entries(p.players)) {
-        const tid = s2id[short];
-        for (const pl of players) {
-          if (!accum[pl.name]) accum[pl.name] = {
-            team: tid, pj:0, pts:0, reb:0, ast:0, pir:0, pm:0,
-            t1m:0,t1a:0, t2m:0,t2a:0, t3m:0,t3a:0, dd:0, td:0
-          };
-          const s = accum[pl.name];
-          s.pj++; s.pts+=pl.pts; s.reb+=pl.reb; s.ast+=pl.ast;
-          s.pir+=pl.pir; s.pm+=pl.pm;
-          const[t1m,t1a]=pl.t1.split('/').map(Number);
-          const[t2m,t2a]=pl.t2.split('/').map(Number);
-          const[t3m,t3a]=pl.t3.split('/').map(Number);
-          s.t1m+=t1m; s.t1a+=t1a; s.t2m+=t2m; s.t2a+=t2a; s.t3m+=t3m; s.t3a+=t3a;
-          const cats=(pl.pts>=10?1:0)+(pl.reb>=10?1:0)+(pl.ast>=10?1:0);
-          if(cats>=2) s.dd++; if(cats>=3) s.td++;
-        }
-      }
-    }
-    PLAYER_STATS = {};
-    for (const [name, s] of Object.entries(accum)) {
-      if(s.pj===0) continue;
-      PLAYER_STATS[name] = {
-        team: s.team, pj: s.pj,
-        pts:  Math.round(s.pts/s.pj*10)/10,
-        reb:  Math.round(s.reb/s.pj*10)/10,
-        ast:  Math.round(s.ast/s.pj*10)/10,
-        pir:  Math.round(s.pir/s.pj*10)/10,
-        pm:   Math.round(s.pm /s.pj*10)/10,
-        t1:   s.t1a>0?`${Math.round(s.t1m/s.t1a*100)}%`:'0%',
-        t2:   s.t2a>0?`${Math.round(s.t2m/s.t2a*100)}%`:'0%',
-        t3:   s.t3a>0?`${Math.round(s.t3m/s.t3a*100)}%`:'0%',
-        dd: s.dd, td: s.td
-      };
-    }
-
-    // Inicializa controles con valores reales
-    curJornada  = JORNADAS[0]?.id ?? null;
-    h2hTeam1    = TEAMS[0]?.id   ?? null;
-    h2hTeam2    = TEAMS[1]?.id   ?? null;
-
-  } catch (err) {
-    console.error('[liga] Error cargando datos:', err);
-  }
-
-  // Renderiza todas las secciones con los datos disponibles
-  renderStandings();
-  renderJornada();
-  renderLeaders();
-  renderEvolucion();
-  renderH2H();
-}
-
-initLiga();
+// Pill del líder — siempre refleja el #1 de STANDINGS
+(function updateLeaderPill(){
+  const pill = document.getElementById('leader-pill');
+  if (!pill || !STANDINGS.length) return;
+  const leader = STANDINGS[0];
+  const t = getTeam(leader.teamId);
+  pill.textContent = (t ? t.name : '?') + ' lidera';
+})();
 </script>
 </body>
 </html>

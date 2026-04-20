@@ -253,12 +253,14 @@ function parseMatchData(d) {
   const localId = d.localId;
   const visitId = d.visitId;
 
-  const allPlayers = d.teams.flatMap(t => t.players || []);
+  // d.teams es un objeto {0:{...}, 1:{...}} — convertir a array
+  const teamsArr   = Object.values(d.teams);
+  const allPlayers = teamsArr.flatMap(t => t.players || []);
   const localRaw   = allPlayers.filter(p => p.playerInternTeam === localId && p.gamePlayed);
   const visitRaw   = allPlayers.filter(p => p.playerInternTeam === visitId && p.gamePlayed);
 
-  const localTeamObj = d.teams.find(t => (t.players||[]).some(p => p.playerInternTeam === localId));
-  const visitTeamObj = d.teams.find(t => (t.players||[]).some(p => p.playerInternTeam === visitId));
+  const localTeamObj = teamsArr.find(t => (t.players||[]).some(p => p.playerInternTeam === localId));
+  const visitTeamObj = teamsArr.find(t => (t.players||[]).some(p => p.playerInternTeam === visitId));
   const localName = localTeamObj ? localTeamObj.name : 'Local';
   const visitName = visitTeamObj ? visitTeamObj.name : 'Visitante';
 
@@ -521,19 +523,10 @@ function renderAll(data) {
 // ══════════════════════════════════════════════════════════════════════════
 
 window.addEventListener('load', async () => {
-  const params  = new URLSearchParams(window.location.search);
-  const matchId = params.get('matchId');
-
-  if (!matchId) {
-    showError(
-      'No se ha indicado ningún partido.<br><br>' +
-      'Usa la URL con el parámetro <code style="color:#4fc3f7;">?matchId=ID</code><br><br>' +
-      'Ejemplo:<br>' +
-      '<code style="color:#4fc3f7;">partit.html?matchId=69c6fb6ee6ffd90001e21de6</code><br><br>' +
-      '<span style="color:#555;font-size:11px;">El archivo <code>data/{matchId}_stats.json</code> debe existir en el repositorio.</span>'
-    );
-    return;
-  }
+  const params   = new URLSearchParams(window.location.search);
+  // Si no hay parámetro ?matchId= se usa el último partido disponible por defecto
+  const DEFAULT_MATCH = '69c6fb6ee6ffd90001e21de6';
+  const matchId  = params.get('matchId') || DEFAULT_MATCH;
 
   // Fade mientras carga
   document.querySelector('.wrap').style.opacity = '0.3';
