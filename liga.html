@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>HoopStats · Liga 2025–26</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -26,10 +26,10 @@
   button { font-family: var(--barlow); cursor: pointer; }
   input, select { font-family: var(--barlow); }
 
-  .app { display: flex; height: 100vh; overflow: hidden; }
+  .app { display: flex; height: 100vh; height: 100dvh; overflow: hidden; }
 
   /* SIDEBAR */
-  .sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100vh; z-index: 10; }
+  .sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100vh; height: 100dvh; z-index: 10; }
   .sidebar-logo { padding: 28px 22px 22px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .logo-eyebrow { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
   .logo-name { font-family: var(--bebas); font-size: 28px; letter-spacing: 3px; line-height: 1; }
@@ -186,8 +186,8 @@
   /* BOTTOM NAV */
   .bnav-label { display: none; font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--muted); line-height: 1; }
   .bnav-item.active .bnav-label { color: var(--red); }
-  @media (min-width: 360px) { .bnav-label { display: block; } .bottom-nav { height: 66px; } }
-  .bottom-nav { display: none; height: 56px; background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+  @media (min-width: 360px) { .bnav-label { display: block; } .bottom-nav { height: calc(66px + env(safe-area-inset-bottom)); } }
+  .bottom-nav { display: none; height: calc(56px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); background: var(--panel); border-top: 1px solid var(--border); flex-shrink: 0; }
   .bnav-inner { display: flex; height: 100%; }
   .bnav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; text-decoration: none; -webkit-tap-highlight-color: transparent; transition: background 0.1s; }
   .bnav-item:active { background: var(--panel2); }
