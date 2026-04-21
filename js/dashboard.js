@@ -146,6 +146,12 @@ function renderUltimoResultado(sac) {
     <div class="result-vs">vs ${rival.nombre} · ${formatFecha(p.fecha)}</div>
     <div class="quarters">${cuartosHtml}</div>
   `;
+
+  // Actualiza el botón "Ver ficha completa" con los parámetros del partido real
+  const fichaBtn = el('ficha-completa-btn');
+  if (fichaBtn && p.fileId && p.jornadaDir) {
+    fichaBtn.onclick = () => window.location = `partido.html?jornada=${p.jornadaDir}&file=${p.fileId}`;
+  }
 }
 
 // ─── CLASIFICACIÓN ──────────────────────────────────────────
@@ -170,7 +176,7 @@ function renderClasificacion(clasificacion) {
 // ─── INIT ────────────────────────────────────────────────────
 async function init() {
   try {
-    const res  = await fetch('/api/matches');
+    const res  = await fetch('/api/matches?v=3');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
