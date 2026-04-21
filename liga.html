@@ -794,7 +794,7 @@ async function initLiga() {
                    '#8B5CF6','#EC4899','#14B8A6','#F97316'];
 
   try {
-    const data = await fetch('/api/matches?v=2').then(r => r.json());
+    const data = await fetch('/api/matches?v=3').then(r => r.json());
     const { partidos, clasificacion } = data;
 
     // 1. TEAMS ─ asigna id numérico; SAC recibe el rojo

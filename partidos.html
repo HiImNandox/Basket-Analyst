@@ -362,11 +362,13 @@ function renderJornadas(partidos, ultimaJornada) {
       `;
 
       // Navegar a partido.html al pulsar la fila
-      if (p.fileId && p.jornadaDir) {
-        row.addEventListener('click', () => {
+      row.addEventListener('click', () => {
+        if (p.fileId && p.jornadaDir) {
           window.location.href = `partido.html?jornada=${p.jornadaDir}&file=${p.fileId}`;
-        });
-      }
+        } else {
+          console.warn('Partido sin fileId/jornadaDir:', p);
+        }
+      });
 
       matchesDiv.appendChild(row);
     }
@@ -384,7 +386,7 @@ function renderJornadas(partidos, ultimaJornada) {
 
 async function init() {
   try {
-    const res  = await fetch('/api/matches');
+    const res  = await fetch('/api/matches?v=3');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (document.getElementById('nav-jornada-badge')) {
