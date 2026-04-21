@@ -210,9 +210,13 @@ export default async function handler(req, res) {
       const files   = readdirSync(dirPath).filter(f => f.endsWith('_stats.json'));
 
       for (const file of files) {
-        const raw  = readFileSync(join(dirPath, file), 'utf8');
-        const json = JSON.parse(raw);
-        partidos.push(parseMatch(json, jNum, dbNameMap));
+        const raw    = readFileSync(join(dirPath, file), 'utf8');
+        const json   = JSON.parse(raw);
+        const fileId = file.replace('_stats.json', '');
+        const p      = parseMatch(json, jNum, dbNameMap);
+        p.fileId     = fileId;          // e.g. "69e1442703837a00011202c1"
+        p.jornadaDir = dir.name;        // e.g. "J9"
+        partidos.push(p);
       }
     }
 

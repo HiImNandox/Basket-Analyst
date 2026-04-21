@@ -87,8 +87,12 @@
     border-top:1px solid var(--border);
     font-family:var(--barlow);
     font-size:13px;
+    cursor:pointer;
+    transition:background .12s;
   }
+  .match-row:hover { background:var(--panel2); }
   .match-row.sac-match { background:rgba(204,20,20,0.04); }
+  .match-row.sac-match:hover { background:rgba(204,20,20,0.09); }
 
   .team-name { font-weight:600; color:var(--text2); font-size:13px; }
   .team-name.home { text-align:right; }
@@ -356,6 +360,14 @@ function renderJornadas(partidos, ultimaJornada) {
         <div class="${visitCls}">${p.visit.nombre}</div>
         <div class="match-fecha">${fmt(p.fecha)}</div>
       `;
+
+      // Navegar a partido.html al pulsar la fila
+      if (p.fileId && p.jornadaDir) {
+        row.addEventListener('click', () => {
+          window.location.href = `partido.html?jornada=${p.jornadaDir}&file=${p.fileId}`;
+        });
+      }
+
       matchesDiv.appendChild(row);
     }
 
