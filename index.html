@@ -624,23 +624,6 @@
   }
 
   /* ─── BOTTOM NAV (móvil) ─── */
-  .bnav-label {
-    display: none;
-    font-size: 11px;
-    letter-spacing: 0;
-    text-transform: uppercase;
-    font-family: var(--barlow);
-    font-weight: 700;
-    color: var(--muted);
-    line-height: 1;
-  }
-  .bnav-item.active .bnav-label { color: var(--red); }
-
-  @media (min-width: 360px) {
-    .bnav-label { display: block; }
-    .bottom-nav { height: calc(66px + env(safe-area-inset-bottom)); }
-  }
-
   .bottom-nav {
     display: none;
     height: calc(56px + env(safe-area-inset-bottom));
@@ -683,11 +666,28 @@
   .bnav-item.active .bnav-icon svg { stroke: var(--red); }
   .bnav-item:not(.active) .bnav-icon svg { stroke: var(--muted); }
 
+  .bnav-label {
+    display: none;
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    font-family: var(--barlow);
+    font-weight: 700;
+    color: var(--muted);
+    line-height: 1;
+  }
+  .bnav-item.active .bnav-label { color: var(--red); }
+
   .bnav-dot {
     width: 4px;
     height: 4px;
     border-radius: 50%;
     background: var(--red);
+  }
+
+  @media (min-width: 360px) {
+    .bnav-label { display: block; }
+    .bottom-nav { height: calc(66px + env(safe-area-inset-bottom)); }
   }
 
   /* ─── MOBILE TOPBAR ─── */
