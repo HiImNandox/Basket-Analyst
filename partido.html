@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sa Cabaneta A · Estadísticas del Partido</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
@@ -100,6 +100,38 @@
     .score-num { font-size: 34px; }
     .team-name { font-size: 12px; }
     .shot-pct-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ─── BOTTOM NAV ─── */
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: calc(56px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: #1a1a1a;
+    border-top: 1px solid #2e2e2e;
+    z-index: 100;
+  }
+  .bnav-inner { display: flex; height: 100%; width: 100%; }
+  .bnav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; text-decoration: none; -webkit-tap-highlight-color: transparent; transition: background 0.1s; }
+  .bnav-item:active { background: #222; }
+  .bnav-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+  .bnav-icon svg { width: 22px; height: 22px; }
+  .bnav-item.active .bnav-icon svg { stroke: #cc1414; }
+  .bnav-item:not(.active) .bnav-icon svg { stroke: #666; }
+  .bnav-label { display: none; font-size: 11px; text-transform: uppercase; font-family: 'Segoe UI', sans-serif; font-weight: 700; color: #666; line-height: 1; letter-spacing: 0; }
+  .bnav-item.active .bnav-label { color: #cc1414; }
+  .bnav-dot { width: 4px; height: 4px; border-radius: 50%; background: #cc1414; }
+
+  @media (min-width: 360px) {
+    .bnav-label { display: block; }
+    .bottom-nav { height: calc(66px + env(safe-area-inset-bottom)); }
+  }
+
+  @media (max-width: 768px) {
+    .bottom-nav { display: flex; }
+    .wrap { padding-bottom: calc(66px + env(safe-area-inset-bottom)); }
   }
 </style>
 </head>
@@ -248,6 +280,55 @@
   <footer>FBIB · Temporada 2025/26 · Sa Cabaneta A · Fontaneria Jose Puerta / Espais Integrals</footer>
 
 </div>
+
+<!-- ═══ BOTTOM NAV (móvil) ═══ -->
+<nav class="bottom-nav">
+  <div class="bnav-inner">
+    <a href="index.html" class="bnav-item">
+      <div class="bnav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+      </div>
+      <div class="bnav-label">Inicio</div>
+    </a>
+    <a href="liga.html" class="bnav-item">
+      <div class="bnav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+        </svg>
+      </div>
+      <div class="bnav-label">Liga</div>
+    </a>
+    <a href="partidos.html" class="bnav-item active">
+      <div class="bnav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+        </svg>
+      </div>
+      <div class="bnav-label">Partidos</div>
+      <div class="bnav-dot"></div>
+    </a>
+    <a href="player_stats.html" class="bnav-item">
+      <div class="bnav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/>
+        </svg>
+      </div>
+      <div class="bnav-label">Jugadores</div>
+    </a>
+    <a href="#" class="bnav-item">
+      <div class="bnav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="bnav-label">Equipo</div>
+    </a>
+  </div>
+</nav>
 
 <script>
 const PLAYER_COLORS = ['#4fc3f7','#81c784','#ffb74d','#f06292','#ba68c8','#4db6ac','#fff176','#ff8a65','#90a4ae','#a5d6a7','#ce93d8'];
