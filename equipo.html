@@ -423,7 +423,7 @@ async function init() {
     const [jugadores, partidosRaw, matches] = await Promise.all([
       fetch(`/api/jugadores?equipo_id=${sac.id}`).then(r => r.json()),
       fetch(`/api/partidos?equipo_id=${sac.id}`).then(r => r.json()),
-      fetch('/api/matches?v=3').then(r => r.json())
+      fetch('/api/matches?v=4').then(r => r.json())
     ]);
 
     // Número real de partidos jugados desde la BD

@@ -176,7 +176,7 @@ function renderClasificacion(clasificacion) {
 // ─── INIT ────────────────────────────────────────────────────
 async function init() {
   try {
-    const res  = await fetch('/api/matches?v=3');
+    const res  = await fetch('/api/matches?v=4');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
