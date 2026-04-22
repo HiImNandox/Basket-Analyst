@@ -417,7 +417,7 @@ function render(jugadores, playerStats, sacPartidos) {
 // ─── INIT ─────────────────────────────────────────────────
 async function init() {
   try {
-    // Cargamos en paralelo: roster (BD) + partidos (JSON)
+    // Cargamos en paralelo: equipos + partidos JSON
     const [equiposRes, matchesRes] = await Promise.all([
       fetch('/api/equipos'),
       fetch('/api/matches?v=3')
@@ -430,11 +430,17 @@ async function init() {
     const sac = equipos.find(e => e.short_name === 'SAC');
     if (!sac) throw new Error('Equipo SAC no encontrado en la BD');
 
-    const jugRes = await fetch(`/api/jugadores?equipo_id=${sac.id}`);
-    const jugadores = await jugRes.json();
+    // Cargamos jugadores y partidos jugados (BD) en paralelo
+    const [jugRes, partidosDBRes] = await Promise.all([
+      fetch(`/api/jugadores?equipo_id=${sac.id}`),
+      fetch(`/api/partidos?equipo_id=${sac.id}&estado=jugado`)
+    ]);
+    const jugadores  = await jugRes.json();
+    const partidosDB = await partidosDBRes.json();
 
     const playerStats = buildPlayerStats(matches.partidos);
-    const sacPartidos = matches.partidos.filter(p => p.esCabaneta).length;
+    // Número real de partidos jugados viene de la BD, no de los JSON cargados
+    const sacPartidos = Array.isArray(partidosDB) ? partidosDB.length : matches.partidos.filter(p => p.esCabaneta).length;
 
     render(jugadores, playerStats, sacPartidos);
 
