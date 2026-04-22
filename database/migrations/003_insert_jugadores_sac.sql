@@ -28,7 +28,7 @@ BEGIN
     (sac_id, 'Tomas',        'Gual Amengual'),
     (sac_id, 'Miquel',       'Marti Hinojosa'),
     (sac_id, 'Antoni',       'Sanchez Juan'),
-    (sac_id, 'J.P.',         'P.'),
+    (sac_id, 'Jaume',        'Pocovi'),
     (sac_id, 'Gaspar',       'Thomas Riera'),
     (sac_id, 'Jose',         'Font Molina')
   ON CONFLICT DO NOTHING;
@@ -51,7 +51,7 @@ BEGIN
     ('Tomas',        'Gual Amengual',     34),
     ('Miquel',       'Marti Hinojosa',    35),
     ('Antoni',       'Sanchez Juan',      77),
-    ('J.P.',         'P.',                79),
+    ('Jaume',        'Pocovi',            79),
     ('Gaspar',       'Thomas Riera',      81),
     ('Jose',         'Font Molina',       83)
   ) AS v(nombre, apellidos, dorsal)
