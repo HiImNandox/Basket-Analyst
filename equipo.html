@@ -448,10 +448,19 @@ async function init() {
     if (!sac) throw new Error('Equipo SAC no encontrado en la BD');
 
     // 2. Jugadores (BD) + partidos jugados (BD) en paralelo
-    const [jugadores, partidos] = await Promise.all([
+    const [jugadores, partidosRaw] = await Promise.all([
       fetch(`/api/jugadores?equipo_id=${sac.id}`).then(r => r.json()),
-      fetch(`/api/partidos?equipo_id=${sac.id}&estado=jugado`).then(r => r.json())
+      fetch(`/api/partidos?equipo_id=${sac.id}`).then(r => r.json())
     ]);
+
+    console.log('[equipo] partidosRaw:', partidosRaw);
+
+    // Filtrar jugados (estado puede ser 'jugado', null, etc.)
+    const partidos = Array.isArray(partidosRaw)
+      ? partidosRaw.filter(p => !p.estado || p.estado === 'jugado')
+      : [];
+
+    console.log(`[equipo] partidos a procesar: ${partidos.length}`);
 
     // 3. Fetch stats de cada partido desde FBIB en paralelo
     const matchDataList = await Promise.all(
