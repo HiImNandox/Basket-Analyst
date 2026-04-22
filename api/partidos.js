@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         AND (${equipo_id ?? null}::int IS NULL
              OR p.equipo_local_id = ${equipo_id ?? null}::int
              OR p.equipo_visit_id = ${equipo_id ?? null}::int)
-        AND (${estado ?? null} IS NULL OR p.estado = ${estado ?? null})
+        AND (${estado ?? null}::text IS NULL OR p.estado = ${estado ?? null}::text)
       ORDER BY p.fecha ASC NULLS LAST, j.numero ASC
     `;
 
