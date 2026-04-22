@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HoopStats · Mi Equipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red:#cc1414; --red-dim:#991010; --red-glow:rgba(204,20,20,0.12); --red-border:rgba(204,20,20,0.3);
+    --bg:#111111; --panel:#1a1a1a; --panel2:#222222; --panel3:#2a2a2a;
+    --border:#2e2e2e; --border2:#3a3a3a;
+    --text:#f0f0f0; --text2:#aaaaaa; --muted:#666666;
+    --green:#27ae60; --green-dim:rgba(39,174,96,0.12); --green-border:rgba(39,174,96,0.3);
+    --bebas:'Bebas Neue',sans-serif; --barlow:'Barlow Condensed',sans-serif; --mono:'JetBrains Mono',monospace;
+    --sidebar-w:230px; --radius:10px;
+  }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:var(--barlow); overflow:hidden; }
+
+  /* ─── LAYOUT ─── */
+  .app { display:flex; height:100vh; height:100dvh; overflow:hidden; }
+  .sidebar { width:var(--sidebar-w); min-width:var(--sidebar-w); background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; height:100vh; height:100dvh; }
+  .sidebar-logo { padding:28px 22px 22px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .logo-eyebrow { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); font-family:var(--barlow); margin-bottom:4px; }
+  .logo-name { font-family:var(--bebas); font-size:28px; letter-spacing:3px; color:var(--text); line-height:1; }
+  .logo-club { font-size:11px; color:var(--text2); font-family:var(--barlow); font-weight:600; margin-top:4px; }
+  .logo-accent { width:40px; height:3px; background:var(--red); margin-top:12px; border-radius:2px; }
+  .sidebar-nav { flex:1; padding:16px 0; overflow-y:auto; }
+  .nav-section-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:14px 22px 6px; }
+  .nav-item { display:flex; align-items:center; gap:12px; padding:11px 22px; cursor:pointer; font-size:14px; font-weight:600; letter-spacing:0.5px; color:var(--text2); border-left:3px solid transparent; transition:background .15s,color .15s; text-decoration:none; }
+  .nav-item:hover { background:var(--panel2); color:var(--text); }
+  .nav-item.active { color:var(--red); border-left-color:var(--red); background:var(--red-glow); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; opacity:.7; }
+  .nav-item.active svg { opacity:1; }
+  .sidebar-bottom { padding:16px; border-top:1px solid var(--border); flex-shrink:0; }
+  .user-card { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; }
+  .user-avatar { width:34px; height:34px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:13px; color:white; flex-shrink:0; }
+  .user-info { flex:1; min-width:0; }
+  .user-name { font-size:13px; font-weight:700; color:var(--text); }
+  .user-role { font-size:11px; color:var(--muted); }
+
+  /* ─── MAIN ─── */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+  .topbar { padding:20px 28px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .topbar-breadcrumb { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+  .topbar-title { font-family:var(--bebas); font-size:30px; letter-spacing:2px; line-height:1; }
+  .content { flex:1; overflow-y:auto; padding:24px 28px 32px; }
+  .content::-webkit-scrollbar { width:4px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+  /* ─── TEAM HEADER ─── */
+  .team-header {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .team-badge {
+    width: 64px; height: 64px; border-radius: 14px;
+    background: var(--red); display: flex; align-items: center; justify-content: center;
+    font-family: var(--bebas); font-size: 22px; letter-spacing: 2px; color: white;
+    flex-shrink: 0;
+  }
+  .team-info-name { font-family: var(--bebas); font-size: 26px; letter-spacing: 2px; line-height: 1; }
+  .team-info-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .team-info-meta { display: flex; gap: 12px; margin-top: 10px; }
+  .team-meta-pill {
+    background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 3px 10px;
+    font-size: 11px; font-family: var(--mono); color: var(--text2);
+  }
+  .team-meta-pill span { color: var(--red); font-weight: 700; }
+
+  /* ─── LÍDERES ─── */
+  .leaders-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .leader-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px;
+    position: relative; overflow: hidden;
+  }
+  .leader-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--red);
+  }
+  .leader-type { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
+  .leader-val { font-family: var(--bebas); font-size: 36px; letter-spacing: 1px; color: var(--red); line-height: 1; }
+  .leader-name { font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px; }
+  .leader-dorsal { font-size: 11px; color: var(--muted); }
+
+  /* ─── TABLA JUGADORES ─── */
+  .section-title { font-family: var(--bebas); font-size: 20px; letter-spacing: 2px; color: var(--text); margin-bottom: 4px; }
+  .section-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+
+  .players-table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+  table.ptbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.ptbl thead th {
+    padding: 10px 12px; font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+    color: var(--muted); text-transform: uppercase; background: var(--panel2);
+    border-bottom: 1px solid var(--border); white-space: nowrap; text-align: right;
+  }
+  table.ptbl thead th:first-child,
+  table.ptbl thead th:nth-child(2) { text-align: left; }
+  table.ptbl tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  table.ptbl tbody tr:last-child { border-bottom: none; }
+  table.ptbl tbody tr:hover { background: var(--panel2); }
+  table.ptbl tbody td { padding: 11px 12px; color: var(--text2); text-align: right; }
+  table.ptbl tbody td:first-child { text-align: left; }
+  table.ptbl tbody td:nth-child(2) { text-align: left; font-weight: 700; color: var(--text); }
+
+  .dorsal-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--panel2); border: 1px solid var(--border2);
+    font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text2);
+  }
+  .dorsal-badge.top { background: var(--red-glow); border-color: var(--red-border); color: var(--red); }
+
+  .stat-hi { color: var(--text); font-weight: 700; }
+  .pj-0 { color: var(--muted); font-style: italic; }
+
+  /* ─── LOADING ─── */
+  .loading { padding: 60px; text-align: center; color: var(--muted); font-size: 14px; }
+
+  /* ─── MOBILE TOPBAR ─── */
+  .mobile-topbar { display:none; padding:14px 18px 10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg); }
+  .mob-logo { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
+  .mob-logo span { color:var(--red); }
+  .mob-right { display:flex; align-items:center; gap:10px; }
+  .mob-avatar { width:32px; height:32px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:12px; color:white; }
+
+  /* ─── BOTTOM NAV ─── */
+  .bottom-nav { display:none; height:calc(56px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
+  .bnav-inner { display:flex; height:100%; width:100%; }
+  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; transition:background 0.1s; }
+  .bnav-item:active { background:var(--panel2); }
+  .bnav-icon { width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
+  .bnav-icon svg { width:22px; height:22px; }
+  .bnav-item.active .bnav-icon svg { stroke:var(--red); }
+  .bnav-item:not(.active) .bnav-icon svg { stroke:var(--muted); }
+  .bnav-label { display:none; font-size:11px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); line-height:1; letter-spacing:0; }
+  .bnav-item.active .bnav-label { color:var(--red); }
+  .bnav-dot { width:4px; height:4px; border-radius:50%; background:var(--red); }
+  @media (min-width:360px) { .bnav-label { display:block; } .bottom-nav { height:calc(66px + env(safe-area-inset-bottom)); } }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width:768px) {
+    .app { flex-direction:column; }
+    .sidebar { display:none; }
+    .mobile-topbar { display:flex; width:100%; }
+    .bottom-nav { display:flex; width:100%; }
+    .topbar { display:none; }
+    .content { padding:14px 14px 16px; }
+    .leaders-grid { grid-template-columns: repeat(2, 1fr); }
+    .team-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-eyebrow">Temporada 2025–26</div>
+      <div class="logo-name">HoopStats</div>
+      <div class="logo-club">Sa Cabaneta A · Fontaneria Jose Puerta</div>
+      <div class="logo-accent"></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Inicio
+      </a>
+      <a href="liga.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        Liga
+      </a>
+      <a href="partidos.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Partidos
+      </a>
+      <a href="player_stats.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg>
+        Jugadores
+      </a>
+      <div class="nav-section-label">Equipo</div>
+      <a href="equipo.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Mi equipo
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">JP</div>
+        <div class="user-info">
+          <div class="user-name">Jordi P.</div>
+          <div class="user-role">Entrenador</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+
+    <div class="mobile-topbar">
+      <div class="mob-logo">Hoop<span>Stats</span></div>
+      <div class="mob-right"><div class="mob-avatar">JP</div></div>
+    </div>
+
+    <div class="topbar">
+      <div>
+        <div class="topbar-breadcrumb">Sa Cabaneta A · Temporada 2025–26</div>
+        <div class="topbar-title">Mi Equipo</div>
+      </div>
+    </div>
+
+    <div class="content" id="content">
+      <div class="loading">Cargando plantilla…</div>
+    </div>
+
+    <!-- Bottom nav -->
+    <nav class="bottom-nav">
+      <div class="bnav-inner">
+        <a href="index.html" class="bnav-item">
+          <div class="bnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+          <div class="bnav-label">Inicio</div>
+        </a>
+        <a href="liga.html" class="bnav-item">
+          <div class="bnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></div>
+          <div class="bnav-label">Liga</div>
+        </a>
+        <a href="partidos.html" class="bnav-item">
+          <div class="bnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+          <div class="bnav-label">Partidos</div>
+        </a>
+        <a href="player_stats.html" class="bnav-item">
+          <div class="bnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg></div>
+          <div class="bnav-label">Jugadores</div>
+        </a>
+        <a href="equipo.html" class="bnav-item active">
+          <div class="bnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="bnav-label">Equipo</div>
+          <div class="bnav-dot"></div>
+        </a>
+      </div>
+    </nav>
+  </div>
+</div>
+
+<script>
+// ─── HELPERS ─────────────────────────────────────────────
+function avg(val, pj) {
+  if (!pj) return '—';
+  return (val / pj).toFixed(1);
+}
+function pct(made, att) {
+  if (!att) return '—';
+  return Math.round(made / att * 100) + '%';
+}
+
+// ─── AGREGAR STATS DE SAC DESDE PARTIDOS ─────────────────
+function buildPlayerStats(partidos) {
+  const stats = {}; // actorId → acumulado
+
+  for (const p of partidos) {
+    if (!p.esCabaneta) continue;
+    const sacKey = p.esCasa ? p.local.shortName : p.visit.shortName;
+    const players = (p.players || {})[sacKey] || [];
+    for (const pl of players) {
+      if (!pl.actorId) continue;
+      if (!stats[pl.actorId]) {
+        stats[pl.actorId] = {
+          actorId: pl.actorId, name: pl.name, dorsal: pl.dorsal,
+          pj: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, pir: 0,
+          t1m: 0, t1a: 0, t2m: 0, t2a: 0, t3m: 0, t3a: 0
+        };
+      }
+      const s = stats[pl.actorId];
+      s.pj++;
+      s.pts += pl.pts || 0;
+      s.reb += pl.reb || 0;
+      s.ast += pl.ast || 0;
+      s.stl += pl.stl || 0;
+      s.blk += pl.blk || 0;
+      s.to  += pl.to  || 0;
+      s.pf  += pl.pf  || 0;
+      s.pir += pl.pir || 0;
+      const [t1m, t1a] = (pl.t1||'0/0').split('/').map(Number);
+      const [t2m, t2a] = (pl.t2||'0/0').split('/').map(Number);
+      const [t3m, t3a] = (pl.t3||'0/0').split('/').map(Number);
+      s.t1m += t1m; s.t1a += t1a;
+      s.t2m += t2m; s.t2a += t2a;
+      s.t3m += t3m; s.t3a += t3a;
+    }
+  }
+  return Object.values(stats);
+}
+
+// ─── RENDER ───────────────────────────────────────────────
+function render(jugadores, playerStats, sacPartidos) {
+  // Cruzar por dorsal: jugadores (BD) ↔ stats (JSON)
+  const statsByDorsal = {};
+  for (const s of playerStats) statsByDorsal[s.dorsal] = s;
+
+  // Ordenar por dorsal
+  const roster = jugadores.sort((a, b) => (a.dorsal || 999) - (b.dorsal || 999));
+
+  // Líderes
+  const withStats = playerStats.filter(s => s.pj > 0);
+  const topPts = withStats.sort((a,b) => b.pts/b.pj - a.pts/a.pj)[0];
+  const topReb = [...withStats].sort((a,b) => b.reb/b.pj - a.reb/a.pj)[0];
+  const topAst = [...withStats].sort((a,b) => b.ast/b.pj - a.ast/a.pj)[0];
+  const topPir = [...withStats].sort((a,b) => b.pir/b.pj - a.pir/a.pj)[0];
+
+  function leaderCard(type, player, val) {
+    if (!player) return `<div class="leader-card"><div class="leader-type">${type}</div><div class="leader-val">—</div></div>`;
+    return `
+      <div class="leader-card">
+        <div class="leader-type">${type}</div>
+        <div class="leader-val">${val}</div>
+        <div class="leader-name">${player.name}</div>
+        <div class="leader-dorsal">#${player.dorsal} · ${player.pj} PJ</div>
+      </div>`;
+  }
+
+  // Tabla de jugadores
+  const rows = roster.map(j => {
+    const s = statsByDorsal[j.dorsal];
+    const fullName = `${j.nombre} ${j.apellidos}`;
+    const isTop = topPts && s && s.dorsal === topPts.dorsal;
+    if (!s || s.pj === 0) {
+      return `<tr>
+        <td><span class="dorsal-badge">${j.dorsal ?? '—'}</span></td>
+        <td>${fullName}</td>
+        <td colspan="9" class="pj-0">Sin minutos esta temporada</td>
+      </tr>`;
+    }
+    return `<tr>
+      <td><span class="dorsal-badge${isTop?' top':''}">${j.dorsal}</span></td>
+      <td>${fullName}</td>
+      <td>${s.pj}</td>
+      <td class="${s.pts/s.pj >= 10 ? 'stat-hi' : ''}">${avg(s.pts, s.pj)}</td>
+      <td>${avg(s.reb, s.pj)}</td>
+      <td>${avg(s.ast, s.pj)}</td>
+      <td>${avg(s.stl, s.pj)}</td>
+      <td>${avg(s.blk, s.pj)}</td>
+      <td>${pct(s.t2m, s.t2a)}</td>
+      <td>${pct(s.t3m, s.t3a)}</td>
+      <td class="${s.pir/s.pj > 0 ? 'stat-hi' : ''}">${avg(s.pir, s.pj)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <!-- TEAM HEADER -->
+    <div class="team-header">
+      <div class="team-badge">SAC</div>
+      <div class="team-info">
+        <div class="team-info-name">Sa Cabaneta A</div>
+        <div class="team-info-sub">Fontaneria Jose Puerta / Espais Integrals</div>
+        <div class="team-info-meta">
+          <div class="team-meta-pill"><span>${jugadores.length}</span> jugadores</div>
+          <div class="team-meta-pill"><span>${sacPartidos}</span> partidos jugados</div>
+          <div class="team-meta-pill">Temporada <span>2025–26</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LÍDERES -->
+    <div class="section-title">Líderes de la temporada</div>
+    <div class="section-sub">Medias por partido</div>
+    <div class="leaders-grid">
+      ${leaderCard('Máximo anotador',  topPts, topPts ? avg(topPts.pts, topPts.pj)+' pts' : '—')}
+      ${leaderCard('Mejor reboteador', topReb, topReb ? avg(topReb.reb, topReb.pj)+' reb' : '—')}
+      ${leaderCard('Mejor asistente',  topAst, topAst ? avg(topAst.ast, topAst.pj)+' ast' : '—')}
+      ${leaderCard('Mejor valoración', topPir, topPir ? avg(topPir.pir, topPir.pj)+' PIR' : '—')}
+    </div>
+
+    <!-- ROSTER -->
+    <div class="section-title">Plantilla</div>
+    <div class="section-sub">Estadísticas medias por partido · Temporada 2025–26</div>
+    <div class="players-table-wrap">
+      <table class="ptbl">
+        <thead>
+          <tr>
+            <th style="text-align:left">#</th>
+            <th style="text-align:left">Jugador</th>
+            <th>PJ</th>
+            <th>PTS</th>
+            <th>REB</th>
+            <th>AST</th>
+            <th>ROB</th>
+            <th>TAP</th>
+            <th>%T2</th>
+            <th>%T3</th>
+            <th>PIR</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+async function init() {
+  try {
+    // Cargamos en paralelo: roster (BD) + partidos (JSON)
+    const [equiposRes, matchesRes] = await Promise.all([
+      fetch('/api/equipos'),
+      fetch('/api/matches?v=3')
+    ]);
+
+    const equipos = await equiposRes.json();
+    const matches = await matchesRes.json();
+
+    // Buscamos el id de SAC
+    const sac = equipos.find(e => e.short_name === 'SAC');
+    if (!sac) throw new Error('Equipo SAC no encontrado en la BD');
+
+    const jugRes = await fetch(`/api/jugadores?equipo_id=${sac.id}`);
+    const jugadores = await jugRes.json();
+
+    const playerStats = buildPlayerStats(matches.partidos);
+    const sacPartidos = matches.partidos.filter(p => p.esCabaneta).length;
+
+    render(jugadores, playerStats, sacPartidos);
+
+  } catch (err) {
+    document.getElementById('content').innerHTML =
+      `<div class="loading">Error al cargar: ${err.message}</div>`;
+    console.error(err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
