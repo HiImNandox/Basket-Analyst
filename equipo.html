@@ -261,6 +261,8 @@
 </div>
 
 <script>
+const SAC_SHORT = 'SAC';
+
 // ─── HELPERS ─────────────────────────────────────────────
 function avg(val, pj) {
   if (!pj) return '—';
@@ -270,16 +272,47 @@ function pct(made, att) {
   if (!att) return '—';
   return Math.round(made / att * 100) + '%';
 }
+function cleanPlayerName(n = '') {
+  return n.trim().toLowerCase().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
 
-// ─── AGREGAR STATS DE SAC DESDE PARTIDOS ─────────────────
-function buildPlayerStats(partidos) {
-  const stats = {}; // actorId → acumulado
+// ─── EXTRAER JUGADORES SAC DE UN JSON DE FBIB ────────────
+function extractSacPlayers(json) {
+  const teams     = json.teams || [];
+  const localTeam = teams.find(t => t.teamIdIntern === json.localId)  || {};
+  const visitTeam = teams.find(t => t.teamIdIntern === json.visitId)  || {};
+  const sacTeam   = localTeam.shortName === SAC_SHORT ? localTeam
+                  : visitTeam.shortName === SAC_SHORT ? visitTeam
+                  : null;
+  if (!sacTeam?.players?.length) return [];
+  return sacTeam.players
+    .filter(p => p.gamePlayed)
+    .map(p => {
+      const d = p.data || {};
+      return {
+        actorId: p.actorId,
+        name:    cleanPlayerName(p.name),
+        dorsal:  p.dorsal || '?',
+        pts:  d.score || 0,
+        reb:  (d.offensiveRebound || 0) + (d.defensiveRebound || 0),
+        ast:  d.assists  || 0,
+        stl:  d.steals   || 0,
+        blk:  d.block    || 0,
+        to:   d.lost     || 0,
+        pf:   d.personal || 0,
+        pir:  d.valoration || 0,
+        t1: `${d.shotsOfOneSuccessful   ||0}/${d.shotsOfOneAttempted   ||0}`,
+        t2: `${d.shotsOfTwoSuccessful   ||0}/${d.shotsOfTwoAttempted   ||0}`,
+        t3: `${d.shotsOfThreeSuccessful ||0}/${d.shotsOfThreeAttempted ||0}`,
+      };
+    });
+}
 
-  for (const p of partidos) {
-    if (!p.esCabaneta) continue;
-    const sacKey = p.esCasa ? p.local.shortName : p.visit.shortName;
-    const players = (p.players || {})[sacKey] || [];
-    for (const pl of players) {
+// ─── ACUMULAR STATS DE TODOS LOS PARTIDOS ────────────────
+function buildPlayerStats(allMatchPlayers) {
+  const stats = {};
+  for (const matchPlayers of allMatchPlayers) {
+    for (const pl of matchPlayers) {
       if (!pl.actorId) continue;
       if (!stats[pl.actorId]) {
         stats[pl.actorId] = {
@@ -290,20 +323,12 @@ function buildPlayerStats(partidos) {
       }
       const s = stats[pl.actorId];
       s.pj++;
-      s.pts += pl.pts || 0;
-      s.reb += pl.reb || 0;
-      s.ast += pl.ast || 0;
-      s.stl += pl.stl || 0;
-      s.blk += pl.blk || 0;
-      s.to  += pl.to  || 0;
-      s.pf  += pl.pf  || 0;
-      s.pir += pl.pir || 0;
-      const [t1m, t1a] = (pl.t1||'0/0').split('/').map(Number);
-      const [t2m, t2a] = (pl.t2||'0/0').split('/').map(Number);
-      const [t3m, t3a] = (pl.t3||'0/0').split('/').map(Number);
-      s.t1m += t1m; s.t1a += t1a;
-      s.t2m += t2m; s.t2a += t2a;
-      s.t3m += t3m; s.t3a += t3a;
+      s.pts += pl.pts; s.reb += pl.reb; s.ast += pl.ast;
+      s.stl += pl.stl; s.blk += pl.blk; s.to  += pl.to; s.pf += pl.pf; s.pir += pl.pir;
+      const [t1m,t1a] = pl.t1.split('/').map(Number);
+      const [t2m,t2a] = pl.t2.split('/').map(Number);
+      const [t3m,t3a] = pl.t3.split('/').map(Number);
+      s.t1m+=t1m; s.t1a+=t1a; s.t2m+=t2m; s.t2a+=t2a; s.t3m+=t3m; s.t3a+=t3a;
     }
   }
   return Object.values(stats);
@@ -417,32 +442,34 @@ function render(jugadores, playerStats, sacPartidos) {
 // ─── INIT ─────────────────────────────────────────────────
 async function init() {
   try {
-    // Cargamos en paralelo: equipos + partidos JSON
-    const [equiposRes, matchesRes] = await Promise.all([
-      fetch('/api/equipos'),
-      fetch('/api/matches?v=3')
-    ]);
-
-    const equipos = await equiposRes.json();
-    const matches = await matchesRes.json();
-
-    // Buscamos el id de SAC
+    // 1. Obtener id de SAC
+    const equipos = await fetch('/api/equipos').then(r => r.json());
     const sac = equipos.find(e => e.short_name === 'SAC');
     if (!sac) throw new Error('Equipo SAC no encontrado en la BD');
 
-    // Cargamos jugadores y partidos jugados (BD) en paralelo
-    const [jugRes, partidosDBRes] = await Promise.all([
-      fetch(`/api/jugadores?equipo_id=${sac.id}`),
-      fetch(`/api/partidos?equipo_id=${sac.id}&estado=jugado`)
+    // 2. Jugadores (BD) + partidos jugados (BD) en paralelo
+    const [jugadores, partidos] = await Promise.all([
+      fetch(`/api/jugadores?equipo_id=${sac.id}`).then(r => r.json()),
+      fetch(`/api/partidos?equipo_id=${sac.id}&estado=jugado`).then(r => r.json())
     ]);
-    const jugadores  = await jugRes.json();
-    const partidosDB = await partidosDBRes.json();
 
-    const playerStats = buildPlayerStats(matches.partidos);
-    // Número real de partidos jugados viene de la BD, no de los JSON cargados
-    const sacPartidos = Array.isArray(partidosDB) ? partidosDB.length : matches.partidos.filter(p => p.esCabaneta).length;
+    // 3. Fetch stats de cada partido desde FBIB en paralelo
+    const matchDataList = await Promise.all(
+      partidos.map(p =>
+        fetch(`/api/fbib?endpoint=getJsonWithMatchStats&matchId=${p.match_id_intern}&currentSeason=true`)
+          .then(r => r.ok ? r.json() : null)
+          .catch(() => null)
+      )
+    );
 
-    render(jugadores, playerStats, sacPartidos);
+    // 4. Extraer jugadores SAC de cada partido y acumular stats
+    const allMatchPlayers = matchDataList
+      .filter(d => d !== null)
+      .map(d => extractSacPlayers(d));
+
+    const playerStats = buildPlayerStats(allMatchPlayers);
+
+    render(jugadores, playerStats, partidos.length);
 
   } catch (err) {
     document.getElementById('content').innerHTML =
