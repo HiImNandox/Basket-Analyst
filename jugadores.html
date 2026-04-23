@@ -346,11 +346,27 @@ const TEAM_COLORS = {
   'CON': '#8e44ad',
   'RES': '#e67e22',
   'SCD': '#16a085',
+  'CBP': '#c0770a',
   'default': '#555555'
+};
+
+// Mapa short_name → fichero de imagen (CON usa soller por restricción Windows)
+const TEAM_LOGOS = {
+  'SAC': '/img/clubes/SAC.jpg',
+  'CBN': '/img/clubes/CBN.jpeg',
+  'SCD': '/img/clubes/SCD.jpg',
+  'CLU': '/img/clubes/CLU.jpg',
+  'CBP': '/img/clubes/CBP.png',
+  'CON': '/img/clubes/soller.png',
+  'RES': '/img/clubes/RES.jpg',
 };
 
 function teamColor(shortName) {
   return TEAM_COLORS[shortName] || TEAM_COLORS['default'];
+}
+
+function teamLogo(shortName) {
+  return TEAM_LOGOS[shortName] || null;
 }
 
 function initials(nombre, apellidos) {
@@ -370,6 +386,22 @@ function showTeams() {
   renderTeams(allEquipos);
 }
 
+function teamBadgeHTML(shortName, size = 80) {
+  const logo = teamLogo(shortName);
+  const color = teamColor(shortName);
+  if (logo) {
+    return `
+      <div class="team-badge-wrap" style="background:none; border-color:color-mix(in srgb,${color} 20%,transparent)">
+        <img src="${logo}" alt="${shortName}"
+          class="team-badge-img"
+          style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="team-badge-letters" style="display:none">${shortName}</span>
+      </div>`;
+  }
+  return `<div class="team-badge-wrap"><span class="team-badge-letters">${shortName}</span></div>`;
+}
+
 function renderTeams(equipos) {
   const cards = equipos.map(e => {
     const color = teamColor(e.short_name);
@@ -377,9 +409,7 @@ function renderTeams(equipos) {
     return `
       <div class="team-card" style="--team-color:${color}" onclick="showPlayers(${e.id}, '${e.short_name}', '${e.nombre}')">
         ${isSac ? '<div class="team-sac-pill">Mi equipo</div>' : ''}
-        <div class="team-badge-wrap">
-          <span class="team-badge-letters">${e.short_name}</span>
-        </div>
+        ${teamBadgeHTML(e.short_name, 64)}
         <div class="team-name">${e.nombre}</div>
         <div class="team-count">${e.num_jugadores} jugador${e.num_jugadores != 1 ? 'es' : ''}</div>
       </div>`;
@@ -419,9 +449,14 @@ async function showPlayers(equipoId, shortName, nombre) {
         </div>`;
     }).join('');
 
+    const logo = teamLogo(shortName);
+    const headerBadge = logo
+      ? `<img src="${logo}" alt="${shortName}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid color-mix(in srgb,${color} 30%,transparent)" onerror="this.outerHTML='<div class=team-header-badge>${shortName}</div>'">`
+      : `<div class="team-header-badge">${shortName}</div>`;
+
     document.getElementById('content').innerHTML = `
       <div class="team-header-bar" style="--team-color:${color}">
-        <div class="team-header-badge">${shortName}</div>
+        ${headerBadge}
         <div>
           <div class="team-header-name">${nombre}</div>
           <div class="team-header-meta">${jugadores.length} jugadores registrados</div>
