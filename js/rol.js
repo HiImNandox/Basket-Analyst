@@ -171,7 +171,7 @@
         </div>
 
         <!-- Player list (hidden until jugador is selected) -->
-        <div id="hrol-player-section" style="display:none; flex:1; overflow:hidden; display:none; flex-direction:column;">
+        <div id="hrol-player-section" style="display:none; flex-direction:column; overflow:hidden; flex:1;">
           <div style="padding:0 22px 10px; border-top:1px solid var(--border); flex-shrink:0;">
             <div style="padding-top:14px; font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; font-weight:700; margin-bottom:10px;">Selecciona tu jugador</div>
             <input id="hrol-search" placeholder="Buscar jugador..." style="
@@ -260,11 +260,10 @@
     try {
       let equipoId = null;
       const equipos = await fetch('/api/equipos').then(r => r.json());
-      // Find SAC team
+      // Find SAC team (API returns snake_case: short_name)
       const sac = equipos.find(e =>
-        (e.nombre || e.name || '').toLowerCase().includes('cabaneta') ||
-        (e.shortName || '').toLowerCase().includes('cab') ||
-        e.esSac === true
+        (e.short_name || '').toUpperCase() === 'SAC' ||
+        (e.nombre || e.name || '').toLowerCase().includes('cabaneta')
       );
       equipoId = sac ? (sac.id || sac._id) : (equipos[0]?.id || equipos[0]?._id);
 
@@ -294,13 +293,14 @@
     }
 
     listEl.innerHTML = filtered.map(p => {
+      const allIdx   = _allPlayers.indexOf(p);
       const nombre   = p.nombre   || p.name  || '';
       const apellidos= p.apellidos|| p.surname|| '';
       const dorsal   = p.dorsal   || p.numero || '–';
       const pid      = p.id       || p._id   || '';
       const initials = (nombre[0] || '') + (apellidos[0] || '');
       const isSelected = current && (current.id === pid || current.dorsal === dorsal);
-      return `<button onclick="window.HoopRol._pickPlayer(${JSON.stringify(JSON.stringify({id:pid,dorsal,nombre,apellidos}))})" style="
+      return `<button onclick="window.HoopRol._pickPlayer(${allIdx})" style="
         width:100%; padding:11px 14px; border-radius:8px;
         border:1px solid ${isSelected ? '#3498db' : 'var(--border)'};
         background:${isSelected ? 'rgba(52,152,219,0.12)' : 'var(--panel3)'};
@@ -320,8 +320,15 @@
     _renderPlayerList(_allPlayers, val);
   }
 
-  function _pickPlayer(jsonStr) {
-    const jugador = JSON.parse(jsonStr);
+  function _pickPlayer(idx) {
+    const p = _allPlayers[idx];
+    if (!p) return;
+    const jugador = {
+      id:        p.id       || p._id      || '',
+      dorsal:    p.dorsal   || p.numero   || '–',
+      nombre:    p.nombre   || p.name     || '',
+      apellidos: p.apellidos|| p.surname  || '',
+    };
     setRol('jugador', jugador);
     _closeModal();
     window.location.reload();

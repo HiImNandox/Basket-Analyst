@@ -502,9 +502,8 @@
       try {
         const equipos = await fetch('/api/equipos').then(r => r.json());
         const sac = equipos.find(e =>
-          (e.nombre || e.name || '').toLowerCase().includes('cabaneta') ||
-          (e.shortName || '').toLowerCase().includes('cab') ||
-          e.esSac === true
+          (e.short_name || '').toUpperCase() === 'SAC' ||
+          (e.nombre || e.name || '').toLowerCase().includes('cabaneta')
         );
         equipoId = sac ? (sac.id || sac._id) : (equipos[0]?.id || equipos[0]?._id);
         const players = await fetch(`/api/jugadores?equipo_id=${equipoId}`).then(r => r.json());
