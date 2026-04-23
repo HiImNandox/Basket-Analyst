@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HoopStats · Calendario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red:#cc1414; --red-dim:#991010; --red-glow:rgba(204,20,20,0.12);
+    --bg:#111111; --panel:#1a1a1a; --panel2:#222222; --panel3:#2a2a2a;
+    --border:#2e2e2e; --border2:#3a3a3a;
+    --text:#f0f0f0; --text2:#aaaaaa; --muted:#666666;
+    --green:#27ae60; --green-dim:rgba(39,174,96,0.15); --green-border:rgba(39,174,96,0.3);
+    --red-border:rgba(204,20,20,0.3);
+    --blue:#3498db; --yellow:#f39c12;
+    --bebas:'Bebas Neue',sans-serif; --barlow:'Barlow Condensed',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+    --sidebar-w:230px; --radius:10px;
+  }
+
+  html, body { height:100%; background:var(--bg); color:var(--text); font-family:var(--barlow); overflow:hidden; }
+  button { font-family:var(--barlow); cursor:pointer; }
+  input, select, textarea { font-family:var(--barlow); }
+
+  .app { display:flex; height:100vh; height:100dvh; overflow:hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width:var(--sidebar-w); min-width:var(--sidebar-w); background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; height:100dvh; z-index:10; }
+  .sidebar-logo { padding:28px 22px 22px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .logo-eyebrow { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+  .logo-name { font-family:var(--bebas); font-size:28px; letter-spacing:3px; line-height:1; }
+  .logo-club { font-size:11px; color:var(--text2); font-weight:600; margin-top:4px; }
+  .logo-accent { width:40px; height:3px; background:var(--red); margin-top:12px; border-radius:2px; }
+  .sidebar-nav { flex:1; padding:16px 0; overflow-y:auto; }
+  .nav-section-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:14px 22px 6px; }
+  .nav-item { display:flex; align-items:center; gap:12px; padding:11px 22px; font-size:14px; font-weight:600; letter-spacing:0.5px; color:var(--text2); border-left:3px solid transparent; transition:background .15s,color .15s; text-decoration:none; }
+  .nav-item:hover { background:var(--panel2); color:var(--text); }
+  .nav-item.active { color:var(--red); border-left-color:var(--red); background:var(--red-glow); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; opacity:.7; }
+  .nav-item.active svg { opacity:1; }
+  .sidebar-bottom { padding:16px; border-top:1px solid var(--border); flex-shrink:0; }
+  .user-card { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:background .15s; }
+  .user-card:hover { background:var(--panel3); }
+  .user-avatar { width:34px; height:34px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:13px; color:white; flex-shrink:0; }
+  .user-info { flex:1; min-width:0; }
+  .user-name { font-size:13px; font-weight:700; }
+  .user-role { font-size:11px; color:var(--muted); }
+
+  /* MAIN */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+  .topbar { padding:20px 28px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:var(--bg); }
+  .topbar-left { display:flex; flex-direction:column; gap:2px; }
+  .topbar-breadcrumb { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+  .topbar-title { font-family:var(--bebas); font-size:30px; letter-spacing:2px; line-height:1; }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .topbar-pill { background:var(--red-glow); border:1px solid var(--red-border); color:var(--red); font-size:11px; font-weight:700; padding:5px 14px; border-radius:4px; letter-spacing:0.5px; }
+
+  /* CONTENT */
+  .content { flex:1; overflow-y:auto; padding:24px 28px 32px; }
+  .content::-webkit-scrollbar { width:4px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+  /* CALENDAR HEADER */
+  .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .cal-month-title { font-family:var(--bebas); font-size:28px; letter-spacing:3px; color:var(--text); }
+  .cal-nav-btn { background:var(--panel); border:1px solid var(--border); color:var(--text2); width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s; font-size:14px; }
+  .cal-nav-btn:hover { background:var(--panel2); color:var(--text); }
+  .cal-nav-group { display:flex; align-items:center; gap:8px; }
+  .cal-today-btn { background:var(--panel); border:1px solid var(--border); color:var(--text2); padding:6px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; letter-spacing:0.5px; transition:background .15s; }
+  .cal-today-btn:hover { background:var(--panel2); color:var(--text); }
+
+  /* CALENDAR LEGEND */
+  .cal-legend { display:flex; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); font-weight:600; }
+  .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+  /* CALENDAR GRID */
+  .cal-weekdays { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:6px; }
+  .cal-weekday { text-align:center; font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:6px 0; }
+
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+
+  .cal-day {
+    background:var(--panel); border:1px solid var(--border); border-radius:8px;
+    min-height:80px; padding:8px; cursor:pointer;
+    transition:background .12s, border-color .12s;
+    display:flex; flex-direction:column;
+  }
+  .cal-day:hover { background:var(--panel2); border-color:var(--border2); }
+  .cal-day.other-month { opacity:0.35; }
+  .cal-day.today { border-color:var(--red); background:rgba(204,20,20,0.06); }
+  .cal-day.selected { border-color:var(--blue); background:rgba(52,152,219,0.08); }
+
+  .cal-day-num { font-family:var(--mono); font-size:12px; font-weight:500; color:var(--text2); margin-bottom:5px; line-height:1; }
+  .cal-day.today .cal-day-num { color:var(--red); font-weight:700; }
+
+  .cal-events { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .cal-event-dot { display:flex; align-items:center; gap:4px; }
+  .cal-event-pip { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .cal-event-label { font-size:10px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2; }
+  .cal-more { font-size:9px; color:var(--muted); margin-top:2px; }
+
+  /* ADD BUTTON */
+  .fab { position:fixed; bottom:calc(80px + env(safe-area-inset-bottom)); right:20px; width:48px; height:48px; background:var(--red); border-radius:50%; border:none; color:white; font-size:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 20px rgba(204,20,20,0.4); transition:transform .15s, background .15s; z-index:100; }
+  .fab:hover { transform:scale(1.08); background:var(--red-dim); }
+  @media (min-width:769px) { .fab { bottom:24px; right:28px; } }
+
+  /* SIDE PANEL / DAY DETAIL */
+  .day-panel {
+    position:fixed; right:0; top:0; bottom:0; width:320px;
+    background:var(--panel); border-left:1px solid var(--border);
+    z-index:200; transform:translateX(100%); transition:transform .25s ease;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .day-panel.open { transform:translateX(0); }
+  .day-panel-hdr { padding:20px 18px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .day-panel-title { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
+  .day-panel-close { background:var(--panel2); border:1px solid var(--border); color:var(--text2); width:30px; height:30px; border-radius:7px; font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .day-panel-body { flex:1; overflow-y:auto; padding:14px 18px; }
+  .day-panel-body::-webkit-scrollbar { width:3px; }
+  .day-panel-body::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+  .event-card { background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:8px; border-left-width:3px; }
+  .event-card.partido { border-left-color:var(--red); }
+  .event-card.entrenamiento { border-left-color:var(--blue); }
+  .event-card.otro { border-left-color:var(--yellow); }
+  .event-type-badge { font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:5px; }
+  .event-title { font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px; }
+  .event-meta { font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:2px; }
+  .event-del { background:none; border:none; color:var(--muted); font-size:11px; margin-top:8px; padding:4px 0; cursor:pointer; }
+  .event-del:hover { color:#e74c3c; }
+
+  .no-events { text-align:center; padding:32px; color:var(--muted); font-size:13px; }
+
+  /* MODAL OVERLAY */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:500; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:var(--panel); border:1px solid var(--border2); border-radius:14px; width:min(460px,calc(100vw - 32px)); max-height:90vh; overflow-y:auto; padding:24px; }
+  .modal-box::-webkit-scrollbar { width:4px; }
+  .modal-box::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+  .modal-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+  .modal-title { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
+  .modal-close { background:var(--panel2); border:1px solid var(--border); color:var(--text2); width:32px; height:32px; border-radius:8px; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+
+  /* FORM */
+  .form-group { margin-bottom:14px; }
+  .form-label { display:block; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .form-input, .form-select, .form-textarea {
+    width:100%; background:var(--panel2); border:1px solid var(--border2);
+    border-radius:8px; padding:10px 12px; color:var(--text); font-size:13px; outline:none;
+    transition:border-color .15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--red); }
+  .form-select option { background:var(--panel2); }
+  .form-textarea { resize:vertical; min-height:70px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .btn-primary { background:var(--red); color:white; border:none; border-radius:8px; padding:12px 24px; font-size:14px; font-weight:700; cursor:pointer; width:100%; letter-spacing:0.5px; transition:background .15s; }
+  .btn-primary:hover { background:var(--red-dim); }
+
+  /* BOTTOM NAV */
+  .bottom-nav { display:none; height:calc(56px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
+  .bnav-inner { display:flex; height:100%; width:100%; }
+  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; transition:background .1s; }
+  .bnav-item:active { background:var(--panel2); }
+  .bnav-icon { width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
+  .bnav-icon svg { width:22px; height:22px; }
+  .bnav-item.active .bnav-icon svg { stroke:var(--red); }
+  .bnav-item:not(.active) .bnav-icon svg { stroke:var(--muted); }
+  .bnav-label { display:none; font-size:11px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); line-height:1; }
+  .bnav-item.active .bnav-label { color:var(--red); }
+  .bnav-dot { width:4px; height:4px; border-radius:50%; background:var(--red); }
+  @media (min-width:360px) { .bnav-label { display:block; } .bottom-nav { height:calc(66px + env(safe-area-inset-bottom)); } }
+
+  /* MOBILE TOPBAR */
+  .mobile-topbar { display:none; padding:14px 18px 10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg); }
+  .mob-logo { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
+  .mob-logo span { color:var(--red); }
+  .mob-right { display:flex; align-items:center; gap:10px; }
+  .mob-avatar { width:32px; height:32px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:12px; color:white; }
+
+  @media (max-width:768px) {
+    .app { flex-direction:column; }
+    .sidebar { display:none; }
+    .mobile-topbar { display:flex; width:100%; }
+    .bottom-nav { display:flex; width:100%; }
+    .topbar { display:none; }
+    .content { padding:14px 14px 90px; }
+    .cal-day { min-height:60px; padding:5px; }
+    .cal-event-label { display:none; }
+    .day-panel { width:100%; top:auto; height:60vh; border-top:1px solid var(--border); border-left:none; transform:translateY(100%); }
+    .day-panel.open { transform:translateY(0); }
+  }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .fadeup { animation:fadeUp .3s ease both; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-eyebrow">Temporada 2025–26</div>
+      <div class="logo-name">HoopStats</div>
+      <div class="logo-club">Sa Cabaneta A · Fontaneria Jose Puerta</div>
+      <div class="logo-accent"></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Inicio
+      </a>
+      <a href="liga.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        Liga
+      </a>
+      <a href="partidos.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Partidos
+      </a>
+      <a href="jugadores.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg>
+        Jugadores
+      </a>
+      <a href="calendario.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calendario
+      </a>
+      <div class="nav-section-label">Equipo</div>
+      <a href="equipo.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Mi equipo
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">JP</div>
+        <div class="user-info">
+          <div class="user-name">Jordi P.</div>
+          <div class="user-role">Entrenador</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Mobile topbar -->
+    <div class="mobile-topbar">
+      <div class="mob-logo">Hoop<span>Stats</span></div>
+      <div class="mob-right">
+        <div class="mob-avatar">JP</div>
+      </div>
+    </div>
+
+    <!-- Desktop topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-breadcrumb">Sa Cabaneta A · Temporada 2025–26</div>
+        <div class="topbar-title">Calendario</div>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-pill" id="role-badge">Staff</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="fadeup">
+
+        <!-- Month navigation -->
+        <div class="cal-header">
+          <div class="cal-nav-group">
+            <button class="cal-nav-btn" id="btn-prev" title="Mes anterior">&#8249;</button>
+            <button class="cal-today-btn" id="btn-today">Hoy</button>
+            <button class="cal-nav-btn" id="btn-next" title="Mes siguiente">&#8250;</button>
+          </div>
+          <div class="cal-month-title" id="cal-month-label">ABRIL 2026</div>
+          <div id="add-btn-wrapper">
+            <!-- FAB shown only for staff on desktop, but also rendered as inline btn here -->
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="cal-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Partido</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Entrenamiento</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Otro</div>
+        </div>
+
+        <!-- Weekday headers -->
+        <div class="cal-weekdays">
+          <div class="cal-weekday">Lun</div>
+          <div class="cal-weekday">Mar</div>
+          <div class="cal-weekday">Mié</div>
+          <div class="cal-weekday">Jue</div>
+          <div class="cal-weekday">Vie</div>
+          <div class="cal-weekday">Sáb</div>
+          <div class="cal-weekday">Dom</div>
+        </div>
+
+        <!-- Calendar grid -->
+        <div class="cal-grid" id="cal-grid"></div>
+
+      </div>
+    </div>
+
+    <!-- Bottom nav (móvil) -->
+    <nav class="bottom-nav">
+      <div class="bnav-inner">
+        <!-- populated by rol.js -->
+      </div>
+    </nav>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- FAB for staff -->
+<button class="fab" id="fab-add" title="Añadir evento" style="display:none;">+</button>
+
+<!-- Day panel -->
+<div class="day-panel" id="day-panel">
+  <div class="day-panel-hdr">
+    <div class="day-panel-title" id="day-panel-title">—</div>
+    <button class="day-panel-close" onclick="closeDayPanel()">✕</button>
+  </div>
+  <div class="day-panel-body" id="day-panel-body"></div>
+</div>
+
+<!-- Add event modal -->
+<div class="modal-overlay" id="add-modal" onclick="closeAddModal(event)">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">Nuevo Evento</div>
+      <button class="modal-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <form id="add-event-form" onsubmit="handleSaveEvent(event)">
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" name="tipo" required>
+          <option value="entrenamiento">Entrenamiento</option>
+          <option value="amistoso">Partido amistoso</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Título</label>
+        <input class="form-input" name="titulo" placeholder="Ej: Entrenamiento técnico..." required />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input class="form-input" type="date" name="fecha" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora</label>
+          <input class="form-input" type="time" name="hora" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lugar</label>
+        <input class="form-input" name="lugar" placeholder="Pabellón Sa Cabaneta..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas</label>
+        <textarea class="form-textarea" name="notas" placeholder="Notas adicionales..."></textarea>
+      </div>
+      <button type="submit" class="btn-primary">Guardar evento</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/rol.js"></script>
+<script>
+  const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DIAS_ES  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+  let currentYear  = new Date().getFullYear();
+  let currentMonth = new Date().getMonth(); // 0-based
+  let selectedDate = null;
+  let partidosAPI  = [];
+
+  // ─── FETCH PARTIDOS ────────────────────────────────────────────
+  async function loadPartidos() {
+    try {
+      const data = await fetch('/api/matches?v=5').then(r => r.json());
+      const partidos = data.partidos || [];
+      partidosAPI = partidos.filter(p => p.esCabaneta || p.local?.esSac || p.visit?.esSac);
+    } catch (e) {
+      console.warn('[Calendario] No se pudo cargar partidos:', e);
+    }
+    renderCalendar();
+  }
+
+  // ─── EVENT COLOR ───────────────────────────────────────────────
+  function typeColor(tipo) {
+    if (tipo === 'partido' || tipo === 'amistoso') return 'var(--red)';
+    if (tipo === 'entrenamiento') return 'var(--blue)';
+    return 'var(--yellow)';
+  }
+  function typeLabel(tipo) {
+    if (tipo === 'partido')       return 'PARTIDO';
+    if (tipo === 'amistoso')      return 'AMISTOSO';
+    if (tipo === 'entrenamiento') return 'ENTRENAMIENTO';
+    return 'EVENTO';
+  }
+
+  // ─── GATHER EVENTS FOR A DATE STRING (yyyy-mm-dd) ──────────────
+  function getEventsForDate(dateStr) {
+    const events = [];
+
+    // Partidos from API
+    for (const p of partidosAPI) {
+      if (!p.fecha) continue;
+      const d = new Date(p.fecha);
+      const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      if (ds === dateStr) {
+        const isHome = p.local?.esSac;
+        const rival  = isHome ? (p.visit?.nombre || p.visit?.shortName || 'Rival') : (p.local?.nombre || p.local?.shortName || 'Rival');
+        events.push({
+          id:    'api_' + (p.id || p._id || ds),
+          tipo:  'partido',
+          titulo: `vs ${rival}`,
+          hora:  p.hora || '',
+          lugar: p.lugar || (isHome ? 'Casa' : 'Fuera'),
+          notas: '',
+          api:   true,
+        });
+      }
+    }
+
+    // localStorage events
+    const stored = window.HoopRol ? window.HoopRol.getEventos() : [];
+    for (const ev of stored) {
+      if (ev.fecha === dateStr) events.push(ev);
+    }
+
+    return events;
+  }
+
+  // ─── RENDER CALENDAR ───────────────────────────────────────────
+  function renderCalendar() {
+    const label = document.getElementById('cal-month-label');
+    label.textContent = MESES_ES[currentMonth].toUpperCase() + ' ' + currentYear;
+
+    const grid = document.getElementById('cal-grid');
+    grid.innerHTML = '';
+
+    const today = new Date();
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    // Monday-based: 0=Mon … 6=Sun
+    let startDow = firstDay.getDay() - 1;
+    if (startDow < 0) startDow = 6;
+
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const daysInPrev  = new Date(currentYear, currentMonth, 0).getDate();
+
+    let cells = [];
+    // Prev month padding
+    for (let i = startDow - 1; i >= 0; i--) {
+      cells.push({ day: daysInPrev - i, thisMonth: false, month: currentMonth - 1, year: currentYear });
+    }
+    // Current month
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push({ day: d, thisMonth: true, month: currentMonth, year: currentYear });
+    }
+    // Next month padding to fill rows
+    let remainder = cells.length % 7;
+    if (remainder !== 0) {
+      for (let d = 1; d <= (7 - remainder); d++) {
+        cells.push({ day: d, thisMonth: false, month: currentMonth + 1, year: currentYear });
+      }
+    }
+
+    for (const cell of cells) {
+      const m = ((cell.month % 12) + 12) % 12;
+      const y = cell.year + Math.floor(cell.month / 12);
+      const dateStr = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(cell.day).padStart(2, '0');
+
+      const isToday = cell.day === today.getDate() && m === today.getMonth() && y === today.getFullYear();
+      const isSelected = selectedDate === dateStr;
+
+      const events = cell.thisMonth ? getEventsForDate(dateStr) : [];
+      const shown  = events.slice(0, 3);
+      const extra  = events.length - shown.length;
+
+      let evHTML = shown.map(ev => `
+        <div class="cal-event-dot">
+          <div class="cal-event-pip" style="background:${typeColor(ev.tipo)}"></div>
+          <div class="cal-event-label">${ev.titulo}</div>
+        </div>`).join('');
+      if (extra > 0) evHTML += `<div class="cal-more">+${extra} más</div>`;
+
+      const el = document.createElement('div');
+      el.className = 'cal-day' +
+        (cell.thisMonth ? '' : ' other-month') +
+        (isToday ? ' today' : '') +
+        (isSelected ? ' selected' : '');
+      el.innerHTML = `<div class="cal-day-num">${cell.day}</div><div class="cal-events">${evHTML}</div>`;
+      if (cell.thisMonth) {
+        el.onclick = () => openDayPanel(dateStr, events);
+      }
+      grid.appendChild(el);
+    }
+  }
+
+  // ─── DAY PANEL ────────────────────────────────────────────────
+  function openDayPanel(dateStr, events) {
+    selectedDate = dateStr;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    document.getElementById('day-panel-title').textContent =
+      DIAS_ES[dt.getDay()].toUpperCase() + ' ' + d + ' ' + MESES_ES[m-1].toUpperCase().slice(0,3);
+
+    const body = document.getElementById('day-panel-body');
+    if (!events.length) {
+      body.innerHTML = '<div class="no-events">Sin eventos este día</div>';
+    } else {
+      body.innerHTML = events.map(ev => `
+        <div class="event-card ${ev.tipo}" id="evcard_${ev.id}">
+          <div class="event-type-badge" style="color:${typeColor(ev.tipo)}">${typeLabel(ev.tipo)}</div>
+          <div class="event-title">${ev.titulo}</div>
+          <div class="event-meta">
+            ${ev.hora ? `<span>⏰ ${ev.hora}</span>` : ''}
+            ${ev.lugar ? `<span>📍 ${ev.lugar}</span>` : ''}
+            ${ev.notas ? `<span>${ev.notas}</span>` : ''}
+          </div>
+          ${!ev.api && window.HoopRol && window.HoopRol.getRol() === 'staff'
+            ? `<button class="event-del" onclick="deleteEvent('${ev.id}','${dateStr}')">Eliminar</button>` : ''}
+        </div>`).join('');
+    }
+
+    document.getElementById('day-panel').classList.add('open');
+    renderCalendar();
+  }
+
+  function closeDayPanel() {
+    document.getElementById('day-panel').classList.remove('open');
+    selectedDate = null;
+    renderCalendar();
+  }
+
+  function deleteEvent(id, dateStr) {
+    if (window.HoopRol) window.HoopRol.deleteEvento(id);
+    const events = getEventsForDate(dateStr);
+    openDayPanel(dateStr, events);
+  }
+
+  // ─── ADD MODAL ────────────────────────────────────────────────
+  function openAddModal(dateStr) {
+    const modal = document.getElementById('add-modal');
+    modal.classList.add('open');
+    const form = document.getElementById('add-event-form');
+    form.reset();
+    if (dateStr) form.fecha.value = dateStr;
+  }
+
+  function closeAddModal(e) {
+    if (!e || e.target === document.getElementById('add-modal')) {
+      document.getElementById('add-modal').classList.remove('open');
+    }
+  }
+
+  function handleSaveEvent(e) {
+    e.preventDefault();
+    const form = e.target;
+    const ev = {
+      id:     'ev_' + Date.now(),
+      tipo:   form.tipo.value,
+      titulo: form.titulo.value,
+      fecha:  form.fecha.value,
+      hora:   form.hora.value,
+      lugar:  form.lugar.value,
+      notas:  form.notas.value,
+    };
+    if (window.HoopRol) window.HoopRol.saveEvento(ev);
+    closeAddModal();
+    const events = getEventsForDate(ev.fecha);
+    openDayPanel(ev.fecha, events);
+  }
+
+  // ─── NAV ──────────────────────────────────────────────────────
+  document.getElementById('btn-prev').onclick = () => {
+    currentMonth--;
+    if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    renderCalendar();
+  };
+  document.getElementById('btn-next').onclick = () => {
+    currentMonth++;
+    if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    renderCalendar();
+  };
+  document.getElementById('btn-today').onclick = () => {
+    currentYear  = new Date().getFullYear();
+    currentMonth = new Date().getMonth();
+    renderCalendar();
+  };
+
+  // ─── INIT ─────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    HoopRol.init();
+
+    const rol = HoopRol.getRol();
+    // Role badge
+    const badge = document.getElementById('role-badge');
+    if (rol === 'jugador') {
+      const j = HoopRol.getJugador();
+      if (badge) badge.textContent = j ? `${j.nombre} ${j.apellidos}` : 'Jugador';
+      if (badge) badge.style.background = 'rgba(52,152,219,0.15)';
+      if (badge) badge.style.borderColor = 'rgba(52,152,219,0.3)';
+      if (badge) badge.style.color = '#3498db';
+    } else {
+      if (badge) badge.textContent = 'Staff';
+    }
+
+    // FAB
+    const fab = document.getElementById('fab-add');
+    if (rol === 'staff') {
+      fab.style.display = 'flex';
+      fab.onclick = () => openAddModal(selectedDate || '');
+    }
+
+    loadPartidos();
+  });
+</script>
+</body>
+</html>

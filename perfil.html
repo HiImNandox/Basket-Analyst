@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HoopStats · Mi Perfil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red:#cc1414; --red-dim:#991010; --red-glow:rgba(204,20,20,0.12);
+    --bg:#111111; --panel:#1a1a1a; --panel2:#222222; --panel3:#2a2a2a;
+    --border:#2e2e2e; --border2:#3a3a3a;
+    --text:#f0f0f0; --text2:#aaaaaa; --muted:#666666;
+    --green:#27ae60; --green-dim:rgba(39,174,96,0.15); --green-border:rgba(39,174,96,0.3);
+    --red-border:rgba(204,20,20,0.3);
+    --blue:#3498db;
+    --bebas:'Bebas Neue',sans-serif; --barlow:'Barlow Condensed',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+    --sidebar-w:230px; --radius:10px;
+  }
+
+  html, body { height:100%; background:var(--bg); color:var(--text); font-family:var(--barlow); overflow:hidden; }
+
+  .app { display:flex; height:100vh; height:100dvh; overflow:hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width:var(--sidebar-w); min-width:var(--sidebar-w); background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; height:100dvh; z-index:10; }
+  .sidebar-logo { padding:28px 22px 22px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .logo-eyebrow { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+  .logo-name { font-family:var(--bebas); font-size:28px; letter-spacing:3px; line-height:1; }
+  .logo-club { font-size:11px; color:var(--text2); font-weight:600; margin-top:4px; }
+  .logo-accent { width:40px; height:3px; background:var(--red); margin-top:12px; border-radius:2px; }
+  .sidebar-nav { flex:1; padding:16px 0; overflow-y:auto; }
+  .nav-section-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:14px 22px 6px; }
+  .nav-item { display:flex; align-items:center; gap:12px; padding:11px 22px; font-size:14px; font-weight:600; letter-spacing:0.5px; color:var(--text2); border-left:3px solid transparent; transition:background .15s,color .15s; text-decoration:none; }
+  .nav-item:hover { background:var(--panel2); color:var(--text); }
+  .nav-item.active { color:var(--red); border-left-color:var(--red); background:var(--red-glow); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; opacity:.7; }
+  .nav-item.active svg { opacity:1; }
+  .sidebar-bottom { padding:16px; border-top:1px solid var(--border); flex-shrink:0; }
+  .user-card { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:background .15s; }
+  .user-card:hover { background:var(--panel3); }
+  .user-avatar { width:34px; height:34px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:13px; color:white; flex-shrink:0; }
+  .user-info { flex:1; min-width:0; }
+  .user-name { font-size:13px; font-weight:700; }
+  .user-role { font-size:11px; color:var(--muted); }
+
+  /* MAIN */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+  .topbar { padding:20px 28px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:var(--bg); }
+  .topbar-left { display:flex; flex-direction:column; gap:2px; }
+  .topbar-breadcrumb { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+  .topbar-title { font-family:var(--bebas); font-size:30px; letter-spacing:2px; line-height:1; }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .topbar-pill { background:rgba(52,152,219,0.15); border:1px solid rgba(52,152,219,0.3); color:var(--blue); font-size:11px; font-weight:700; padding:5px 14px; border-radius:4px; }
+
+  /* CONTENT */
+  .content { flex:1; overflow-y:auto; padding:24px 28px 32px; }
+  .content::-webkit-scrollbar { width:4px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+  /* PROFILE HERO */
+  .profile-hero { display:flex; align-items:center; gap:24px; background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:28px; margin-bottom:20px; }
+  .profile-avatar-big { width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,var(--red) 0%,#7b0a0a 100%); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:34px; letter-spacing:2px; color:white; flex-shrink:0; border:3px solid rgba(204,20,20,0.4); }
+  .profile-info { flex:1; }
+  .profile-name { font-family:var(--bebas); font-size:36px; letter-spacing:3px; line-height:1; }
+  .profile-sub  { font-size:13px; color:var(--text2); margin-top:4px; }
+  .dorsal-badge { display:inline-block; background:var(--red); color:white; font-family:var(--bebas); font-size:22px; letter-spacing:2px; padding:4px 16px; border-radius:8px; margin-top:10px; }
+
+  /* STAT CHIPS */
+  .chips-row { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  .stat-chip { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:14px 18px; flex:1; min-width:100px; }
+  .stat-chip.accent { border-left:3px solid var(--red); }
+  .chip-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .chip-value { font-family:var(--bebas); font-size:32px; letter-spacing:1px; line-height:1; color:var(--text); }
+  .chip-sub { font-size:11px; color:var(--text2); margin-top:4px; }
+
+  /* TABLE */
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .card-head { padding:14px 18px 0; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); font-family:var(--barlow); }
+  .card-body { padding:10px 18px 16px; }
+  .tbl { width:100%; border-collapse:collapse; }
+  .tbl th { padding:9px 10px; font-size:9px; font-weight:700; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; border-bottom:1px solid var(--border); text-align:left; }
+  .tbl th.tr { text-align:right; }
+  .tbl td { padding:10px; font-size:13px; color:var(--text2); border-bottom:1px solid var(--border); }
+  .tbl td.tr { text-align:right; font-family:var(--mono); }
+  .tbl tbody tr:hover { background:rgba(255,255,255,.02); }
+  .result-badge { display:inline-block; font-family:var(--bebas); font-size:11px; padding:2px 8px; border-radius:3px; }
+  .result-badge.v { background:var(--green-dim); color:var(--green); border:1px solid var(--green-border); }
+  .result-badge.d { background:var(--red-glow); color:#e74c3c; border:1px solid var(--red-border); }
+
+  /* EMPTY STATE */
+  .empty-state { text-align:center; padding:60px 24px; }
+  .empty-icon { font-size:48px; margin-bottom:16px; opacity:0.4; }
+  .empty-title { font-family:var(--bebas); font-size:24px; letter-spacing:2px; color:var(--text2); margin-bottom:8px; }
+  .empty-sub { font-size:14px; color:var(--muted); }
+  .empty-btn { margin-top:20px; background:var(--red); color:white; border:none; border-radius:8px; padding:12px 24px; font-size:14px; font-weight:700; cursor:pointer; }
+
+  /* BOTTOM NAV */
+  .bottom-nav { display:none; height:calc(56px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
+  .bnav-inner { display:flex; height:100%; width:100%; }
+  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; transition:background .1s; }
+  .bnav-item:active { background:var(--panel2); }
+  .bnav-icon { width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
+  .bnav-icon svg { width:22px; height:22px; }
+  .bnav-item.active .bnav-icon svg { stroke:var(--red); }
+  .bnav-item:not(.active) .bnav-icon svg { stroke:var(--muted); }
+  .bnav-label { display:none; font-size:11px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); line-height:1; }
+  .bnav-item.active .bnav-label { color:var(--red); }
+  .bnav-dot { width:4px; height:4px; border-radius:50%; background:var(--red); }
+  @media (min-width:360px) { .bnav-label { display:block; } .bottom-nav { height:calc(66px + env(safe-area-inset-bottom)); } }
+
+  /* MOBILE TOPBAR */
+  .mobile-topbar { display:none; padding:14px 18px 10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg); }
+  .mob-logo { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
+  .mob-logo span { color:var(--red); }
+  .mob-right { display:flex; align-items:center; gap:10px; }
+  .mob-avatar { width:32px; height:32px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:12px; color:white; }
+
+  @media (max-width:768px) {
+    .app { flex-direction:column; }
+    .sidebar { display:none; }
+    .mobile-topbar { display:flex; width:100%; }
+    .bottom-nav { display:flex; width:100%; }
+    .topbar { display:none; }
+    .content { padding:14px 14px 16px; }
+    .profile-hero { flex-direction:column; text-align:center; }
+    .chips-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .stat-chip { min-width:unset; }
+    .chip-value { font-size:26px; }
+  }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .fadeup { animation:fadeUp .3s ease both; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-eyebrow">Temporada 2025–26</div>
+      <div class="logo-name">HoopStats</div>
+      <div class="logo-club">Sa Cabaneta A · Fontaneria Jose Puerta</div>
+      <div class="logo-accent"></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Inicio
+      </a>
+      <a href="liga.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        Liga
+      </a>
+      <a href="partidos.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Partidos
+      </a>
+      <a href="jugadores.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg>
+        Jugadores
+      </a>
+      <a href="calendario.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calendario
+      </a>
+      <div class="nav-section-label">Equipo</div>
+      <a href="equipo.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Mi equipo
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">JP</div>
+        <div class="user-info">
+          <div class="user-name">Jordi P.</div>
+          <div class="user-role">Entrenador</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Mobile topbar -->
+    <div class="mobile-topbar">
+      <div class="mob-logo">Hoop<span>Stats</span></div>
+      <div class="mob-right">
+        <div class="mob-avatar">JP</div>
+      </div>
+    </div>
+
+    <!-- Desktop topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-breadcrumb">Sa Cabaneta A · Temporada 2025–26</div>
+        <div class="topbar-title">Mi Perfil</div>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-pill" id="role-pill">Jugador</span>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content" id="page-content">
+      <div style="text-align:center;padding:60px;color:var(--muted);">Cargando...</div>
+    </div>
+
+    <!-- Bottom nav -->
+    <nav class="bottom-nav">
+      <div class="bnav-inner">
+        <!-- populated by rol.js -->
+      </div>
+    </nav>
+
+  </div>
+</div>
+
+<script src="js/rol.js"></script>
+<script>
+  const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+
+  function formatFecha(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.getDate() + ' ' + MESES_CORTOS[d.getMonth()];
+  }
+
+  // ─── RENDER EMPTY STATE ────────────────────────────────────────
+  function renderEmpty() {
+    document.getElementById('page-content').innerHTML = `
+      <div class="empty-state fadeup">
+        <div class="empty-icon">👤</div>
+        <div class="empty-title">Selecciona tu perfil</div>
+        <div class="empty-sub">Toca el avatar para elegir tu vista de jugador y ver tus estadísticas personales.</div>
+        <button class="empty-btn" onclick="window.HoopRol._openModal()">Cambiar vista</button>
+      </div>`;
+  }
+
+  // ─── RENDER PROFILE ────────────────────────────────────────────
+  function renderProfile(jugador, partidos) {
+    const nombre    = jugador.nombre   || '';
+    const apellidos = jugador.apellidos || '';
+    const dorsal    = jugador.dorsal    || '–';
+    const initials  = (nombre[0] || '') + (apellidos[0] || '');
+
+    // Filter SAC matches
+    const sacMatches = partidos.filter(p => p.esCabaneta || p.local?.esSac || p.visit?.esSac);
+
+    // Find player stats by dorsal or name across all SAC matches
+    const playerGames = [];
+    for (const match of sacMatches) {
+      if (!match.players) continue;
+      // Find in SAC team players
+      for (const [teamShort, players] of Object.entries(match.players)) {
+        // Only look in the SAC side
+        const isSacSide = (match.local?.esSac && match.local?.shortName === teamShort) ||
+                          (match.visit?.esSac && match.visit?.shortName === teamShort);
+        if (!isSacSide) continue;
+
+        const found = players.find(p => {
+          // Match by dorsal or by name similarity
+          if (jugador.id && p.id === jugador.id) return true;
+          const fullName = (nombre + ' ' + apellidos).toLowerCase().trim();
+          const pName = (p.name || p.nombre || '').toLowerCase().trim();
+          return fullName === pName || pName.includes(nombre.toLowerCase()) ||
+                 (String(p.dorsal) === String(dorsal));
+        });
+
+        if (found) {
+          const isLocal  = match.local?.esSac;
+          const myPts    = isLocal ? match.local.puntos  : match.visit.puntos;
+          const theirPts = isLocal ? match.visit.puntos  : match.local.puntos;
+          const rival    = isLocal ? (match.visit?.nombre || match.visit?.shortName || '?')
+                                   : (match.local?.nombre || match.local?.shortName || '?');
+          playerGames.push({
+            jornada: match.jornada,
+            fecha:   match.fecha,
+            rival,
+            pts:  found.pts   || 0,
+            reb:  found.reb   || 0,
+            ast:  found.ast   || 0,
+            pir:  found.pir   || 0,
+            resultado: myPts > theirPts ? 'V' : 'D',
+            score: `${myPts}–${theirPts}`,
+          });
+        }
+      }
+    }
+
+    // Averages
+    const pj = playerGames.length;
+    const avg = key => pj > 0
+      ? (playerGames.reduce((s, g) => s + (g[key] || 0), 0) / pj).toFixed(1)
+      : '—';
+    const avgPts = avg('pts');
+    const avgReb = avg('reb');
+    const avgAst = avg('ast');
+    const avgPir = avg('pir');
+
+    // Table rows
+    const tableRows = playerGames.length
+      ? playerGames.map(g => `
+          <tr>
+            <td>J${g.jornada}</td>
+            <td>${formatFecha(g.fecha)}</td>
+            <td style="font-weight:600;color:var(--text)">${g.rival}</td>
+            <td class="tr" style="color:var(--red);font-weight:700">${g.pts}</td>
+            <td class="tr">${g.reb}</td>
+            <td class="tr">${g.ast}</td>
+            <td class="tr" style="color:${g.pir >= 12 ? 'var(--text)' : 'var(--muted)'}; font-weight:${g.pir >= 12 ? 700 : 400}">${g.pir}</td>
+            <td><span class="result-badge ${g.resultado === 'V' ? 'v' : 'd'}">${g.resultado}</span></td>
+          </tr>`).join('')
+      : `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">No hay partidos registrados</td></tr>`;
+
+    document.getElementById('page-content').innerHTML = `
+      <div class="fadeup">
+
+        <!-- Hero -->
+        <div class="profile-hero">
+          <div class="profile-avatar-big">${initials.toUpperCase() || 'J'}</div>
+          <div class="profile-info">
+            <div class="profile-name">${nombre} ${apellidos}</div>
+            <div class="profile-sub">Sa Cabaneta A · Temporada 2025–26</div>
+            <div class="dorsal-badge">#${dorsal}</div>
+          </div>
+        </div>
+
+        <!-- Season stats -->
+        <div class="chips-row">
+          <div class="stat-chip accent">
+            <div class="chip-label">Partidos</div>
+            <div class="chip-value">${pj}</div>
+            <div class="chip-sub">jugados esta temporada</div>
+          </div>
+          <div class="stat-chip">
+            <div class="chip-label">Puntos</div>
+            <div class="chip-value" style="color:var(--red)">${avgPts}</div>
+            <div class="chip-sub">por partido</div>
+          </div>
+          <div class="stat-chip">
+            <div class="chip-label">Rebotes</div>
+            <div class="chip-value">${avgReb}</div>
+            <div class="chip-sub">por partido</div>
+          </div>
+          <div class="stat-chip">
+            <div class="chip-label">Asistencias</div>
+            <div class="chip-value">${avgAst}</div>
+            <div class="chip-sub">por partido</div>
+          </div>
+          <div class="stat-chip">
+            <div class="chip-label">PIR</div>
+            <div class="chip-value">${avgPir}</div>
+            <div class="chip-sub">valoración media</div>
+          </div>
+        </div>
+
+        <!-- Games table -->
+        <div class="card">
+          <div class="card-head" style="padding-bottom:12px;">Mis partidos</div>
+          <div style="overflow-x:auto">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>J</th>
+                  <th>Fecha</th>
+                  <th>Rival</th>
+                  <th class="tr">PTS</th>
+                  <th class="tr">REB</th>
+                  <th class="tr">AST</th>
+                  <th class="tr">PIR</th>
+                  <th>Res</th>
+                </tr>
+              </thead>
+              <tbody>${tableRows}</tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>`;
+  }
+
+  // ─── MAIN INIT ─────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', async () => {
+    HoopRol.init();
+
+    const jugador = HoopRol.getJugador();
+
+    // Role pill
+    const pill = document.getElementById('role-pill');
+    if (jugador && pill) {
+      pill.textContent = `#${jugador.dorsal} ${jugador.nombre}`;
+    }
+
+    if (!jugador) {
+      renderEmpty();
+      return;
+    }
+
+    // Load match data
+    try {
+      const data     = await fetch('/api/matches?v=5').then(r => r.json());
+      const partidos = data.partidos || [];
+      renderProfile(jugador, partidos);
+    } catch (e) {
+      console.error('[Perfil] Error loading matches:', e);
+      renderProfile(jugador, []);
+    }
+  });
+</script>
+</body>
+</html>

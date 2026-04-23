@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HoopStats · Asistencia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red:#cc1414; --red-dim:#991010; --red-glow:rgba(204,20,20,0.12);
+    --bg:#111111; --panel:#1a1a1a; --panel2:#222222; --panel3:#2a2a2a;
+    --border:#2e2e2e; --border2:#3a3a3a;
+    --text:#f0f0f0; --text2:#aaaaaa; --muted:#666666;
+    --green:#27ae60; --green-dim:rgba(39,174,96,0.15); --green-border:rgba(39,174,96,0.3);
+    --red-border:rgba(204,20,20,0.3);
+    --bebas:'Bebas Neue',sans-serif; --barlow:'Barlow Condensed',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+    --sidebar-w:230px; --radius:10px;
+  }
+
+  html, body { height:100%; background:var(--bg); color:var(--text); font-family:var(--barlow); overflow:hidden; }
+  button { font-family:var(--barlow); cursor:pointer; }
+
+  .app { display:flex; height:100vh; height:100dvh; overflow:hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width:var(--sidebar-w); min-width:var(--sidebar-w); background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; height:100dvh; z-index:10; }
+  .sidebar-logo { padding:28px 22px 22px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .logo-eyebrow { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+  .logo-name { font-family:var(--bebas); font-size:28px; letter-spacing:3px; line-height:1; }
+  .logo-club { font-size:11px; color:var(--text2); font-weight:600; margin-top:4px; }
+  .logo-accent { width:40px; height:3px; background:var(--red); margin-top:12px; border-radius:2px; }
+  .sidebar-nav { flex:1; padding:16px 0; overflow-y:auto; }
+  .nav-section-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:14px 22px 6px; }
+  .nav-item { display:flex; align-items:center; gap:12px; padding:11px 22px; font-size:14px; font-weight:600; letter-spacing:0.5px; color:var(--text2); border-left:3px solid transparent; transition:background .15s,color .15s; text-decoration:none; }
+  .nav-item:hover { background:var(--panel2); color:var(--text); }
+  .nav-item.active { color:var(--red); border-left-color:var(--red); background:var(--red-glow); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; opacity:.7; }
+  .nav-item.active svg { opacity:1; }
+  .sidebar-bottom { padding:16px; border-top:1px solid var(--border); flex-shrink:0; }
+  .user-card { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:background .15s; }
+  .user-card:hover { background:var(--panel3); }
+  .user-avatar { width:34px; height:34px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:13px; color:white; flex-shrink:0; }
+  .user-info { flex:1; min-width:0; }
+  .user-name { font-size:13px; font-weight:700; }
+  .user-role { font-size:11px; color:var(--muted); }
+
+  /* MAIN */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+  .topbar { padding:20px 28px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:var(--bg); }
+  .topbar-left { display:flex; flex-direction:column; gap:2px; }
+  .topbar-breadcrumb { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+  .topbar-title { font-family:var(--bebas); font-size:30px; letter-spacing:2px; line-height:1; }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .topbar-pill { background:var(--red-glow); border:1px solid var(--red-border); color:var(--red); font-size:11px; font-weight:700; padding:5px 14px; border-radius:4px; }
+
+  /* SUBNAV */
+  .subnav { display:flex; padding:0 28px; border-bottom:1px solid var(--border); background:var(--bg); flex-shrink:0; }
+  .subnav-btn { padding:11px 14px; background:none; border:none; border-bottom:2px solid transparent; font-size:12px; font-weight:700; letter-spacing:0.8px; color:var(--muted); cursor:pointer; transition:all .15s; white-space:nowrap; text-transform:uppercase; margin-bottom:-1px; }
+  .subnav-btn.active { color:var(--red); border-bottom-color:var(--red); }
+  .subnav-btn:hover { color:var(--text); }
+
+  /* CONTENT */
+  .content { flex:1; overflow-y:auto; padding:24px 28px 32px; }
+  .content::-webkit-scrollbar { width:4px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+  /* SESSION CARDS */
+  .sessions-list { display:flex; flex-direction:column; gap:10px; }
+  .session-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .session-hdr { display:flex; align-items:center; gap:12px; padding:14px 18px; cursor:pointer; transition:background .12s; }
+  .session-hdr:hover { background:var(--panel2); }
+  .session-hdr.open { background:var(--panel2); }
+  .session-type-badge { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:3px 10px; border-radius:4px; flex-shrink:0; }
+  .session-type-badge.partido { background:var(--red-glow); color:var(--red); border:1px solid var(--red-border); }
+  .session-type-badge.entrenamiento { background:rgba(52,152,219,0.15); color:#3498db; border:1px solid rgba(52,152,219,0.3); }
+  .session-type-badge.otro { background:rgba(243,156,18,0.15); color:#f39c12; border:1px solid rgba(243,156,18,0.3); }
+  .session-title { font-size:14px; font-weight:700; color:var(--text); flex:1; }
+  .session-date  { font-size:11px; color:var(--muted); font-family:var(--mono); }
+  .session-count { font-size:12px; color:var(--text2); font-family:var(--mono); background:var(--panel3); border:1px solid var(--border2); padding:2px 8px; border-radius:4px; flex-shrink:0; }
+  .session-chevron { font-size:10px; color:var(--muted); transition:transform .2s; }
+  .session-hdr.open .session-chevron { transform:rotate(180deg); }
+
+  .session-body { display:none; border-top:1px solid var(--border); }
+  .session-body.open { display:block; }
+
+  /* ATTENDANCE LIST */
+  .attendance-list { padding:0; }
+  .att-row { display:flex; align-items:center; gap:12px; padding:11px 18px; border-bottom:1px solid var(--border); transition:background .1s; }
+  .att-row:last-child { border-bottom:none; }
+  .att-row:hover { background:rgba(255,255,255,.02); }
+  .att-dorsal { width:28px; height:28px; border-radius:50%; background:var(--panel3); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; color:var(--muted); flex-shrink:0; }
+  .att-name { flex:1; font-size:14px; font-weight:600; color:var(--text); }
+  .att-toggle { display:flex; gap:6px; }
+  .att-btn { padding:5px 14px; border-radius:6px; font-size:12px; font-weight:700; border:1px solid var(--border2); background:var(--panel3); color:var(--muted); cursor:pointer; transition:all .15s; letter-spacing:0.3px; }
+  .att-btn.present.active { background:var(--green-dim); border-color:var(--green-border); color:var(--green); }
+  .att-btn.absent.active  { background:var(--red-glow);  border-color:var(--red-border);   color:#e74c3c; }
+  .att-btn:hover { background:var(--panel2); }
+
+  /* RESUMEN TABLE */
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .card-head { padding:14px 18px 12px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+  .tbl { width:100%; border-collapse:collapse; }
+  .tbl th { padding:9px 10px; font-size:9px; font-weight:700; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; border-bottom:1px solid var(--border); text-align:left; }
+  .tbl td { padding:10px; font-size:13px; color:var(--text2); border-bottom:1px solid var(--border); }
+  .tbl tbody tr:hover { background:rgba(255,255,255,.02); }
+  .bar-track { height:5px; border-radius:3px; background:var(--panel3); overflow:hidden; min-width:60px; }
+  .bar-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+
+  /* ACCESS DENIED */
+  .access-denied { text-align:center; padding:80px 24px; }
+  .access-icon { font-size:48px; margin-bottom:16px; opacity:0.4; }
+  .access-title { font-family:var(--bebas); font-size:28px; letter-spacing:3px; color:var(--text2); margin-bottom:10px; }
+  .access-sub { font-size:14px; color:var(--muted); }
+
+  /* BOTTOM NAV */
+  .bottom-nav { display:none; height:calc(56px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
+  .bnav-inner { display:flex; height:100%; width:100%; }
+  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; transition:background .1s; }
+  .bnav-item:active { background:var(--panel2); }
+  .bnav-icon { width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
+  .bnav-icon svg { width:22px; height:22px; }
+  .bnav-item.active .bnav-icon svg { stroke:var(--red); }
+  .bnav-item:not(.active) .bnav-icon svg { stroke:var(--muted); }
+  .bnav-label { display:none; font-size:11px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); line-height:1; }
+  .bnav-item.active .bnav-label { color:var(--red); }
+  .bnav-dot { width:4px; height:4px; border-radius:50%; background:var(--red); }
+  @media (min-width:360px) { .bnav-label { display:block; } .bottom-nav { height:calc(66px + env(safe-area-inset-bottom)); } }
+
+  /* MOBILE TOPBAR */
+  .mobile-topbar { display:none; padding:14px 18px 10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg); }
+  .mob-logo { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
+  .mob-logo span { color:var(--red); }
+  .mob-right { display:flex; align-items:center; gap:10px; }
+  .mob-avatar { width:32px; height:32px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:12px; color:white; }
+
+  @media (max-width:768px) {
+    .app { flex-direction:column; }
+    .sidebar { display:none; }
+    .mobile-topbar { display:flex; width:100%; }
+    .bottom-nav { display:flex; width:100%; }
+    .topbar { display:none; }
+    .content { padding:14px 14px 16px; }
+    .subnav { padding:0 14px; }
+  }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .fadeup { animation:fadeUp .3s ease both; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-eyebrow">Temporada 2025–26</div>
+      <div class="logo-name">HoopStats</div>
+      <div class="logo-club">Sa Cabaneta A · Fontaneria Jose Puerta</div>
+      <div class="logo-accent"></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Inicio
+      </a>
+      <a href="liga.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        Liga
+      </a>
+      <a href="partidos.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Partidos
+      </a>
+      <a href="jugadores.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg>
+        Jugadores
+      </a>
+      <a href="calendario.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calendario
+      </a>
+      <div class="nav-section-label">Equipo</div>
+      <a href="asistencia.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Asistencia
+      </a>
+      <a href="equipo.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Mi equipo
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">JP</div>
+        <div class="user-info">
+          <div class="user-name">Jordi P.</div>
+          <div class="user-role">Entrenador</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Mobile topbar -->
+    <div class="mobile-topbar">
+      <div class="mob-logo">Hoop<span>Stats</span></div>
+      <div class="mob-right">
+        <div class="mob-avatar">JP</div>
+      </div>
+    </div>
+
+    <!-- Desktop topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-breadcrumb">Sa Cabaneta A · Temporada 2025–26</div>
+        <div class="topbar-title">Asistencia</div>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-pill">Staff</span>
+      </div>
+    </div>
+
+    <!-- Subnav -->
+    <div class="subnav" id="subnav" style="display:none">
+      <button class="subnav-btn active" onclick="showTab('sesiones',this)">Sesiones</button>
+      <button class="subnav-btn" onclick="showTab('resumen',this)">Resumen</button>
+    </div>
+
+    <!-- Content -->
+    <div class="content" id="page-content">
+      <div style="text-align:center;padding:60px;color:var(--muted);">Cargando...</div>
+    </div>
+
+    <!-- Bottom nav -->
+    <nav class="bottom-nav">
+      <div class="bnav-inner">
+        <!-- populated by rol.js -->
+      </div>
+    </nav>
+
+  </div>
+</div>
+
+<script src="js/rol.js"></script>
+<script>
+  const MESES_CORTOS = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  const ATT_KEY = 'hs_asistencia';
+
+  let allSessions = [];
+  let allPlayers  = [];
+  let expandedSession = null;
+  let currentTab = 'sesiones';
+
+  // ─── STORAGE ──────────────────────────────────────────────────
+  function getAttendance() {
+    try { return JSON.parse(localStorage.getItem(ATT_KEY)) || {}; }
+    catch (_) { return {}; }
+  }
+
+  function setAttendance(sessionId, playerId, present) {
+    const att = getAttendance();
+    att[sessionId + '_' + playerId] = present;
+    localStorage.setItem(ATT_KEY, JSON.stringify(att));
+  }
+
+  function isPresent(sessionId, playerId) {
+    const att = getAttendance();
+    const key = sessionId + '_' + playerId;
+    return att[key] === true;
+  }
+
+  function isAbsent(sessionId, playerId) {
+    const att = getAttendance();
+    const key = sessionId + '_' + playerId;
+    return att[key] === false;
+  }
+
+  // ─── FORMAT ────────────────────────────────────────────────────
+  function formatFecha(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.getDate() + ' ' + MESES_CORTOS[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  function typeLabel(tipo) {
+    if (tipo === 'partido') return 'Partido';
+    if (tipo === 'entrenamiento') return 'Entrenamiento';
+    return 'Otro';
+  }
+
+  // ─── BUILD SESSIONS LIST ───────────────────────────────────────
+  function buildSessions(partidos) {
+    const sessions = [];
+
+    // Partidos SAC
+    const sacMatches = partidos.filter(p => p.esCabaneta || p.local?.esSac || p.visit?.esSac);
+    for (const p of sacMatches) {
+      const isLocal = p.local?.esSac;
+      const rival   = isLocal
+        ? (p.visit?.nombre || p.visit?.shortName || 'Rival')
+        : (p.local?.nombre || p.local?.shortName || 'Rival');
+      sessions.push({
+        id:    'match_' + (p.id || p._id || p.jornada),
+        tipo:  'partido',
+        title: `vs ${rival} · J${p.jornada}`,
+        fecha: p.fecha || '',
+        hora:  p.hora  || '',
+      });
+    }
+
+    // Entrenamientos from localStorage
+    const stored = window.HoopRol ? window.HoopRol.getEventos() : [];
+    for (const ev of stored) {
+      sessions.push({
+        id:    ev.id,
+        tipo:  ev.tipo,
+        title: ev.titulo,
+        fecha: ev.fecha ? ev.fecha + 'T00:00:00' : '',
+        hora:  ev.hora  || '',
+      });
+    }
+
+    // Sort newest first
+    sessions.sort((a, b) => {
+      const da = a.fecha ? new Date(a.fecha) : new Date(0);
+      const db = b.fecha ? new Date(b.fecha) : new Date(0);
+      return db - da;
+    });
+
+    return sessions;
+  }
+
+  // ─── PRESENT COUNT ─────────────────────────────────────────────
+  function getPresentCount(sessionId) {
+    const att = getAttendance();
+    let present = 0, total = 0;
+    for (const p of allPlayers) {
+      const pid = p.id || p._id;
+      const key = sessionId + '_' + pid;
+      total++;
+      if (att[key] === true) present++;
+    }
+    return { present, total };
+  }
+
+  // ─── RENDER SESSIONS TAB ───────────────────────────────────────
+  function renderSesiones() {
+    const el = document.getElementById('page-content');
+
+    if (!allSessions.length) {
+      el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);">No hay sesiones disponibles</div>';
+      return;
+    }
+
+    el.innerHTML = `<div class="sessions-list fadeup">${allSessions.map(s => {
+      const { present, total } = getPresentCount(s.id);
+      const isOpen = expandedSession === s.id;
+      const attendanceHTML = isOpen && allPlayers.length ? allPlayers.map(p => {
+        const pid       = p.id || p._id;
+        const nombre    = (p.nombre || p.name || '').trim();
+        const apellidos = (p.apellidos || p.surname || '').trim();
+        const dorsal    = p.dorsal || p.numero || '–';
+        const pres  = isPresent(s.id, pid);
+        const abs   = isAbsent(s.id, pid);
+        return `<div class="att-row">
+          <div class="att-dorsal">#${dorsal}</div>
+          <div class="att-name">${nombre} ${apellidos}</div>
+          <div class="att-toggle">
+            <button class="att-btn present ${pres ? 'active' : ''}" onclick="toggleAtt('${s.id}','${pid}',true)">Presente</button>
+            <button class="att-btn absent ${abs ? 'active' : ''}" onclick="toggleAtt('${s.id}','${pid}',false)">Ausente</button>
+          </div>
+        </div>`;
+      }).join('') : '';
+
+      return `<div class="session-card">
+        <div class="session-hdr ${isOpen ? 'open' : ''}" onclick="toggleSession('${s.id}')">
+          <span class="session-type-badge ${s.tipo}">${typeLabel(s.tipo)}</span>
+          <div class="session-title">${s.title}</div>
+          <div class="session-date">${formatFecha(s.fecha)}</div>
+          ${total > 0 ? `<div class="session-count">${present}/${total}</div>` : ''}
+          <span class="session-chevron">▼</span>
+        </div>
+        ${isOpen ? `<div class="session-body open"><div class="attendance-list">${attendanceHTML || '<div style="padding:20px;text-align:center;color:var(--muted);">Sin jugadores cargados</div>'}</div></div>` : ''}
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  function toggleSession(id) {
+    expandedSession = expandedSession === id ? null : id;
+    renderSesiones();
+  }
+
+  function toggleAtt(sessionId, playerId, present) {
+    // If already set to that value, toggle off (unset)
+    const att = getAttendance();
+    const key = sessionId + '_' + playerId;
+    if (att[key] === present) {
+      delete att[key];
+      localStorage.setItem(ATT_KEY, JSON.stringify(att));
+    } else {
+      setAttendance(sessionId, playerId, present);
+    }
+    renderSesiones();
+  }
+
+  // ─── RENDER RESUMEN TAB ────────────────────────────────────────
+  function renderResumen() {
+    const el = document.getElementById('page-content');
+
+    if (!allPlayers.length) {
+      el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);">No hay jugadores</div>';
+      return;
+    }
+
+    const att = getAttendance();
+    const totalSessions = allSessions.length;
+
+    const rows = allPlayers.map(p => {
+      const pid = p.id || p._id;
+      const nombre = (p.nombre || p.name || '').trim();
+      const apellidos = (p.apellidos || p.surname || '').trim();
+      const dorsal = p.dorsal || '–';
+
+      let presentes = 0;
+      for (const s of allSessions) {
+        if (att[s.id + '_' + pid] === true) presentes++;
+      }
+
+      const pct = totalSessions > 0 ? Math.round(presentes / totalSessions * 100) : 0;
+      const barColor = pct >= 75 ? 'var(--green)' : pct >= 50 ? '#f39c12' : '#e74c3c';
+
+      return { nombre, apellidos, dorsal, presentes, pct, barColor };
+    }).sort((a, b) => b.pct - a.pct);
+
+    el.innerHTML = `<div class="card fadeup">
+      <div class="card-head">Resumen de asistencia · Temporada 2025–26</div>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr>
+            <th>#</th>
+            <th>Jugador</th>
+            <th style="text-align:center">Sesiones</th>
+            <th style="text-align:center">Presentes</th>
+            <th style="text-align:center">%</th>
+            <th style="min-width:80px">Asistencia</th>
+          </tr></thead>
+          <tbody>${rows.map((r, i) => `<tr>
+            <td style="font-family:var(--mono);color:var(--muted);font-size:11px">${r.dorsal}</td>
+            <td style="font-weight:600;color:var(--text)">${r.nombre} ${r.apellidos}</td>
+            <td style="text-align:center;font-family:var(--mono)">${totalSessions}</td>
+            <td style="text-align:center;font-family:var(--mono);color:var(--green)">${r.presentes}</td>
+            <td style="text-align:center;font-family:var(--mono);font-weight:700;color:${r.barColor}">${r.pct}%</td>
+            <td><div class="bar-track"><div class="bar-fill" style="width:${r.pct}%;background:${r.barColor}"></div></div></td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  // ─── TAB SWITCH ────────────────────────────────────────────────
+  function showTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.subnav-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    if (tab === 'sesiones') renderSesiones();
+    else renderResumen();
+  }
+
+  // ─── INIT ──────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', async () => {
+    HoopRol.init();
+
+    const rol = HoopRol.getRol();
+
+    if (rol === 'jugador') {
+      document.getElementById('page-content').innerHTML = `
+        <div class="access-denied fadeup">
+          <div class="access-icon">🔒</div>
+          <div class="access-title">Acceso restringido</div>
+          <div class="access-sub">Esta sección es solo para el Staff y entrenadores.</div>
+        </div>`;
+      return;
+    }
+
+    // Show subnav
+    document.getElementById('subnav').style.display = 'flex';
+
+    try {
+      // Load matches
+      const data = await fetch('/api/matches?v=5').then(r => r.json());
+      const partidos = data.partidos || [];
+
+      // Load players
+      let equipoId = null;
+      try {
+        const equipos = await fetch('/api/equipos').then(r => r.json());
+        const sac = equipos.find(e =>
+          (e.nombre || e.name || '').toLowerCase().includes('cabaneta') ||
+          (e.shortName || '').toLowerCase().includes('cab') ||
+          e.esSac === true
+        );
+        equipoId = sac ? (sac.id || sac._id) : (equipos[0]?.id || equipos[0]?._id);
+        const players = await fetch(`/api/jugadores?equipo_id=${equipoId}`).then(r => r.json());
+        allPlayers = Array.isArray(players) ? players : (players.jugadores || []);
+      } catch (e) {
+        console.warn('[Asistencia] No se pudo cargar jugadores:', e);
+      }
+
+      allSessions = buildSessions(partidos);
+      renderSesiones();
+
+    } catch (e) {
+      console.error('[Asistencia] Error:', e);
+      document.getElementById('page-content').innerHTML =
+        '<div style="text-align:center;padding:60px;color:#e74c3c;">Error al cargar datos</div>';
+    }
+  });
+</script>
+</body>
+</html>
