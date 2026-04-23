@@ -188,8 +188,9 @@
     .bottom-nav { display:flex; width:100%; }
     .topbar { display:none; }
     .content { padding:14px 14px 90px; }
-    .cal-day { min-height:60px; padding:5px; }
-    .cal-event-label { display:none; }
+    .cal-day { min-height:62px; padding:5px 4px; }
+    .cal-event-label { font-size:9px; }
+    .cal-weekday { font-size:9px; padding:4px 0; }
     .day-panel { width:100%; top:auto; height:60vh; border-top:1px solid var(--border); border-left:none; transform:translateY(100%); }
     .day-panel.open { transform:translateY(0); }
   }
@@ -392,10 +393,30 @@
     try {
       const data = await fetch('/api/matches?v=5').then(r => r.json());
       const partidos = data.partidos || [];
-      partidosAPI = partidos.filter(p => p.esCabaneta || p.local?.esSac || p.visit?.esSac);
+      partidosAPI = partidos.filter(p => p.esCabaneta);
     } catch (e) {
       console.warn('[Calendario] No se pudo cargar partidos:', e);
     }
+
+    // Auto-navegar al mes más reciente con partido SAC
+    // Si el mes actual ya tiene partidos, quedarse; si no, ir al más reciente jugado
+    const hasEventThisMonth = partidosAPI.some(p => {
+      if (!p.fecha) return false;
+      const d = new Date(p.fecha);
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    });
+    if (!hasEventThisMonth && partidosAPI.length > 0) {
+      // Encontrar el último partido con fecha
+      const sorted = [...partidosAPI]
+        .filter(p => p.fecha)
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      if (sorted.length > 0) {
+        const last = new Date(sorted[0].fecha);
+        currentYear  = last.getFullYear();
+        currentMonth = last.getMonth();
+      }
+    }
+
     renderCalendar();
   }
 
@@ -419,30 +440,60 @@
     // Partidos from API
     for (const p of partidosAPI) {
       if (!p.fecha) continue;
-      const d = new Date(p.fecha);
-      const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-      if (ds === dateStr) {
-        const isHome = p.local?.esSac;
-        const rival  = isHome ? (p.visit?.nombre || p.visit?.shortName || 'Rival') : (p.local?.nombre || p.local?.shortName || 'Rival');
-        events.push({
-          id:    'api_' + (p.id || p._id || ds),
-          tipo:  'partido',
-          titulo: `vs ${rival}`,
-          hora:  p.hora || '',
-          lugar: p.lugar || (isHome ? 'Casa' : 'Fuera'),
-          notas: '',
-          api:   true,
-        });
+      // Extraer fecha como string local evitando conversión de zona horaria
+      const d  = new Date(p.fecha);
+      const ds = d.getFullYear() + '-'
+               + String(d.getMonth() + 1).padStart(2, '0') + '-'
+               + String(d.getDate()).padStart(2, '0');
+      if (ds !== dateStr) continue;
+
+      // esCasa está en el partido: true = SAC juega en casa
+      const isHome = p.esCasa;
+      const rival  = isHome
+        ? (p.visit?.nombre || p.visit?.shortName || 'Rival')
+        : (p.local?.nombre || p.local?.shortName || 'Rival');
+      const rivalShort = isHome
+        ? (p.visit?.shortName || 'RIV')
+        : (p.local?.shortName || 'RIV');
+      const condicion = isHome ? 'Casa' : 'Fuera';
+
+      // Construir título y notas (con resultado si ya se jugó)
+      let titulo = `J${p.jornada} vs ${rival}`;
+      let notas  = '';
+      if (p.sacPuntos !== null && p.sacPuntos !== undefined && p.rivalPuntos !== null) {
+        const marcador = isHome
+          ? `${p.sacPuntos}–${p.rivalPuntos}`
+          : `${p.rivalPuntos}–${p.sacPuntos}`;
+        notas = `${p.resultado === 'V' ? '✅' : '❌'} ${isHome ? 'SAC' : rivalShort} ${marcador} ${isHome ? rivalShort : 'SAC'}`;
       }
+
+      events.push({
+        id:         'api_' + (p.fileId || ds + p.jornada),
+        tipo:       'partido',
+        titulo,
+        rivalShort,
+        hora:       p.hora || formatHoraLocal(p.fecha),
+        lugar:      condicion,
+        notas,
+        resultado:  p.resultado || null,
+        api:        true,
+        jornada:    p.jornada,
+      });
     }
 
-    // localStorage events
+    // localStorage events (entrenamientos, etc.)
     const stored = window.HoopRol ? window.HoopRol.getEventos() : [];
     for (const ev of stored) {
       if (ev.fecha === dateStr) events.push(ev);
     }
 
     return events;
+  }
+
+  function formatHoraLocal(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + 'h';
   }
 
   // ─── RENDER CALENDAR ───────────────────────────────────────────
@@ -491,11 +542,16 @@
       const shown  = events.slice(0, 3);
       const extra  = events.length - shown.length;
 
-      let evHTML = shown.map(ev => `
-        <div class="cal-event-dot">
+      let evHTML = shown.map(ev => {
+        // Compact label: for partidos show "vs XYZ" or short name; truncate for space
+        const label = ev.tipo === 'partido'
+          ? `vs ${ev.rivalShort || ev.titulo.replace(/^J\d+ /,'').substring(0,8)}`
+          : (ev.titulo || '').substring(0, 12);
+        return `<div class="cal-event-dot">
           <div class="cal-event-pip" style="background:${typeColor(ev.tipo)}"></div>
-          <div class="cal-event-label">${ev.titulo}</div>
-        </div>`).join('');
+          <div class="cal-event-label">${label}</div>
+        </div>`;
+      }).join('');
       if (extra > 0) evHTML += `<div class="cal-more">+${extra} más</div>`;
 
       const el = document.createElement('div');
@@ -525,12 +581,12 @@
     } else {
       body.innerHTML = events.map(ev => `
         <div class="event-card ${ev.tipo}" id="evcard_${ev.id}">
-          <div class="event-type-badge" style="color:${typeColor(ev.tipo)}">${typeLabel(ev.tipo)}</div>
+          <div class="event-type-badge" style="color:${typeColor(ev.tipo)}">${typeLabel(ev.tipo)}${ev.jornada ? ` · J${ev.jornada}` : ''}</div>
           <div class="event-title">${ev.titulo}</div>
           <div class="event-meta">
             ${ev.hora ? `<span>⏰ ${ev.hora}</span>` : ''}
             ${ev.lugar ? `<span>📍 ${ev.lugar}</span>` : ''}
-            ${ev.notas ? `<span>${ev.notas}</span>` : ''}
+            ${ev.notas ? `<span style="margin-top:4px;font-size:13px;font-weight:700;color:var(--text)">${ev.notas}</span>` : ''}
           </div>
           ${!ev.api && window.HoopRol && window.HoopRol.getRol() === 'staff'
             ? `<button class="event-del" onclick="deleteEvent('${ev.id}','${dateStr}')">Eliminar</button>` : ''}
