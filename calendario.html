@@ -160,6 +160,19 @@
   .btn-primary { background:var(--red); color:white; border:none; border-radius:8px; padding:12px 24px; font-size:14px; font-weight:700; cursor:pointer; width:100%; letter-spacing:0.5px; transition:background .15s; }
   .btn-primary:hover { background:var(--red-dim); }
 
+  /* RECURRENCIA TOGGLE */
+  .recurrente-toggle { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--panel2); border:1px solid var(--border2); border-radius:8px; cursor:pointer; }
+  .recurrente-toggle input[type=checkbox] { accent-color:var(--red); width:16px; height:16px; cursor:pointer; }
+  .recurrente-toggle-label { font-size:13px; font-weight:600; color:var(--text2); cursor:pointer; }
+
+  /* DÍAS SEMANA PICKER */
+  .dias-picker { display:flex; gap:6px; flex-wrap:wrap; }
+  .dia-btn { width:36px; height:36px; border-radius:50%; border:1px solid var(--border2); background:var(--panel3);
+    color:var(--text2); font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center;
+    justify-content:center; transition:all .12s; font-family:var(--barlow); letter-spacing:.5px; }
+  .dia-btn.active { background:var(--red); border-color:var(--red); color:white; }
+  .dia-btn:hover:not(.active) { border-color:var(--border); color:var(--text); }
+
   /* BOTTOM NAV */
   .bottom-nav { display:none; height:calc(56px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
   .bnav-inner { display:flex; height:100%; width:100%; }
@@ -345,7 +358,7 @@
     <form id="add-event-form" onsubmit="handleSaveEvent(event)">
       <div class="form-group">
         <label class="form-label">Tipo</label>
-        <select class="form-select" name="tipo" required>
+        <select class="form-select" name="tipo" required onchange="onTipoChange(this.value)">
           <option value="entrenamiento">Entrenamiento</option>
           <option value="amistoso">Partido amistoso</option>
           <option value="otro">Otro</option>
@@ -355,16 +368,62 @@
         <label class="form-label">Título</label>
         <input class="form-input" name="titulo" placeholder="Ej: Entrenamiento técnico..." required />
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Fecha</label>
-          <input class="form-input" type="date" name="fecha" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Hora</label>
-          <input class="form-input" type="time" name="hora" />
+
+      <!-- Toggle recurrente -->
+      <div class="form-group">
+        <label class="recurrente-toggle" for="chk-recurrente">
+          <input type="checkbox" id="chk-recurrente" name="recurrente" onchange="toggleRecurrente(this.checked)">
+          <span class="recurrente-toggle-label">Evento recurrente (semanal)</span>
+        </label>
+      </div>
+
+      <!-- Campos puntual -->
+      <div id="campos-puntual">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Fecha</label>
+            <input class="form-input" type="date" name="fecha" id="input-fecha" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hora</label>
+            <input class="form-input" type="time" name="hora" />
+          </div>
         </div>
       </div>
+
+      <!-- Campos recurrente (ocultos por defecto) -->
+      <div id="campos-recurrente" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Días de la semana</label>
+          <div class="dias-picker" id="dias-picker">
+            <button type="button" class="dia-btn" data-dia="1">LUN</button>
+            <button type="button" class="dia-btn" data-dia="2">MAR</button>
+            <button type="button" class="dia-btn" data-dia="3">MIÉ</button>
+            <button type="button" class="dia-btn" data-dia="4">JUE</button>
+            <button type="button" class="dia-btn" data-dia="5">VIE</button>
+            <button type="button" class="dia-btn" data-dia="6">SÁB</button>
+            <button type="button" class="dia-btn" data-dia="7">DOM</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Hora</label>
+            <input class="form-input" type="time" name="hora_rec" />
+          </div>
+          <div class="form-group"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Desde</label>
+            <input class="form-input" type="date" name="fecha_inicio" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hasta</label>
+            <input class="form-input" type="date" name="fecha_fin" />
+          </div>
+        </div>
+      </div>
+
       <div class="form-group">
         <label class="form-label">Lugar</label>
         <input class="form-input" name="lugar" placeholder="Pabellón Sa Cabaneta..." />
@@ -373,7 +432,7 @@
         <label class="form-label">Notas</label>
         <textarea class="form-textarea" name="notas" placeholder="Notas adicionales..."></textarea>
       </div>
-      <button type="submit" class="btn-primary">Guardar evento</button>
+      <button type="submit" class="btn-primary" id="btn-guardar">Guardar evento</button>
     </form>
   </div>
 </div>
@@ -384,43 +443,13 @@
   const DIAS_ES  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
   let currentYear  = new Date().getFullYear();
-  let currentMonth = new Date().getMonth(); // 0-based
+  let currentMonth = new Date().getMonth();
   let selectedDate = null;
   let partidosAPI  = [];
+  let eventosAPI   = [];
+  let equipoId     = null;
 
-  // ─── FETCH PARTIDOS ────────────────────────────────────────────
-  async function loadPartidos() {
-    try {
-      const data = await fetch('/api/matches?v=5').then(r => r.json());
-      const partidos = data.partidos || [];
-      partidosAPI = partidos.filter(p => p.esCabaneta);
-    } catch (e) {
-      console.warn('[Calendario] No se pudo cargar partidos:', e);
-    }
-
-    // Auto-navegar al mes más reciente con partido SAC
-    // Si el mes actual ya tiene partidos, quedarse; si no, ir al más reciente jugado
-    const hasEventThisMonth = partidosAPI.some(p => {
-      if (!p.fecha) return false;
-      const d = new Date(p.fecha);
-      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
-    });
-    if (!hasEventThisMonth && partidosAPI.length > 0) {
-      // Encontrar el último partido con fecha
-      const sorted = [...partidosAPI]
-        .filter(p => p.fecha)
-        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-      if (sorted.length > 0) {
-        const last = new Date(sorted[0].fecha);
-        currentYear  = last.getFullYear();
-        currentMonth = last.getMonth();
-      }
-    }
-
-    renderCalendar();
-  }
-
-  // ─── EVENT COLOR ───────────────────────────────────────────────
+  // ─── HELPERS ──────────────────────────────────────────────────
   function typeColor(tipo) {
     if (tipo === 'partido' || tipo === 'amistoso') return 'var(--red)';
     if (tipo === 'entrenamiento') return 'var(--blue)';
@@ -432,137 +461,134 @@
     if (tipo === 'entrenamiento') return 'ENTRENAMIENTO';
     return 'EVENTO';
   }
+  function formatHoraLocal(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + 'h';
+  }
 
-  // ─── GATHER EVENTS FOR A DATE STRING (yyyy-mm-dd) ──────────────
+  // ─── FETCH EQUIPO ID ──────────────────────────────────────────
+  async function fetchEquipoId() {
+    try {
+      const equipos = await fetch('/api/equipos').then(r => r.json());
+      const sac = equipos.find(e =>
+        (e.short_name || '').toUpperCase() === 'SAC' ||
+        (e.nombre || '').toLowerCase().includes('cabaneta')
+      );
+      equipoId = sac ? sac.id : null;
+    } catch (e) { console.warn('[Calendario] No se pudo obtener equipoId:', e); }
+  }
+
+  // ─── FETCH PARTIDOS ───────────────────────────────────────────
+  async function fetchPartidos() {
+    try {
+      const data = await fetch('/api/matches?v=5').then(r => r.json());
+      partidosAPI = (data.partidos || []).filter(p => p.esCabaneta);
+    } catch (e) { console.warn('[Calendario] Error partidos:', e); }
+  }
+
+  // ─── FETCH EVENTOS (BD) ───────────────────────────────────────
+  async function fetchEventos() {
+    if (!equipoId) return;
+    // Rango: mes anterior, actual y siguiente para navegación fluida
+    const desde = new Date(currentYear, currentMonth - 1, 1).toISOString().split('T')[0];
+    const hasta  = new Date(currentYear, currentMonth + 2, 0).toISOString().split('T')[0];
+    try {
+      const data = await fetch(`/api/eventos?equipo_id=${equipoId}&desde=${desde}&hasta=${hasta}`).then(r => r.json());
+      eventosAPI = Array.isArray(data) ? data : [];
+    } catch (e) {
+      console.warn('[Calendario] Error eventos:', e);
+      eventosAPI = [];
+    }
+  }
+
+  // ─── GATHER EVENTS FOR DATE ───────────────────────────────────
   function getEventsForDate(dateStr) {
     const events = [];
 
-    // Partidos from API
+    // Partidos oficiales (API matches)
     for (const p of partidosAPI) {
       if (!p.fecha) continue;
-      // Extraer fecha como string local evitando conversión de zona horaria
       const d  = new Date(p.fecha);
-      const ds = d.getFullYear() + '-'
-               + String(d.getMonth() + 1).padStart(2, '0') + '-'
-               + String(d.getDate()).padStart(2, '0');
+      const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       if (ds !== dateStr) continue;
 
-      // esCasa está en el partido: true = SAC juega en casa
-      const isHome = p.esCasa;
-      const rival  = isHome
-        ? (p.visit?.nombre || p.visit?.shortName || 'Rival')
-        : (p.local?.nombre || p.local?.shortName || 'Rival');
-      const rivalShort = isHome
-        ? (p.visit?.shortName || 'RIV')
-        : (p.local?.shortName || 'RIV');
-      const condicion = isHome ? 'Casa' : 'Fuera';
-
-      // Construir título y notas (con resultado si ya se jugó)
-      let titulo = `J${p.jornada} vs ${rival}`;
-      let notas  = '';
-      if (p.sacPuntos !== null && p.sacPuntos !== undefined && p.rivalPuntos !== null) {
-        const marcador = isHome
-          ? `${p.sacPuntos}–${p.rivalPuntos}`
-          : `${p.rivalPuntos}–${p.sacPuntos}`;
+      const isHome     = p.esCasa;
+      const rival      = isHome ? (p.visit?.nombre || p.visit?.shortName || 'Rival') : (p.local?.nombre || p.local?.shortName || 'Rival');
+      const rivalShort = isHome ? (p.visit?.shortName || 'RIV') : (p.local?.shortName || 'RIV');
+      let notas = '';
+      if (p.sacPuntos != null && p.rivalPuntos != null) {
+        const marcador = isHome ? `${p.sacPuntos}–${p.rivalPuntos}` : `${p.rivalPuntos}–${p.sacPuntos}`;
         notas = `${p.resultado === 'V' ? '✅' : '❌'} ${isHome ? 'SAC' : rivalShort} ${marcador} ${isHome ? rivalShort : 'SAC'}`;
       }
-
       events.push({
-        id:         'api_' + (p.fileId || ds + p.jornada),
-        tipo:       'partido',
-        titulo,
-        rivalShort,
-        hora:       p.hora || formatHoraLocal(p.fecha),
-        lugar:      condicion,
-        notas,
-        resultado:  p.resultado || null,
-        api:        true,
-        jornada:    p.jornada,
+        id: 'api_' + (p.fileId || ds + p.jornada),
+        tipo: 'partido', titulo: `J${p.jornada} vs ${rival}`,
+        rivalShort, hora: formatHoraLocal(p.fecha),
+        lugar: isHome ? 'Casa' : 'Fuera',
+        notas, api: true, jornada: p.jornada,
       });
     }
 
-    // localStorage events (entrenamientos, etc.)
-    const stored = window.HoopRol ? window.HoopRol.getEventos() : [];
-    for (const ev of stored) {
-      if (ev.fecha === dateStr) events.push(ev);
+    // Eventos de la BD (entrenamientos, amistosos, otros)
+    for (const ev of eventosAPI) {
+      if (ev.fecha === dateStr) {
+        events.push({ ...ev, api: false });
+      }
     }
 
     return events;
   }
 
-  function formatHoraLocal(iso) {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + 'h';
-  }
-
-  // ─── RENDER CALENDAR ───────────────────────────────────────────
+  // ─── RENDER CALENDAR ──────────────────────────────────────────
   function renderCalendar() {
-    const label = document.getElementById('cal-month-label');
-    label.textContent = MESES_ES[currentMonth].toUpperCase() + ' ' + currentYear;
+    document.getElementById('cal-month-label').textContent =
+      MESES_ES[currentMonth].toUpperCase() + ' ' + currentYear;
 
-    const grid = document.getElementById('cal-grid');
+    const grid  = document.getElementById('cal-grid');
     grid.innerHTML = '';
-
     const today = new Date();
-    const firstDay = new Date(currentYear, currentMonth, 1);
-    // Monday-based: 0=Mon … 6=Sun
-    let startDow = firstDay.getDay() - 1;
+
+    let startDow = new Date(currentYear, currentMonth, 1).getDay() - 1;
     if (startDow < 0) startDow = 6;
 
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const daysInPrev  = new Date(currentYear, currentMonth, 0).getDate();
 
-    let cells = [];
-    // Prev month padding
-    for (let i = startDow - 1; i >= 0; i--) {
+    const cells = [];
+    for (let i = startDow - 1; i >= 0; i--)
       cells.push({ day: daysInPrev - i, thisMonth: false, month: currentMonth - 1, year: currentYear });
-    }
-    // Current month
-    for (let d = 1; d <= daysInMonth; d++) {
+    for (let d = 1; d <= daysInMonth; d++)
       cells.push({ day: d, thisMonth: true, month: currentMonth, year: currentYear });
-    }
-    // Next month padding to fill rows
-    let remainder = cells.length % 7;
-    if (remainder !== 0) {
-      for (let d = 1; d <= (7 - remainder); d++) {
-        cells.push({ day: d, thisMonth: false, month: currentMonth + 1, year: currentYear });
-      }
-    }
+    const rem = cells.length % 7;
+    if (rem) for (let d = 1; d <= 7 - rem; d++)
+      cells.push({ day: d, thisMonth: false, month: currentMonth + 1, year: currentYear });
 
     for (const cell of cells) {
       const m = ((cell.month % 12) + 12) % 12;
       const y = cell.year + Math.floor(cell.month / 12);
-      const dateStr = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(cell.day).padStart(2, '0');
+      const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(cell.day).padStart(2,'0')}`;
 
-      const isToday = cell.day === today.getDate() && m === today.getMonth() && y === today.getFullYear();
+      const isToday    = cell.day === today.getDate() && m === today.getMonth() && y === today.getFullYear();
       const isSelected = selectedDate === dateStr;
+      const events     = cell.thisMonth ? getEventsForDate(dateStr) : [];
+      const shown      = events.slice(0, 3);
+      const extra      = events.length - shown.length;
 
-      const events = cell.thisMonth ? getEventsForDate(dateStr) : [];
-      const shown  = events.slice(0, 3);
-      const extra  = events.length - shown.length;
-
-      let evHTML = shown.map(ev => {
-        // Compact label: for partidos show "vs XYZ" or short name; truncate for space
-        const label = ev.tipo === 'partido'
-          ? `vs ${ev.rivalShort || ev.titulo.replace(/^J\d+ /,'').substring(0,8)}`
-          : (ev.titulo || '').substring(0, 12);
+      const evHTML = shown.map(ev => {
+        const lbl = ev.tipo === 'partido'
+          ? `vs ${ev.rivalShort || '?'}`
+          : (ev.titulo || '').substring(0, 10);
         return `<div class="cal-event-dot">
           <div class="cal-event-pip" style="background:${typeColor(ev.tipo)}"></div>
-          <div class="cal-event-label">${label}</div>
+          <div class="cal-event-label">${lbl}</div>
         </div>`;
-      }).join('');
-      if (extra > 0) evHTML += `<div class="cal-more">+${extra} más</div>`;
+      }).join('') + (extra > 0 ? `<div class="cal-more">+${extra} más</div>` : '');
 
       const el = document.createElement('div');
-      el.className = 'cal-day' +
-        (cell.thisMonth ? '' : ' other-month') +
-        (isToday ? ' today' : '') +
-        (isSelected ? ' selected' : '');
-      el.innerHTML = `<div class="cal-day-num">${cell.day}</div><div class="cal-events">${evHTML}</div>`;
-      if (cell.thisMonth) {
-        el.onclick = () => openDayPanel(dateStr, events);
-      }
+      el.className = 'cal-day' + (cell.thisMonth ? '' : ' other-month') + (isToday ? ' today' : '') + (isSelected ? ' selected' : '');
+      el.innerHTML  = `<div class="cal-day-num">${cell.day}</div><div class="cal-events">${evHTML}</div>`;
+      if (cell.thisMonth) el.onclick = () => openDayPanel(dateStr, events);
       grid.appendChild(el);
     }
   }
@@ -576,22 +602,26 @@
       DIAS_ES[dt.getDay()].toUpperCase() + ' ' + d + ' ' + MESES_ES[m-1].toUpperCase().slice(0,3);
 
     const body = document.getElementById('day-panel-body');
-    if (!events.length) {
-      body.innerHTML = '<div class="no-events">Sin eventos este día</div>';
-    } else {
-      body.innerHTML = events.map(ev => `
-        <div class="event-card ${ev.tipo}" id="evcard_${ev.id}">
-          <div class="event-type-badge" style="color:${typeColor(ev.tipo)}">${typeLabel(ev.tipo)}${ev.jornada ? ` · J${ev.jornada}` : ''}</div>
-          <div class="event-title">${ev.titulo}</div>
-          <div class="event-meta">
-            ${ev.hora ? `<span>⏰ ${ev.hora}</span>` : ''}
-            ${ev.lugar ? `<span>📍 ${ev.lugar}</span>` : ''}
-            ${ev.notas ? `<span style="margin-top:4px;font-size:13px;font-weight:700;color:var(--text)">${ev.notas}</span>` : ''}
-          </div>
-          ${!ev.api && window.HoopRol && window.HoopRol.getRol() === 'staff'
-            ? `<button class="event-del" onclick="deleteEvent('${ev.id}','${dateStr}')">Eliminar</button>` : ''}
-        </div>`).join('');
-    }
+    const isStaff = window.HoopRol && window.HoopRol.getRol() === 'staff';
+
+    body.innerHTML = !events.length
+      ? `<div class="no-events">Sin eventos este día${isStaff ? '<br><small style="color:var(--muted)">Usa + para añadir</small>' : ''}</div>`
+      : events.map(ev => {
+          const recLabel = ev.recurrente ? ' · Recurrente' : '';
+          return `<div class="event-card ${ev.tipo}">
+            <div class="event-type-badge" style="color:${typeColor(ev.tipo)}">${typeLabel(ev.tipo)}${ev.jornada ? ` · J${ev.jornada}` : recLabel}</div>
+            <div class="event-title">${ev.titulo}</div>
+            <div class="event-meta">
+              ${ev.hora  ? `<span>⏰ ${ev.hora}</span>`  : ''}
+              ${ev.lugar ? `<span>📍 ${ev.lugar}</span>` : ''}
+              ${ev.notas ? `<span style="margin-top:4px;font-size:13px;font-weight:700;color:var(--text)">${ev.notas}</span>` : ''}
+            </div>
+            ${!ev.api && isStaff
+              ? `<button class="event-del" onclick="deleteEvento('${ev.id}','${dateStr}',${!!ev.recurrente})">
+                   ${ev.recurrente ? 'Eliminar serie' : 'Eliminar'}
+                 </button>` : ''}
+          </div>`;
+        }).join('');
 
     document.getElementById('day-panel').classList.add('open');
     renderCalendar();
@@ -603,11 +633,51 @@
     renderCalendar();
   }
 
-  function deleteEvent(id, dateStr) {
-    if (window.HoopRol) window.HoopRol.deleteEvento(id);
-    const events = getEventsForDate(dateStr);
-    openDayPanel(dateStr, events);
+  async function deleteEvento(id, dateStr, isRecurrente) {
+    const msg = isRecurrente
+      ? '¿Eliminar toda la serie de entrenamientos recurrentes?'
+      : '¿Eliminar este evento?';
+    if (!confirm(msg)) return;
+    try {
+      const r = await fetch(`/api/eventos?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error();
+      await fetchEventos();
+      openDayPanel(dateStr, getEventsForDate(dateStr));
+    } catch { alert('Error al eliminar el evento'); }
   }
+
+  // ─── FORM: TOGGLE RECURRENCIA ─────────────────────────────────
+  function toggleRecurrente(checked) {
+    document.getElementById('campos-puntual').style.display   = checked ? 'none' : 'block';
+    document.getElementById('campos-recurrente').style.display = checked ? 'block' : 'none';
+    document.getElementById('input-fecha').required = !checked;
+    // Rellenar fecha mínima de hoy
+    if (checked) {
+      const hoy = new Date().toISOString().split('T')[0];
+      const fi = document.querySelector('[name=fecha_inicio]');
+      const ff = document.querySelector('[name=fecha_fin]');
+      if (fi && !fi.value) fi.value = hoy;
+    }
+  }
+
+  function onTipoChange(tipo) {
+    const chk = document.getElementById('chk-recurrente');
+    // Solo entrenamientos/otro pueden ser recurrentes
+    if (tipo === 'partido' || tipo === 'amistoso') {
+      chk.checked = false;
+      chk.disabled = true;
+      toggleRecurrente(false);
+    } else {
+      chk.disabled = false;
+    }
+  }
+
+  // Día buttons toggle
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.dia-btn').forEach(btn => {
+      btn.addEventListener('click', () => btn.classList.toggle('active'));
+    });
+  });
 
   // ─── ADD MODAL ────────────────────────────────────────────────
   function openAddModal(dateStr) {
@@ -615,75 +685,116 @@
     modal.classList.add('open');
     const form = document.getElementById('add-event-form');
     form.reset();
-    if (dateStr) form.fecha.value = dateStr;
+    document.querySelectorAll('.dia-btn').forEach(b => b.classList.remove('active'));
+    toggleRecurrente(false);
+    document.getElementById('chk-recurrente').disabled = false;
+    document.getElementById('input-fecha').required = true;
+    if (dateStr) document.getElementById('input-fecha').value = dateStr;
   }
 
   function closeAddModal(e) {
-    if (!e || e.target === document.getElementById('add-modal')) {
+    if (!e || e.target === document.getElementById('add-modal'))
       document.getElementById('add-modal').classList.remove('open');
+  }
+
+  async function handleSaveEvent(e) {
+    e.preventDefault();
+    const form  = e.target;
+    const recurrente = document.getElementById('chk-recurrente').checked;
+    const btn   = document.getElementById('btn-guardar');
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    const body = {
+      tipo:      form.tipo.value,
+      titulo:    form.titulo.value,
+      hora:      recurrente ? form.hora_rec?.value || '' : form.hora?.value || '',
+      lugar:     form.lugar.value,
+      notas:     form.notas.value,
+      equipo_id: equipoId,
+      recurrente,
+    };
+
+    if (recurrente) {
+      const dias = [...document.querySelectorAll('.dia-btn.active')].map(b => parseInt(b.dataset.dia));
+      if (!dias.length) { alert('Selecciona al menos un día de la semana'); btn.disabled = false; btn.textContent = 'Guardar evento'; return; }
+      body.dias_semana  = dias;
+      body.fecha_inicio = form.fecha_inicio.value;
+      body.fecha_fin    = form.fecha_fin.value;
+      if (!body.fecha_inicio || !body.fecha_fin) { alert('Indica las fechas de inicio y fin'); btn.disabled = false; btn.textContent = 'Guardar evento'; return; }
+    } else {
+      body.fecha = form.fecha.value;
+    }
+
+    try {
+      const r = await fetch('/api/eventos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!r.ok) throw new Error((await r.json()).error);
+      closeAddModal();
+      await fetchEventos();
+      renderCalendar();
+      if (!recurrente && body.fecha) openDayPanel(body.fecha, getEventsForDate(body.fecha));
+    } catch (err) {
+      alert('Error al guardar: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar evento';
     }
   }
 
-  function handleSaveEvent(e) {
-    e.preventDefault();
-    const form = e.target;
-    const ev = {
-      id:     'ev_' + Date.now(),
-      tipo:   form.tipo.value,
-      titulo: form.titulo.value,
-      fecha:  form.fecha.value,
-      hora:   form.hora.value,
-      lugar:  form.lugar.value,
-      notas:  form.notas.value,
-    };
-    if (window.HoopRol) window.HoopRol.saveEvento(ev);
-    closeAddModal();
-    const events = getEventsForDate(ev.fecha);
-    openDayPanel(ev.fecha, events);
-  }
-
   // ─── NAV ──────────────────────────────────────────────────────
-  document.getElementById('btn-prev').onclick = () => {
+  document.getElementById('btn-prev').onclick = async () => {
     currentMonth--;
     if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    await fetchEventos();
     renderCalendar();
   };
-  document.getElementById('btn-next').onclick = () => {
+  document.getElementById('btn-next').onclick = async () => {
     currentMonth++;
     if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    await fetchEventos();
     renderCalendar();
   };
-  document.getElementById('btn-today').onclick = () => {
+  document.getElementById('btn-today').onclick = async () => {
     currentYear  = new Date().getFullYear();
     currentMonth = new Date().getMonth();
+    await fetchEventos();
     renderCalendar();
   };
 
   // ─── INIT ─────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     HoopRol.init();
 
-    const rol = HoopRol.getRol();
-    // Role badge
+    const rol   = HoopRol.getRol();
     const badge = document.getElementById('role-badge');
     if (rol === 'jugador') {
       const j = HoopRol.getJugador();
-      if (badge) badge.textContent = j ? `${j.nombre} ${j.apellidos}` : 'Jugador';
-      if (badge) badge.style.background = 'rgba(52,152,219,0.15)';
-      if (badge) badge.style.borderColor = 'rgba(52,152,219,0.3)';
-      if (badge) badge.style.color = '#3498db';
-    } else {
-      if (badge) badge.textContent = 'Staff';
+      if (badge) { badge.textContent = j ? `${j.nombre} ${j.apellidos}` : 'Jugador'; badge.style.cssText = 'background:rgba(52,152,219,.15);border-color:rgba(52,152,219,.3);color:#3498db'; }
     }
 
-    // FAB
     const fab = document.getElementById('fab-add');
     if (rol === 'staff') {
       fab.style.display = 'flex';
       fab.onclick = () => openAddModal(selectedDate || '');
     }
 
-    loadPartidos();
+    // Cargar datos en paralelo
+    await fetchEquipoId();
+    await Promise.all([fetchPartidos(), fetchEventos()]);
+
+    // Auto-navegar al mes con más actividad reciente si el actual está vacío
+    const hasSomething = [...partidosAPI, ...eventosAPI].some(p => {
+      const f = p.fecha;
+      if (!f) return false;
+      const d = new Date(f);
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    });
+    if (!hasSomething && partidosAPI.length > 0) {
+      const last = [...partidosAPI].filter(p => p.fecha).sort((a,b) => new Date(b.fecha) - new Date(a.fecha))[0];
+      if (last) { const d = new Date(last.fecha); currentYear = d.getFullYear(); currentMonth = d.getMonth(); }
+    }
+
+    renderCalendar();
   });
 </script>
 </body>

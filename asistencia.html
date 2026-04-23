@@ -296,45 +296,53 @@
   }
 
   // ─── BUILD SESSIONS LIST ───────────────────────────────────────
-  function buildSessions(partidos) {
+  function buildSessions(partidos, eventosDB) {
     const sessions = [];
 
-    // Partidos SAC
-    const sacMatches = partidos.filter(p => p.esCabaneta || p.local?.esSac || p.visit?.esSac);
+    // Partidos SAC (usando esCabaneta)
+    const sacMatches = partidos.filter(p => p.esCabaneta);
     for (const p of sacMatches) {
-      const isLocal = p.local?.esSac;
-      const rival   = isLocal
+      const isHome = p.esCasa;
+      const rival  = isHome
         ? (p.visit?.nombre || p.visit?.shortName || 'Rival')
         : (p.local?.nombre || p.local?.shortName || 'Rival');
       sessions.push({
-        id:    'match_' + (p.id || p._id || p.jornada),
+        id:    'match_' + p.jornada,
         tipo:  'partido',
-        title: `vs ${rival} · J${p.jornada}`,
+        title: `J${p.jornada} vs ${rival}`,
         fecha: p.fecha || '',
-        hora:  p.hora  || '',
+        hora:  '',
       });
     }
 
-    // Entrenamientos from localStorage
-    const stored = window.HoopRol ? window.HoopRol.getEventos() : [];
-    for (const ev of stored) {
+    // Entrenamientos y otros desde la BD
+    for (const ev of (eventosDB || [])) {
       sessions.push({
-        id:    ev.id,
-        tipo:  ev.tipo,
+        id:    String(ev.id),
+        tipo:  ev.tipo || 'entrenamiento',
         title: ev.titulo,
         fecha: ev.fecha ? ev.fecha + 'T00:00:00' : '',
-        hora:  ev.hora  || '',
+        hora:  ev.hora || '',
+        recurrente: ev.recurrente || false,
       });
     }
 
-    // Sort newest first
-    sessions.sort((a, b) => {
+    // Eliminar duplicados por id + fecha y ordenar de más reciente a más antiguo
+    const seen = new Set();
+    const unique = sessions.filter(s => {
+      const key = s.id + '_' + s.fecha;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    unique.sort((a, b) => {
       const da = a.fecha ? new Date(a.fecha) : new Date(0);
       const db = b.fecha ? new Date(b.fecha) : new Date(0);
       return db - da;
     });
 
-    return sessions;
+    return unique;
   }
 
   // ─── PRESENT COUNT ─────────────────────────────────────────────
@@ -493,11 +501,7 @@
     document.getElementById('subnav').style.display = 'flex';
 
     try {
-      // Load matches
-      const data = await fetch('/api/matches?v=5').then(r => r.json());
-      const partidos = data.partidos || [];
-
-      // Load players
+      // 1. Obtener equipo SAC
       let equipoId = null;
       try {
         const equipos = await fetch('/api/equipos').then(r => r.json());
@@ -506,13 +510,19 @@
           (e.nombre || e.name || '').toLowerCase().includes('cabaneta')
         );
         equipoId = sac ? (sac.id || sac._id) : (equipos[0]?.id || equipos[0]?._id);
-        const players = await fetch(`/api/jugadores?equipo_id=${equipoId}`).then(r => r.json());
-        allPlayers = Array.isArray(players) ? players : (players.jugadores || []);
-      } catch (e) {
-        console.warn('[Asistencia] No se pudo cargar jugadores:', e);
-      }
+      } catch (e) { console.warn('[Asistencia] Error equipos:', e); }
 
-      allSessions = buildSessions(partidos);
+      // 2. Cargar partidos, jugadores y eventos en paralelo
+      const [matchData, playersData, eventosData] = await Promise.all([
+        fetch('/api/matches?v=5').then(r => r.json()).catch(() => ({})),
+        equipoId ? fetch(`/api/jugadores?equipo_id=${equipoId}`).then(r => r.json()).catch(() => []) : Promise.resolve([]),
+        equipoId ? fetch(`/api/eventos?equipo_id=${equipoId}`).then(r => r.json()).catch(() => []) : Promise.resolve([]),
+      ]);
+
+      const partidos = matchData.partidos || [];
+      allPlayers = Array.isArray(playersData) ? playersData : (playersData.jugadores || []);
+
+      allSessions = buildSessions(partidos, Array.isArray(eventosData) ? eventosData : []);
       renderSesiones();
 
     } catch (e) {
