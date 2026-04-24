@@ -103,10 +103,11 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { equipo_id: eqRaw, desde, hasta } = req.query;
     // Sanear equipo_id: solo usar si es un número válido
-    const equipo_id = eqRaw && /^\d+$/.test(eqRaw) ? eqRaw : null;
+    const equipo_id = eqRaw && /^\d+$/.test(eqRaw) ? parseInt(eqRaw) : null;
     try {
+      // Devuelve eventos del equipo Y los que no tienen equipo asignado (equipo_id IS NULL)
       const rows = equipo_id
-        ? await sql`SELECT * FROM eventos WHERE equipo_id = ${parseInt(equipo_id)} ORDER BY created_at`
+        ? await sql`SELECT * FROM eventos WHERE equipo_id = ${equipo_id} OR equipo_id IS NULL ORDER BY created_at`
         : await sql`SELECT * FROM eventos ORDER BY created_at`;
 
       // Expandir todos los eventos (puntual + recurrentes)
@@ -150,8 +151,10 @@ export default async function handler(req, res) {
         }
       }
 
+      console.log(`[eventos GET] equipo_id=${equipo_id} desde=${desde} hasta=${hasta} rows=${rows.length} expanded=${result.length}`);
       return res.status(200).json(result);
     } catch (err) {
+      console.error('[eventos GET] Error:', err.message);
       return res.status(500).json({ error: err.message });
     }
   }
