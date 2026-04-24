@@ -19,23 +19,45 @@
     people:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg>`,
     user:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
     clipboard:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>`,
+    liga:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`,
   };
 
-  // ─── BOTTOM NAV DEFINITIONS ─────────────────────────────────────
+  // ─── SIDEBAR NAV (escritorio) ───────────────────────────────────
   const NAV_STAFF = [
-    { href: 'index.html',      icon: 'home',     label: 'Inicio' },
-    { href: 'partidos.html',   icon: 'clock',    label: 'Partidos' },
-    { href: 'calendario.html', icon: 'calendar', label: 'Calendario' },
-    { href: 'asistencia.html', icon: 'check',    label: 'Asistencia' },
-    { href: 'equipo.html',     icon: 'team',     label: 'Equipo' },
+    { href: 'index.html',      icon: 'home',      label: 'Inicio' },
+    { href: 'liga.html',       icon: 'liga',      label: 'Liga' },
+    { href: 'partidos.html',   icon: 'clock',     label: 'Partidos' },
+    { href: 'jugadores.html',  icon: 'people',    label: 'Jugadores' },
+    { href: 'calendario.html', icon: 'calendar',  label: 'Calendario' },
+    { href: 'asistencia.html', icon: 'check',     label: 'Asistencia' },
+    { href: 'equipo.html',     icon: 'team',      label: 'Equipo' },
+  ];
+
+  // ─── BOTTOM NAV (móvil) — los 5 más usados ─────────────────────
+  const NAV_STAFF_BOTTOM = [
+    { href: 'index.html',      icon: 'home',      label: 'Inicio' },
+    { href: 'liga.html',       icon: 'liga',      label: 'Liga' },
+    { href: 'partidos.html',   icon: 'clock',     label: 'Partidos' },
+    { href: 'calendario.html', icon: 'calendar',  label: 'Cal.' },
+    { href: 'asistencia.html', icon: 'check',     label: 'Asist.' },
   ];
 
   const NAV_JUGADOR = [
-    { href: 'index.html',      icon: 'home',     label: 'Inicio' },
-    { href: 'partidos.html',   icon: 'clock',    label: 'Partidos' },
-    { href: 'calendario.html', icon: 'calendar', label: 'Calendario' },
-    { href: 'jugadores.html',  icon: 'people',   label: 'Jugadores' },
-    { href: 'perfil.html',     icon: 'user',     label: 'Mi Perfil' },
+    { href: 'index.html',      icon: 'home',      label: 'Inicio' },
+    { href: 'liga.html',       icon: 'liga',      label: 'Liga' },
+    { href: 'partidos.html',   icon: 'clock',     label: 'Partidos' },
+    { href: 'calendario.html', icon: 'calendar',  label: 'Cal.' },
+    { href: 'perfil.html',     icon: 'user',      label: 'Perfil' },
+  ];
+
+  // Sidebar jugador (más items)
+  const NAV_JUGADOR_SIDEBAR = [
+    { href: 'index.html',      icon: 'home',      label: 'Inicio' },
+    { href: 'liga.html',       icon: 'liga',      label: 'Liga' },
+    { href: 'partidos.html',   icon: 'clock',     label: 'Partidos' },
+    { href: 'jugadores.html',  icon: 'people',    label: 'Jugadores' },
+    { href: 'calendario.html', icon: 'calendar',  label: 'Calendario' },
+    { href: 'perfil.html',     icon: 'user',      label: 'Mi Perfil' },
   ];
 
   // ─── STORAGE ────────────────────────────────────────────────────
@@ -365,7 +387,7 @@
     if (!sidebarNav) return;
 
     const rol   = getRol();
-    const items = rol === 'jugador' ? NAV_JUGADOR : NAV_STAFF;
+    const items = rol === 'jugador' ? NAV_JUGADOR_SIDEBAR : NAV_STAFF;
 
     sidebarNav.innerHTML =
       '<div class="nav-section-label">Navegación</div>' +
@@ -383,8 +405,8 @@
     const bnavInner = document.querySelector('.bnav-inner');
     if (!bnavInner) return;
 
-    const rol = getRol();
-    const items = rol === 'jugador' ? NAV_JUGADOR : NAV_STAFF;
+    const rol   = getRol();
+    const items = rol === 'jugador' ? NAV_JUGADOR : NAV_STAFF_BOTTOM;
     bnavInner.innerHTML = items.map(buildNavItem).join('');
   }
 

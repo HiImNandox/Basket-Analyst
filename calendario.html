@@ -189,19 +189,63 @@
     font-family:var(--barlow); letter-spacing:.5px; transition:background .15s; }
   .btn-restaurar:hover { background:rgba(39,174,96,.25); }
 
+  /* PLAN DE SESIÓN (day panel) */
+  .plan-toggle { width:100%; padding:7px 10px; margin-top:10px; border-radius:7px; border:1px solid rgba(52,152,219,0.3); background:rgba(52,152,219,0.07); color:#3498db; font-size:11px; font-weight:700; cursor:pointer; font-family:var(--barlow); letter-spacing:.5px; transition:all .15s; text-align:left; display:flex; align-items:center; justify-content:space-between; }
+  .plan-toggle:hover { background:rgba(52,152,219,0.14); }
+  .plan-toggle .ptog-arrow { transition:transform .2s; font-size:10px; }
+  .plan-toggle.open .ptog-arrow { transform:rotate(180deg); }
+  .plan-content { padding-top:8px; }
+  .plan-empty { text-align:center; padding:14px 0 6px; color:var(--muted); font-size:12px; }
+  .plan-loading { text-align:center; padding:14px 0 6px; color:var(--muted); font-size:12px; }
+  /* exercise cards */
+  .ej-card { background:var(--panel3); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-bottom:6px; }
+  .ej-badge { display:inline-block; font-size:8px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:4px; margin-bottom:6px; }
+  .ej-titulo { font-size:12px; font-weight:700; color:var(--text); margin-bottom:8px; }
+  .stat-grid { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+  .stat-box { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .stat-lbl { font-size:9px; color:var(--muted); letter-spacing:.5px; text-transform:uppercase; }
+  .stat-input { width:52px; background:var(--panel2); border:1px solid var(--border2); border-radius:5px; padding:5px; color:var(--text); font-size:14px; font-family:var(--mono); font-weight:700; text-align:center; outline:none; }
+  .stat-input:focus { border-color:var(--red); }
+  .stat-pct { font-size:10px; color:var(--muted); font-family:var(--mono); }
+  .ej-actions { display:flex; justify-content:flex-end; margin-top:6px; }
+  .ej-del { background:none; border:none; color:var(--muted); font-size:11px; cursor:pointer; padding:3px 8px; border-radius:4px; font-family:var(--barlow); }
+  .ej-del:hover { color:#e74c3c; background:rgba(231,76,60,.1); }
+  .btn-add-ej { width:100%; padding:8px; margin-top:4px; border-radius:7px; border:1px dashed var(--border2); background:none; color:var(--muted); font-size:11px; font-weight:700; cursor:pointer; font-family:var(--barlow); transition:all .15s; }
+  .btn-add-ej:hover { border-color:var(--red); color:var(--red); background:var(--red-glow); }
+  .ps-row { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--border); }
+  .ps-row:last-child { border-bottom:none; }
+  .ps-name { flex:1; font-size:11px; font-weight:600; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ps-inputs { display:flex; gap:4px; align-items:center; font-size:10px; color:var(--muted); flex-shrink:0; }
+  .ps-inp { width:46px; background:var(--panel2); border:1px solid var(--border2); border-radius:5px; padding:4px; color:var(--text); font-size:13px; font-family:var(--mono); font-weight:700; text-align:center; outline:none; }
+  .ps-inp:focus { border-color:var(--red); }
+  /* modal extras for exercises */
+  .ej-type-btns { display:flex; gap:8px; }
+  .ej-type-btn { flex:1; padding:10px 6px; border-radius:8px; border:1px solid var(--border2); background:var(--panel2); color:var(--text2); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--barlow); letter-spacing:.3px; transition:all .15s; }
+  .ej-type-btn.active { background:var(--red-glow); border-color:var(--red-border); color:var(--red); }
+  .nivel-toggle { display:flex; gap:8px; }
+  .nivel-btn { flex:1; padding:9px; border-radius:8px; border:1px solid var(--border2); background:var(--panel2); color:var(--text2); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--barlow); transition:all .15s; }
+  .nivel-btn.active { background:var(--red-glow); border-color:var(--red-border); color:var(--red); }
+  .player-checks { max-height:130px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; border:1px solid var(--border2); border-radius:8px; padding:6px; background:var(--panel2); }
+  .player-check { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); padding:4px 6px; border-radius:4px; cursor:pointer; }
+  .player-check:hover { background:var(--panel3); }
+  .player-check input { accent-color:var(--red); cursor:pointer; }
+  .quintet-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+  .quintet-col { display:flex; flex-direction:column; gap:6px; }
+  .quintet-hdr { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+
   /* BOTTOM NAV */
   .bottom-nav { display:none; height:calc(56px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
   .bnav-inner { display:flex; height:100%; width:100%; }
-  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; transition:background .1s; }
+  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; transition:background .1s; }
   .bnav-item:active { background:var(--panel2); }
-  .bnav-icon { width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
-  .bnav-icon svg { width:22px; height:22px; }
+  .bnav-icon { width:20px; height:20px; display:flex; align-items:center; justify-content:center; }
+  .bnav-icon svg { width:18px; height:18px; }
   .bnav-item.active .bnav-icon svg { stroke:var(--red); }
   .bnav-item:not(.active) .bnav-icon svg { stroke:var(--muted); }
-  .bnav-label { display:none; font-size:11px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); line-height:1; }
+  .bnav-label { display:none; font-size:9px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); line-height:1; letter-spacing:0; }
   .bnav-item.active .bnav-label { color:var(--red); }
-  .bnav-dot { width:4px; height:4px; border-radius:50%; background:var(--red); }
-  @media (min-width:360px) { .bnav-label { display:block; } .bottom-nav { height:calc(66px + env(safe-area-inset-bottom)); } }
+  .bnav-dot { width:3px; height:3px; border-radius:50%; background:var(--red); }
+  @media (min-width:360px) { .bnav-label { display:block; } .bottom-nav { height:calc(60px + env(safe-area-inset-bottom)); } }
 
   /* MOBILE TOPBAR */
   .mobile-topbar { display:none; padding:14px 18px 10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg); }
@@ -216,7 +260,7 @@
     .mobile-topbar { display:flex; width:100%; }
     .bottom-nav { display:flex; width:100%; }
     .topbar { display:none; }
-    .content { padding:14px 14px 90px; }
+    .content { padding:14px 14px 76px; }
     .cal-day { min-height:62px; padding:5px 4px; }
     .cal-event-label { font-size:9px; }
     .cal-weekday { font-size:9px; padding:4px 0; }
@@ -658,6 +702,13 @@
                 ? `<button class="event-del" onclick="deleteEvento('${ev.id}','${dateStr}',false)">Eliminar</button>`
                 : `<button class="event-del" onclick="deleteEvento('${ev.id}','${dateStr}',true)" style="margin-top:6px">Eliminar serie completa</button>`}
             ` : ''}
+            ${!ev.api && !esCancelado && (ev.tipo === 'entrenamiento' || ev.tipo === 'otro') ? (() => {
+              const sid = getSesionId(ev);
+              return `<button class="plan-toggle" id="ptog-${sid}" onclick="togglePlan('${sid}')">
+                📋 Plan de sesión <span class="ptog-arrow">▾</span>
+              </button>
+              <div class="plan-content" id="pcont-${sid}" style="display:none"></div>`;
+            })() : ''}
           </div>`;
         }).join('');
 
@@ -807,6 +858,245 @@
     }
   }
 
+  // ─── PLAN DE SESIÓN ──────────────────────────────────────────
+  let planCache       = {};   // sesionId → null(cargando) | [](cargado)
+  let planOpen        = {};   // sesionId → bool
+  let allPlayersLocal = [];
+  let _ejSesionId     = null;
+  let _ejTipo         = 'tiro';
+  let _ejNivel        = 'equipo';
+
+  function getSesionId(ev) {
+    return ev.recurrente ? `rec_${ev.recurrente_id}_${ev.fecha}` : String(ev.id);
+  }
+
+  async function togglePlan(sid) {
+    planOpen[sid] = !planOpen[sid];
+    const btn     = document.getElementById(`ptog-${sid}`);
+    const content = document.getElementById(`pcont-${sid}`);
+    if (!content) return;
+    if (planOpen[sid]) {
+      content.style.display = 'block';
+      if (btn) btn.classList.add('open');
+      await loadPlan(sid);
+    } else {
+      content.style.display = 'none';
+      if (btn) btn.classList.remove('open');
+    }
+  }
+
+  async function loadPlan(sid) {
+    if (planCache[sid] !== undefined) { renderPlanContent(sid); return; }
+    planCache[sid] = null;
+    renderPlanContent(sid);
+    try {
+      const data = await fetch(`/api/entrenos?sesion_id=${encodeURIComponent(sid)}`).then(r => r.json());
+      planCache[sid] = Array.isArray(data) ? data : [];
+    } catch { planCache[sid] = []; }
+    renderPlanContent(sid);
+  }
+
+  function renderPlanContent(sid) {
+    const el = document.getElementById(`pcont-${sid}`);
+    if (!el) return;
+    const isStaff = window.HoopRol && window.HoopRol.getRol() === 'staff';
+    const cache   = planCache[sid];
+    const addBtn  = isStaff ? `<button class="btn-add-ej" onclick="openAddEjCal('${sid}')">+ Añadir ejercicio</button>` : '';
+    if (cache === null) { el.innerHTML = '<div class="plan-loading">Cargando...</div>'; return; }
+    if (!cache.length)  { el.innerHTML = `<div class="plan-empty">Sin ejercicios planificados</div>${addBtn}`; return; }
+    el.innerHTML = cache.map(ej => renderEjCardCal(ej, sid)).join('') + addBtn;
+  }
+
+  function renderEjCardCal(ej, sid) {
+    const d = ej.datos || {};
+    const isStaff = window.HoopRol && window.HoopRol.getRol() === 'staff';
+    let badgeStyle, badgeText, statsHTML = '';
+
+    if (ej.tipo === 'tiro') {
+      badgeStyle = 'background:rgba(204,20,20,.15);color:var(--red)';
+      badgeText  = '🏀 Tiro';
+      if (d.nivel === 'jugador' && d.jugadores) {
+        statsHTML = '<div style="margin-top:6px">' + d.jugadores.map((jug, i) => {
+          const pct = jug.intentos > 0 ? Math.round(jug.aciertos / jug.intentos * 100) : 0;
+          return `<div class="ps-row">
+            <span class="ps-name">#${jug.dorsal} ${(jug.nombre||'').split(' ')[0]}</span>
+            <div class="ps-inputs">
+              <span>Int</span>
+              <input class="ps-inp" type="number" min="0" value="${jug.intentos||0}"
+                onchange="calTiroJug(${ej.id},'${sid}',${i},'intentos',this.value)">
+              <span>Ac</span>
+              <input class="ps-inp" type="number" min="0" value="${jug.aciertos||0}"
+                onchange="calTiroJug(${ej.id},'${sid}',${i},'aciertos',this.value)">
+              <span class="stat-pct" id="pct-${ej.id}-${i}">${pct}%</span>
+            </div>
+          </div>`;
+        }).join('') + '</div>';
+      } else {
+        const pct = (d.intentos||0) > 0 ? Math.round((d.aciertos||0)/(d.intentos||0)*100) : 0;
+        statsHTML = `<div class="stat-grid">
+          <div class="stat-box"><span class="stat-lbl">Intentos</span>
+            <input class="stat-input" type="number" min="0" value="${d.intentos||0}"
+              onchange="calTiroEq(${ej.id},'${sid}','intentos',this.value)">
+          </div>
+          <div class="stat-box"><span class="stat-lbl">Aciertos</span>
+            <input class="stat-input" type="number" min="0" value="${d.aciertos||0}"
+              onchange="calTiroEq(${ej.id},'${sid}','aciertos',this.value)">
+          </div>
+          <div class="stat-box"><span class="stat-lbl">%</span>
+            <span class="stat-pct" id="pct-${ej.id}" style="font-size:18px;font-weight:700;color:var(--text)">${pct}%</span>
+          </div>
+        </div>`;
+      }
+    } else if (ej.tipo === '5vs5') {
+      badgeStyle = 'background:rgba(39,174,96,.15);color:var(--green)';
+      badgeText  = '👥 5vs5';
+      statsHTML  = `<div class="stat-grid">
+        <div class="stat-box"><span class="stat-lbl">Q-A Pts</span>
+          <input class="stat-input" type="number" min="0" value="${d.puntosA||0}"
+            onchange="cal5v5(${ej.id},'${sid}','puntosA',this.value)"></div>
+        <div class="stat-box"><span class="stat-lbl">Q-A Fall</span>
+          <input class="stat-input" type="number" min="0" value="${d.falladosA||0}"
+            onchange="cal5v5(${ej.id},'${sid}','falladosA',this.value)"></div>
+        <div class="stat-box"><span class="stat-lbl">Q-B Pts</span>
+          <input class="stat-input" type="number" min="0" value="${d.puntosB||0}"
+            onchange="cal5v5(${ej.id},'${sid}','puntosB',this.value)"></div>
+        <div class="stat-box"><span class="stat-lbl">Q-B Fall</span>
+          <input class="stat-input" type="number" min="0" value="${d.falladosB||0}"
+            onchange="cal5v5(${ej.id},'${sid}','falladosB',this.value)"></div>
+      </div>`;
+    } else {
+      badgeStyle = 'background:rgba(52,152,219,.15);color:#3498db';
+      badgeText  = '📋 Ejercicio';
+      statsHTML  = d.descripcion ? `<div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.4">${d.descripcion}</div>` : '';
+    }
+
+    return `<div class="ej-card" id="ejc-${ej.id}">
+      <span class="ej-badge" style="${badgeStyle}">${badgeText}</span>
+      <div class="ej-titulo">${ej.titulo}</div>
+      ${statsHTML}
+      ${isStaff ? `<div class="ej-actions"><button class="ej-del" onclick="calDelEj(${ej.id},'${sid}')">🗑 Eliminar</button></div>` : ''}
+    </div>`;
+  }
+
+  function calGetEj(ejId, sid) {
+    return (planCache[sid] || []).find(e => String(e.id) === String(ejId));
+  }
+  function calSaveDatos(ejId, sid) {
+    const ej = calGetEj(ejId, sid);
+    if (!ej) return;
+    fetch(`/api/entrenos?id=${ejId}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ datos: ej.datos }),
+    }).catch(() => {});
+  }
+  function calTiroEq(ejId, sid, field, val) {
+    const ej = calGetEj(ejId, sid); if (!ej) return;
+    ej.datos[field] = parseInt(val)||0;
+    const pct = ej.datos.intentos > 0 ? Math.round(ej.datos.aciertos/ej.datos.intentos*100) : 0;
+    const el = document.getElementById(`pct-${ejId}`);
+    if (el) el.textContent = pct + '%';
+    calSaveDatos(ejId, sid);
+  }
+  function calTiroJug(ejId, sid, idx, field, val) {
+    const ej = calGetEj(ejId, sid); if (!ej || !ej.datos.jugadores?.[idx]) return;
+    ej.datos.jugadores[idx][field] = parseInt(val)||0;
+    const jug = ej.datos.jugadores[idx];
+    const pct = jug.intentos > 0 ? Math.round(jug.aciertos/jug.intentos*100) : 0;
+    const el = document.getElementById(`pct-${ejId}-${idx}`);
+    if (el) el.textContent = pct + '%';
+    calSaveDatos(ejId, sid);
+  }
+  function cal5v5(ejId, sid, field, val) {
+    const ej = calGetEj(ejId, sid); if (!ej) return;
+    ej.datos[field] = parseInt(val)||0;
+    calSaveDatos(ejId, sid);
+  }
+  async function calDelEj(ejId, sid) {
+    if (!confirm('¿Eliminar ejercicio?')) return;
+    try {
+      await fetch(`/api/entrenos?id=${ejId}`, { method:'DELETE' });
+      planCache[sid] = (planCache[sid]||[]).filter(e => String(e.id) !== String(ejId));
+      renderPlanContent(sid);
+    } catch { alert('Error al eliminar'); }
+  }
+
+  // ─── MODAL AÑADIR EJERCICIO ────────────────────────────────────
+  function openAddEjCal(sid) {
+    _ejSesionId = sid; _ejTipo = 'tiro'; _ejNivel = 'equipo';
+    document.getElementById('cal-ej-form').reset();
+    calSelTipo('tiro'); calSelNivel('equipo'); calPopQ();
+    document.getElementById('cal-ej-modal').classList.add('open');
+  }
+  function closeAddEjCal(e) {
+    if (!e || e.target === document.getElementById('cal-ej-modal'))
+      document.getElementById('cal-ej-modal').classList.remove('open');
+  }
+  function calSelTipo(t) {
+    _ejTipo = t;
+    document.querySelectorAll('#cal-ej-modal .ej-type-btn').forEach(b => b.classList.toggle('active', b.dataset.tipo === t));
+    document.getElementById('cal-ej-tiro').style.display    = t==='tiro'      ? 'block':'none';
+    document.getElementById('cal-ej-5vs5').style.display    = t==='5vs5'      ? 'block':'none';
+    document.getElementById('cal-ej-libre').style.display   = t==='ejercicio' ? 'block':'none';
+  }
+  function calSelNivel(n) {
+    _ejNivel = n;
+    document.querySelectorAll('#cal-ej-modal .nivel-btn').forEach(b => b.classList.toggle('active', b.dataset.nivel === n));
+  }
+  function calPopQ() {
+    ['cal-qA','cal-qB'].forEach((lid, qi) => {
+      const el = document.getElementById(lid);
+      if (!el) return;
+      el.innerHTML = allPlayersLocal.length
+        ? allPlayersLocal.map(p => {
+            const name = `${p.nombre||''} ${p.apellidos||''}`.trim();
+            return `<label class="player-check">
+              <input type="checkbox" name="q${qi===0?'A':'B'}" value="${p.id||p._id}" data-nombre="${name}" data-dorsal="${p.dorsal||'–'}">
+              <span>#${p.dorsal||'–'} ${name}</span></label>`;
+          }).join('')
+        : '<div style="color:var(--muted);font-size:12px;padding:6px;">Sin jugadores</div>';
+    });
+  }
+  async function calSubmitEj(e) {
+    e.preventDefault();
+    const form = e.target;
+    let titulo = '', datos = {};
+    if (_ejTipo === 'tiro') {
+      const zonaEl  = form.zona;
+      const zonaVal = zonaEl?.value || '2pts-pintura';
+      titulo = zonaEl?.options[zonaEl.selectedIndex]?.text || zonaVal;
+      if (_ejNivel === 'jugador') {
+        datos = { zona:zonaVal, nivel:'jugador', jugadores: allPlayersLocal.map(p => ({
+          id:String(p.id||p._id), nombre:`${p.nombre||''} ${p.apellidos||''}`.trim(),
+          dorsal:p.dorsal||'–', intentos:0, aciertos:0,
+        }))};
+      } else {
+        datos = { zona:zonaVal, nivel:'equipo', intentos:0, aciertos:0 };
+      }
+    } else if (_ejTipo === '5vs5') {
+      titulo = form.titulo_5vs5?.value || '5vs5';
+      const qa = [...document.querySelectorAll('#cal-qA input:checked')].map(cb => ({id:cb.value, nombre:cb.dataset.nombre, dorsal:cb.dataset.dorsal}));
+      const qb = [...document.querySelectorAll('#cal-qB input:checked')].map(cb => ({id:cb.value, nombre:cb.dataset.nombre, dorsal:cb.dataset.dorsal}));
+      datos = { quintetoA:qa, quintetoB:qb, puntosA:0, falladosA:0, puntosB:0, falladosB:0 };
+    } else {
+      titulo = form.titulo_ej?.value || 'Ejercicio';
+      datos  = { descripcion: form.descripcion?.value || '' };
+    }
+    const btn = document.getElementById('cal-ej-submit');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    try {
+      const r = await fetch('/api/entrenos', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ sesion_id:_ejSesionId, tipo:_ejTipo, titulo, datos }),
+      });
+      if (!r.ok) throw new Error((await r.json()).error);
+      const newEj = await r.json();
+      planCache[_ejSesionId] = [...(planCache[_ejSesionId]||[]), newEj];
+      closeAddEjCal();
+      renderPlanContent(_ejSesionId);
+    } catch(err) { alert('Error: ' + err.message); }
+    finally { btn.disabled = false; btn.textContent = 'Añadir ejercicio'; }
+  }
+
   // ─── NAV ──────────────────────────────────────────────────────
   document.getElementById('btn-prev').onclick = async () => {
     currentMonth--;
@@ -848,6 +1138,13 @@
     await fetchEquipoId();
     await Promise.all([fetchPartidos(), fetchEventos()]);
 
+    // Cargar jugadores para el plan de sesión (sin await, en background)
+    if (equipoId) {
+      fetch(`/api/jugadores?equipo_id=${equipoId}`).then(r => r.json()).then(data => {
+        allPlayersLocal = Array.isArray(data) ? data : (data.jugadores || []);
+      }).catch(() => {});
+    }
+
     // Auto-navegar al mes con más actividad reciente si el actual está vacío
     const hasSomething = [...partidosAPI, ...eventosAPI].some(p => {
       const f = p.fecha;
@@ -863,5 +1160,94 @@
     renderCalendar();
   });
 </script>
+
+<!-- ── MODAL: AÑADIR EJERCICIO AL ENTRENO ─────────────────────────────── -->
+<div class="modal-overlay" id="cal-ej-modal" onclick="closeAddEjCal(event)">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">Nuevo Ejercicio</div>
+      <button type="button" class="modal-close" onclick="closeAddEjCal()">✕</button>
+    </div>
+    <form id="cal-ej-form" onsubmit="calSubmitEj(event)">
+
+      <!-- Tipo -->
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <div class="ej-type-btns">
+          <button type="button" class="ej-type-btn active" data-tipo="tiro"      onclick="calSelTipo('tiro')">🏀 Tiro</button>
+          <button type="button" class="ej-type-btn"        data-tipo="5vs5"      onclick="calSelTipo('5vs5')">👥 5vs5</button>
+          <button type="button" class="ej-type-btn"        data-tipo="ejercicio" onclick="calSelTipo('ejercicio')">📋 Ejercicio</button>
+        </div>
+      </div>
+
+      <!-- TIRO -->
+      <div id="cal-ej-tiro">
+        <div class="form-group">
+          <label class="form-label">Zona de tiro</label>
+          <select name="zona" class="form-select">
+            <optgroup label="2 puntos">
+              <option value="2pts-pintura">Pintura</option>
+              <option value="2pts-lateral-izq">Lateral izquierdo</option>
+              <option value="2pts-lateral-der">Lateral derecho</option>
+              <option value="2pts-media-izq">Media distancia izq</option>
+              <option value="2pts-media-der">Media distancia der</option>
+              <option value="2pts-frontal">Frontal 2pts</option>
+            </optgroup>
+            <optgroup label="3 puntos">
+              <option value="3pts-esquina-izq">Esquina izquierda</option>
+              <option value="3pts-esquina-der">Esquina derecha</option>
+              <option value="3pts-lateral-izq">Lateral 3pts izq</option>
+              <option value="3pts-lateral-der">Lateral 3pts der</option>
+              <option value="3pts-frontal">Frontal 3pts</option>
+            </optgroup>
+            <optgroup label="Especial">
+              <option value="tl">Tiro libre</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Registro por</label>
+          <div class="nivel-toggle">
+            <button type="button" class="nivel-btn active" data-nivel="equipo"  onclick="calSelNivel('equipo')">Equipo</button>
+            <button type="button" class="nivel-btn"        data-nivel="jugador" onclick="calSelNivel('jugador')">Jugador</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5vs5 -->
+      <div id="cal-ej-5vs5" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input name="titulo_5vs5" class="form-input" placeholder="Ej: Partido 1" value="5vs5">
+        </div>
+        <div class="quintet-grid">
+          <div class="quintet-col">
+            <div class="quintet-hdr">Quinteto A</div>
+            <div class="player-checks" id="cal-qA"><div style="color:var(--muted);font-size:12px;padding:6px;">Sin jugadores</div></div>
+          </div>
+          <div class="quintet-col">
+            <div class="quintet-hdr">Quinteto B</div>
+            <div class="player-checks" id="cal-qB"><div style="color:var(--muted);font-size:12px;padding:6px;">Sin jugadores</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EJERCICIO LIBRE -->
+      <div id="cal-ej-libre" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Título</label>
+          <input name="titulo_ej" class="form-input" placeholder="Nombre del ejercicio">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción</label>
+          <textarea name="descripcion" class="form-textarea" rows="3" placeholder="Describe el ejercicio..."></textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary" id="cal-ej-submit" style="margin-top:8px">Añadir ejercicio</button>
+    </form>
+  </div>
+</div>
+
 </body>
 </html>
