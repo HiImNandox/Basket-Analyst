@@ -296,30 +296,18 @@
   }
 
   // ─── BUILD SESSIONS LIST ───────────────────────────────────────
-  function buildSessions(partidos, eventosDB) {
+  function buildSessions(eventosDB) {
     const sessions = [];
 
-    // Partidos SAC (usando esCabaneta)
-    const sacMatches = partidos.filter(p => p.esCabaneta);
-    for (const p of sacMatches) {
-      const isHome = p.esCasa;
-      const rival  = isHome
-        ? (p.visit?.nombre || p.visit?.shortName || 'Rival')
-        : (p.local?.nombre || p.local?.shortName || 'Rival');
-      sessions.push({
-        id:    'match_' + p.jornada,
-        tipo:  'partido',
-        title: `J${p.jornada} vs ${rival}`,
-        fecha: p.fecha || '',
-        hora:  '',
-      });
-    }
+    // Solo entrenamientos y otros (sin partidos ni amistosos)
+    const evFiltrados = (eventosDB || []).filter(ev =>
+      ev.tipo === 'entrenamiento' || ev.tipo === 'otro'
+    );
 
-    // Entrenamientos y otros desde la BD
-    for (const ev of (eventosDB || [])) {
+    for (const ev of evFiltrados) {
       sessions.push({
         id:    String(ev.id),
-        tipo:  ev.tipo || 'entrenamiento',
+        tipo:  ev.tipo,
         title: ev.titulo,
         fecha: ev.fecha ? ev.fecha + 'T00:00:00' : '',
         hora:  ev.hora || '',
@@ -512,17 +500,15 @@
         equipoId = sac ? (sac.id || sac._id) : (equipos[0]?.id || equipos[0]?._id);
       } catch (e) { console.warn('[Asistencia] Error equipos:', e); }
 
-      // 2. Cargar partidos, jugadores y eventos en paralelo
-      const [matchData, playersData, eventosData] = await Promise.all([
-        fetch('/api/matches?v=5').then(r => r.json()).catch(() => ({})),
+      // 2. Cargar jugadores y eventos en paralelo
+      const [playersData, eventosData] = await Promise.all([
         equipoId ? fetch(`/api/jugadores?equipo_id=${equipoId}`).then(r => r.json()).catch(() => []) : Promise.resolve([]),
         equipoId ? fetch(`/api/eventos?equipo_id=${equipoId}`).then(r => r.json()).catch(() => []) : Promise.resolve([]),
       ]);
 
-      const partidos = matchData.partidos || [];
       allPlayers = Array.isArray(playersData) ? playersData : (playersData.jugadores || []);
 
-      allSessions = buildSessions(partidos, Array.isArray(eventosData) ? eventosData : []);
+      allSessions = buildSessions(Array.isArray(eventosData) ? eventosData : []);
       renderSesiones();
 
     } catch (e) {
