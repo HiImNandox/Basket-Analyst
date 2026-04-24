@@ -173,6 +173,22 @@
   .dia-btn.active { background:var(--red); border-color:var(--red); color:white; }
   .dia-btn:hover:not(.active) { border-color:var(--border); color:var(--text); }
 
+  /* CANCELADO */
+  .cal-event-dot.cancelado .cal-event-pip { background:var(--muted) !important; }
+  .cal-event-dot.cancelado .cal-event-label { text-decoration:line-through; color:var(--muted); }
+  .event-card.cancelado { opacity:.55; border-left-color:var(--muted) !important; }
+  .badge-cancelado { display:inline-block; background:rgba(231,76,60,.15); color:#e74c3c;
+    font-size:9px; font-weight:700; letter-spacing:1.5px; padding:2px 8px; border-radius:4px;
+    text-transform:uppercase; margin-left:6px; vertical-align:middle; }
+  .btn-cancelar { width:100%; padding:8px; margin-top:10px; border-radius:7px; border:1px solid var(--border2);
+    background:rgba(231,76,60,.1); color:#e74c3c; font-size:12px; font-weight:700; cursor:pointer;
+    font-family:var(--barlow); letter-spacing:.5px; transition:background .15s; }
+  .btn-cancelar:hover { background:rgba(231,76,60,.2); }
+  .btn-restaurar { width:100%; padding:8px; margin-top:10px; border-radius:7px; border:1px solid var(--green-border);
+    background:var(--green-dim); color:var(--green); font-size:12px; font-weight:700; cursor:pointer;
+    font-family:var(--barlow); letter-spacing:.5px; transition:background .15s; }
+  .btn-restaurar:hover { background:rgba(39,174,96,.25); }
+
   /* BOTTOM NAV */
   .bottom-nav { display:none; height:calc(56px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
   .bnav-inner { display:flex; height:100%; width:100%; }
@@ -385,8 +401,12 @@
             <input class="form-input" type="date" name="fecha" id="input-fecha" />
           </div>
           <div class="form-group">
-            <label class="form-label">Hora</label>
-            <input class="form-input" type="time" name="hora" />
+            <label class="form-label">Inicio → Fin</label>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input class="form-input" type="time" name="hora" style="flex:1" />
+              <span style="color:var(--muted);font-size:12px;">→</span>
+              <input class="form-input" type="time" name="hora_fin" style="flex:1" />
+            </div>
           </div>
         </div>
       </div>
@@ -405,12 +425,13 @@
             <button type="button" class="dia-btn" data-dia="7">DOM</button>
           </div>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Hora</label>
-            <input class="form-input" type="time" name="hora_rec" />
+        <div class="form-group">
+          <label class="form-label">Inicio → Fin</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input class="form-input" type="time" name="hora_rec" style="flex:1" />
+            <span style="color:var(--muted);font-size:12px;">→</span>
+            <input class="form-input" type="time" name="hora_fin_rec" style="flex:1" />
           </div>
-          <div class="form-group"></div>
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -419,7 +440,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Hasta</label>
-            <input class="form-input" type="date" name="fecha_fin" />
+            <input class="form-input" type="date" name="fecha_fin_serie" />
           </div>
         </div>
       </div>
@@ -579,8 +600,9 @@
         const lbl = ev.tipo === 'partido'
           ? `vs ${ev.rivalShort || '?'}`
           : (ev.titulo || '').substring(0, 10);
-        return `<div class="cal-event-dot">
-          <div class="cal-event-pip" style="background:${typeColor(ev.tipo)}"></div>
+        const cancelCls = ev.cancelado ? ' cancelado' : '';
+        return `<div class="cal-event-dot${cancelCls}">
+          <div class="cal-event-pip" style="background:${ev.cancelado ? 'var(--muted)' : typeColor(ev.tipo)}"></div>
           <div class="cal-event-label">${lbl}</div>
         </div>`;
       }).join('') + (extra > 0 ? `<div class="cal-more">+${extra} más</div>` : '');
@@ -607,19 +629,34 @@
     body.innerHTML = !events.length
       ? `<div class="no-events">Sin eventos este día${isStaff ? '<br><small style="color:var(--muted)">Usa + para añadir</small>' : ''}</div>`
       : events.map(ev => {
-          const recLabel = ev.recurrente ? ' · Recurrente' : '';
-          return `<div class="event-card ${ev.tipo}">
-            <div class="event-type-badge" style="color:${typeColor(ev.tipo)}">${typeLabel(ev.tipo)}${ev.jornada ? ` · J${ev.jornada}` : recLabel}</div>
-            <div class="event-title">${ev.titulo}</div>
-            <div class="event-meta">
-              ${ev.hora  ? `<span>⏰ ${ev.hora}</span>`  : ''}
-              ${ev.lugar ? `<span>📍 ${ev.lugar}</span>` : ''}
-              ${ev.notas ? `<span style="margin-top:4px;font-size:13px;font-weight:700;color:var(--text)">${ev.notas}</span>` : ''}
+          const esCancelado = !!ev.cancelado;
+          const horario = ev.hora
+            ? (ev.hora_fin ? `${ev.hora} → ${ev.hora_fin}` : ev.hora)
+            : '';
+          const recLabel = ev.recurrente ? ' · Semanal' : '';
+          return `<div class="event-card ${ev.tipo}${esCancelado ? ' cancelado' : ''}">
+            <div class="event-type-badge" style="color:${esCancelado ? 'var(--muted)' : typeColor(ev.tipo)}">
+              ${typeLabel(ev.tipo)}${ev.jornada ? ` · J${ev.jornada}` : recLabel}
+              ${esCancelado ? '<span class="badge-cancelado">Cancelado</span>' : ''}
             </div>
-            ${!ev.api && isStaff
-              ? `<button class="event-del" onclick="deleteEvento('${ev.id}','${dateStr}',${!!ev.recurrente})">
-                   ${ev.recurrente ? 'Eliminar serie' : 'Eliminar'}
-                 </button>` : ''}
+            <div class="event-title" style="${esCancelado ? 'text-decoration:line-through;color:var(--muted)' : ''}">${ev.titulo}</div>
+            <div class="event-meta">
+              ${horario ? `<span>⏰ ${horario}</span>` : ''}
+              ${ev.lugar ? `<span>📍 ${ev.lugar}</span>` : ''}
+              ${ev.notas_exc ? `<span style="color:var(--muted);font-style:italic">💬 ${ev.notas_exc}</span>` : ''}
+              ${ev.notas && !ev.jornada ? `<span style="margin-top:4px;font-size:13px;font-weight:700;color:var(--text)">${ev.notas}</span>` : ''}
+            </div>
+            ${!ev.api && isStaff ? `
+              ${ev.recurrente && !esCancelado
+                ? `<button class="btn-cancelar" onclick="cancelarSesion(${ev.recurrente_id},'${ev.fecha}','${dateStr}')">Cancelar esta sesión</button>`
+                : ''}
+              ${ev.recurrente && esCancelado
+                ? `<button class="btn-restaurar" onclick="restaurarSesion(${ev.recurrente_id},'${ev.fecha}','${dateStr}')">Restaurar sesión</button>`
+                : ''}
+              ${!ev.recurrente
+                ? `<button class="event-del" onclick="deleteEvento('${ev.id}','${dateStr}',false)">Eliminar</button>`
+                : `<button class="event-del" onclick="deleteEvento('${ev.id}','${dateStr}',true)" style="margin-top:6px">Eliminar serie completa</button>`}
+            ` : ''}
           </div>`;
         }).join('');
 
@@ -631,6 +668,30 @@
     document.getElementById('day-panel').classList.remove('open');
     selectedDate = null;
     renderCalendar();
+  }
+
+  // ─── CANCELAR / RESTAURAR SESIÓN ─────────────────────────────
+  async function cancelarSesion(eventoId, fecha, dateStr) {
+    const notas = prompt('Motivo de la cancelación (opcional):') ?? '';
+    try {
+      const r = await fetch('/api/eventos?accion=excepcion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ evento_id: eventoId, fecha, cancelado: true, notas: notas || null })
+      });
+      if (!r.ok) throw new Error();
+      await fetchEventos();
+      openDayPanel(dateStr, getEventsForDate(dateStr));
+    } catch { alert('Error al cancelar la sesión'); }
+  }
+
+  async function restaurarSesion(eventoId, fecha, dateStr) {
+    try {
+      const r = await fetch(`/api/eventos?accion=excepcion&evento_id=${eventoId}&fecha=${fecha}`, { method: 'DELETE' });
+      if (!r.ok) throw new Error();
+      await fetchEventos();
+      openDayPanel(dateStr, getEventsForDate(dateStr));
+    } catch { alert('Error al restaurar la sesión'); }
   }
 
   async function deleteEvento(id, dateStr, isRecurrente) {
@@ -655,7 +716,6 @@
     if (checked) {
       const hoy = new Date().toISOString().split('T')[0];
       const fi = document.querySelector('[name=fecha_inicio]');
-      const ff = document.querySelector('[name=fecha_fin]');
       if (fi && !fi.value) fi.value = hoy;
     }
   }
@@ -708,7 +768,8 @@
     const body = {
       tipo:      form.tipo.value,
       titulo:    form.titulo.value,
-      hora:      recurrente ? form.hora_rec?.value || '' : form.hora?.value || '',
+      hora:      recurrente ? (form.hora_rec?.value || '')     : (form.hora?.value || ''),
+      hora_fin:  recurrente ? (form.hora_fin_rec?.value || '') : (form.hora_fin?.value || ''),
       lugar:     form.lugar.value,
       notas:     form.notas.value,
       equipo_id: equipoId,
@@ -720,7 +781,7 @@
       if (!dias.length) { alert('Selecciona al menos un día de la semana'); btn.disabled = false; btn.textContent = 'Guardar evento'; return; }
       body.dias_semana  = dias;
       body.fecha_inicio = form.fecha_inicio.value;
-      body.fecha_fin    = form.fecha_fin.value;
+      body.fecha_fin    = form.fecha_fin_serie.value;
       if (!body.fecha_inicio || !body.fecha_fin) { alert('Indica las fechas de inicio y fin'); btn.disabled = false; btn.textContent = 'Guardar evento'; return; }
     } else {
       body.fecha = form.fecha.value;

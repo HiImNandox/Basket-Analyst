@@ -1,7 +1,7 @@
 import { sql } from './lib/db.js';
 import { setCors, handleOptions } from './lib/cors.js';
 
-// ─── INIT TABLE ─────────────────────────────────────────────────────────────
+// ─── INIT TABLES ─────────────────────────────────────────────────────────────
 async function ensureTable() {
   await sql`
     CREATE TABLE IF NOT EXISTS eventos (
@@ -9,25 +9,44 @@ async function ensureTable() {
       tipo         VARCHAR(50) NOT NULL DEFAULT 'entrenamiento',
       titulo       TEXT NOT NULL,
       hora         VARCHAR(10),
+      hora_fin     VARCHAR(10),
       lugar        TEXT,
       notas        TEXT,
       equipo_id    INTEGER,
-
-      -- Evento puntual
       fecha        DATE,
-
-      -- Evento recurrente
       recurrente   BOOLEAN NOT NULL DEFAULT false,
-      dias_semana  TEXT,        -- JSON: "[1,4]" (1=Lun … 7=Dom)
+      dias_semana  TEXT,
       fecha_inicio DATE,
       fecha_fin    DATE,
-
       created_at   TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+  // Columna hora_fin en tablas previas sin ella
+  await sql`ALTER TABLE eventos ADD COLUMN IF NOT EXISTS hora_fin VARCHAR(10)`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS eventos_excepciones (
+      id           SERIAL PRIMARY KEY,
+      evento_id    INTEGER REFERENCES eventos(id) ON DELETE CASCADE,
+      fecha        DATE NOT NULL,
+      cancelado    BOOLEAN NOT NULL DEFAULT true,
+      hora_inicio  VARCHAR(10),
+      hora_fin     VARCHAR(10),
+      notas        TEXT,
+      created_at   TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(evento_id, fecha)
     )
   `;
 }
 
-// ─── HELPER: expandir recurrente en fechas individuales ─────────────────────
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function toDateStr(val) {
+  if (!val) return null;
+  if (typeof val === 'string') return val.split('T')[0];
+  if (val instanceof Date)     return val.toISOString().split('T')[0];
+  return String(val).split('T')[0];
+}
+
 function expandirRecurrente(ev, desdeStr, hastaStr) {
   const resultado = [];
   const dias = JSON.parse(ev.dias_semana || '[]');
@@ -43,7 +62,7 @@ function expandirRecurrente(ev, desdeStr, hastaStr) {
 
   let cur = new Date(start);
   while (cur <= end) {
-    const dow = cur.getDay() === 0 ? 7 : cur.getDay(); // 1=Lun … 7=Dom
+    const dow = cur.getDay() === 0 ? 7 : cur.getDay(); // 1=Lun…7=Dom
     if (dias.includes(dow)) {
       const dateStr = cur.toISOString().split('T')[0];
       resultado.push({
@@ -52,10 +71,12 @@ function expandirRecurrente(ev, desdeStr, hastaStr) {
         tipo:          ev.tipo,
         titulo:        ev.titulo,
         hora:          ev.hora,
+        hora_fin:      ev.hora_fin,
         lugar:         ev.lugar,
         notas:         ev.notas,
         fecha:         dateStr,
         recurrente:    true,
+        cancelado:     false,
         dias_semana:   dias,
         fecha_inicio:  toDateStr(ev.fecha_inicio),
         fecha_fin:     toDateStr(ev.fecha_fin),
@@ -66,13 +87,6 @@ function expandirRecurrente(ev, desdeStr, hastaStr) {
   return resultado;
 }
 
-function toDateStr(val) {
-  if (!val) return null;
-  if (typeof val === 'string') return val.split('T')[0];
-  if (val instanceof Date)     return val.toISOString().split('T')[0];
-  return String(val).split('T')[0];
-}
-
 // ─── HANDLER ────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   setCors(res);
@@ -81,7 +95,11 @@ export default async function handler(req, res) {
   try { await ensureTable(); }
   catch (err) { return res.status(500).json({ error: 'DB init: ' + err.message }); }
 
-  // ── GET /api/eventos ──────────────────────────────────────────────────────
+  const accion = req.query.accion || null;
+
+  // ══════════════════════════════════════════════════════════════════
+  // GET /api/eventos
+  // ══════════════════════════════════════════════════════════════════
   if (req.method === 'GET') {
     const { equipo_id, desde, hasta } = req.query;
     try {
@@ -89,6 +107,7 @@ export default async function handler(req, res) {
         ? await sql`SELECT * FROM eventos WHERE equipo_id = ${equipo_id} ORDER BY created_at`
         : await sql`SELECT * FROM eventos ORDER BY created_at`;
 
+      // Expandir todos los eventos (puntual + recurrentes)
       const result = [];
       for (const ev of rows) {
         if (!ev.recurrente) {
@@ -96,64 +115,97 @@ export default async function handler(req, res) {
           if (desde && fecha && fecha < desde) continue;
           if (hasta && fecha && fecha > hasta) continue;
           result.push({
-            id:         ev.id,
-            tipo:       ev.tipo,
-            titulo:     ev.titulo,
-            hora:       ev.hora,
-            lugar:      ev.lugar,
-            notas:      ev.notas,
-            fecha,
-            recurrente: false,
+            id: ev.id, tipo: ev.tipo, titulo: ev.titulo,
+            hora: ev.hora, hora_fin: ev.hora_fin,
+            lugar: ev.lugar, notas: ev.notas, fecha,
+            recurrente: false, cancelado: false,
           });
         } else {
           result.push(...expandirRecurrente(ev, desde, hasta));
         }
       }
+
+      // Aplicar excepciones a las ocurrencias recurrentes
+      const recIds = rows.filter(r => r.recurrente).map(r => r.id);
+      if (recIds.length > 0) {
+        const excs = await sql`
+          SELECT * FROM eventos_excepciones
+          WHERE evento_id = ANY(${recIds})
+          ${desde ? sql`AND fecha >= ${desde}` : sql``}
+          ${hasta ? sql`AND fecha <= ${hasta}` : sql``}
+        `;
+        const excMap = {};
+        for (const ex of excs) excMap[`${ex.evento_id}_${toDateStr(ex.fecha)}`] = ex;
+
+        for (const occ of result) {
+          if (!occ.recurrente) continue;
+          const ex = excMap[`${occ.recurrente_id}_${occ.fecha}`];
+          if (!ex) continue;
+          occ.cancelado       = ex.cancelado;
+          occ.notas_exc       = ex.notas || null;
+          if (ex.hora_inicio) occ.hora     = ex.hora_inicio;
+          if (ex.hora_fin)    occ.hora_fin = ex.hora_fin;
+        }
+      }
+
       return res.status(200).json(result);
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
   }
 
-  // ── POST /api/eventos ─────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════
+  // POST /api/eventos                 → crear evento
+  // POST /api/eventos?accion=excepcion → crear/actualizar excepción
+  // ══════════════════════════════════════════════════════════════════
   if (req.method === 'POST') {
+
+    // ── Excepción (cancelar / modificar una ocurrencia) ────────────
+    if (accion === 'excepcion') {
+      const { evento_id, fecha, cancelado = true, hora_inicio, hora_fin, notas } = req.body || {};
+      if (!evento_id || !fecha) return res.status(400).json({ error: 'evento_id y fecha son obligatorios' });
+      try {
+        await sql`
+          INSERT INTO eventos_excepciones (evento_id, fecha, cancelado, hora_inicio, hora_fin, notas)
+          VALUES (${evento_id}, ${fecha}, ${cancelado}, ${hora_inicio || null}, ${hora_fin || null}, ${notas || null})
+          ON CONFLICT (evento_id, fecha) DO UPDATE SET
+            cancelado   = EXCLUDED.cancelado,
+            hora_inicio = EXCLUDED.hora_inicio,
+            hora_fin    = EXCLUDED.hora_fin,
+            notas       = EXCLUDED.notas
+        `;
+        return res.status(200).json({ ok: true });
+      } catch (err) {
+        return res.status(500).json({ error: err.message });
+      }
+    }
+
+    // ── Crear evento (puntual o recurrente) ────────────────────────
     const {
-      tipo        = 'entrenamiento',
-      titulo,
-      hora,
-      lugar,
-      notas,
-      equipo_id,
-      fecha,
-      recurrente  = false,
-      dias_semana,
-      fecha_inicio,
-      fecha_fin,
+      tipo = 'entrenamiento', titulo, hora, hora_fin,
+      lugar, notas, equipo_id,
+      fecha, recurrente = false, dias_semana, fecha_inicio, fecha_fin,
     } = req.body || {};
 
     if (!titulo) return res.status(400).json({ error: '"titulo" es obligatorio' });
 
     const diasStr = recurrente && Array.isArray(dias_semana) && dias_semana.length
-      ? JSON.stringify(dias_semana)
-      : null;
+      ? JSON.stringify(dias_semana) : null;
 
     try {
       const [row] = await sql`
         INSERT INTO eventos
-          (tipo, titulo, hora, lugar, notas, equipo_id,
+          (tipo, titulo, hora, hora_fin, lugar, notas, equipo_id,
            fecha, recurrente, dias_semana, fecha_inicio, fecha_fin)
         VALUES (
-          ${tipo},
-          ${titulo},
-          ${hora         || null},
-          ${lugar        || null},
-          ${notas        || null},
-          ${equipo_id    || null},
-          ${!recurrente && fecha       ? fecha       : null},
+          ${tipo}, ${titulo},
+          ${hora      || null}, ${hora_fin  || null},
+          ${lugar     || null}, ${notas     || null}, ${equipo_id || null},
+          ${!recurrente && fecha        ? fecha        : null},
           ${!!recurrente},
           ${diasStr},
-          ${recurrente   && fecha_inicio ? fecha_inicio : null},
-          ${recurrente   && fecha_fin    ? fecha_fin    : null}
+          ${recurrente && fecha_inicio  ? fecha_inicio : null},
+          ${recurrente && fecha_fin     ? fecha_fin    : null}
         )
         RETURNING *
       `;
@@ -163,12 +215,28 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── DELETE /api/eventos?id=X ──────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════
+  // DELETE /api/eventos?id=X                         → eliminar evento
+  // DELETE /api/eventos?accion=excepcion&evento_id=X&fecha=Y → restaurar sesión
+  // ══════════════════════════════════════════════════════════════════
   if (req.method === 'DELETE') {
+
+    // ── Restaurar sesión (eliminar excepción) ──────────────────────
+    if (accion === 'excepcion') {
+      const { evento_id, fecha } = req.query;
+      if (!evento_id || !fecha) return res.status(400).json({ error: 'evento_id y fecha son obligatorios' });
+      try {
+        await sql`DELETE FROM eventos_excepciones WHERE evento_id = ${evento_id} AND fecha = ${fecha}`;
+        return res.status(200).json({ ok: true });
+      } catch (err) {
+        return res.status(500).json({ error: err.message });
+      }
+    }
+
+    // ── Eliminar evento completo ───────────────────────────────────
     const { id } = req.query;
     if (!id) return res.status(400).json({ error: '"id" es obligatorio' });
 
-    // "rec_123_2026-04-01" → id real = 123
     const actualId = String(id).startsWith('rec_')
       ? parseInt(String(id).split('_')[1])
       : parseInt(id);
