@@ -226,9 +226,10 @@
   .nivel-btn { flex:1; padding:9px; border-radius:8px; border:1px solid var(--border2); background:var(--panel2); color:var(--text2); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--barlow); transition:all .15s; }
   .nivel-btn.active { background:var(--red-glow); border-color:var(--red-border); color:var(--red); }
   .player-checks { max-height:130px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; border:1px solid var(--border2); border-radius:8px; padding:6px; background:var(--panel2); }
-  .player-check { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); padding:4px 6px; border-radius:4px; cursor:pointer; }
-  .player-check:hover { background:var(--panel3); }
+  .player-check { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); padding:4px 6px; border-radius:4px; cursor:pointer; transition:opacity .15s; }
+  .player-check:hover:not([style*="pointer-events: none"]) { background:var(--panel3); }
   .player-check input { accent-color:var(--red); cursor:pointer; }
+  .player-check input:disabled { cursor:not-allowed; }
   .quintet-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
   .quintet-col { display:flex; flex-direction:column; gap:6px; }
   .quintet-hdr { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
@@ -1042,58 +1043,100 @@
     _ejNivel = n;
     document.querySelectorAll('#cal-ej-modal .nivel-btn').forEach(b => b.classList.toggle('active', b.dataset.nivel === n));
   }
+
+  // Genera las listas de quintetos con exclusión mutua
   function calPopQ() {
-    ['cal-qA','cal-qB'].forEach((lid, qi) => {
-      const el = document.getElementById(lid);
-      if (!el) return;
-      el.innerHTML = allPlayersLocal.length
-        ? allPlayersLocal.map(p => {
-            const name = `${p.nombre||''} ${p.apellidos||''}`.trim();
-            return `<label class="player-check">
-              <input type="checkbox" name="q${qi===0?'A':'B'}" value="${p.id||p._id}" data-nombre="${name}" data-dorsal="${p.dorsal||'–'}">
-              <span>#${p.dorsal||'–'} ${name}</span></label>`;
-          }).join('')
-        : '<div style="color:var(--muted);font-size:12px;padding:6px;">Sin jugadores</div>';
-    });
+    const noPlayers = '<div style="color:var(--muted);font-size:12px;padding:6px;">Sin jugadores</div>';
+    const elA = document.getElementById('cal-qA');
+    const elB = document.getElementById('cal-qB');
+    if (!elA || !elB) return;
+    if (!allPlayersLocal.length) { elA.innerHTML = noPlayers; elB.innerHTML = noPlayers; return; }
+
+    const makeRow = (p, side) => {
+      const pid  = String(p.id || p._id || '');
+      const name = `${p.nombre||''} ${p.apellidos||''}`.trim();
+      const drs  = p.dorsal || '–';
+      return `<label class="player-check" id="qlbl-${side}-${pid}">
+        <input type="checkbox" data-pid="${pid}" data-nombre="${name}" data-dorsal="${drs}"
+          onchange="calQToggle(this,'${side}')">
+        <span>#${drs} ${name}</span>
+      </label>`;
+    };
+
+    elA.innerHTML = allPlayersLocal.map(p => makeRow(p, 'A')).join('');
+    elB.innerHTML = allPlayersLocal.map(p => makeRow(p, 'B')).join('');
   }
+
+  // Cuando se marca/desmarca en un equipo, bloquea/desbloquea en el otro
+  function calQToggle(cb, side) {
+    const pid       = cb.dataset.pid;
+    const otherSide = side === 'A' ? 'B' : 'A';
+    const otherLbl  = document.getElementById(`qlbl-${otherSide}-${pid}`);
+    if (!otherLbl) return;
+    const otherCb = otherLbl.querySelector('input');
+    if (cb.checked) {
+      // Marcado en este equipo → deshabilitar en el otro
+      if (otherCb) { otherCb.checked = false; otherCb.disabled = true; }
+      otherLbl.style.opacity = '0.38';
+      otherLbl.style.pointerEvents = 'none';
+    } else {
+      // Desmarcado → volver a habilitar en el otro
+      if (otherCb) otherCb.disabled = false;
+      otherLbl.style.opacity = '';
+      otherLbl.style.pointerEvents = '';
+    }
+  }
+
   async function calSubmitEj(e) {
     e.preventDefault();
-    const form = e.target;
     let titulo = '', datos = {};
+
     if (_ejTipo === 'tiro') {
-      const zonaEl  = form.zona;
-      const zonaVal = zonaEl?.value || '2pts-pintura';
-      titulo = zonaEl?.options[zonaEl.selectedIndex]?.text || zonaVal;
+      // Acceso explícito por querySelector para evitar ambigüedad con form.elements
+      const zonaEl  = document.querySelector('#cal-ej-tiro select[name="zona"]');
+      const zonaVal = zonaEl ? zonaEl.value : '2pts-pintura';
+      const zonaText = zonaEl ? zonaEl.options[zonaEl.selectedIndex].text : zonaVal;
+      titulo = zonaText;
       if (_ejNivel === 'jugador') {
-        datos = { zona:zonaVal, nivel:'jugador', jugadores: allPlayersLocal.map(p => ({
-          id:String(p.id||p._id), nombre:`${p.nombre||''} ${p.apellidos||''}`.trim(),
-          dorsal:p.dorsal||'–', intentos:0, aciertos:0,
+        datos = { zona: zonaVal, nivel: 'jugador', jugadores: allPlayersLocal.map(p => ({
+          id: String(p.id||p._id), nombre: `${p.nombre||''} ${p.apellidos||''}`.trim(),
+          dorsal: p.dorsal||'–', intentos: 0, aciertos: 0,
         }))};
       } else {
-        datos = { zona:zonaVal, nivel:'equipo', intentos:0, aciertos:0 };
+        datos = { zona: zonaVal, nivel: 'equipo', intentos: 0, aciertos: 0 };
       }
+
     } else if (_ejTipo === '5vs5') {
-      titulo = form.titulo_5vs5?.value || '5vs5';
-      const qa = [...document.querySelectorAll('#cal-qA input:checked')].map(cb => ({id:cb.value, nombre:cb.dataset.nombre, dorsal:cb.dataset.dorsal}));
-      const qb = [...document.querySelectorAll('#cal-qB input:checked')].map(cb => ({id:cb.value, nombre:cb.dataset.nombre, dorsal:cb.dataset.dorsal}));
-      datos = { quintetoA:qa, quintetoB:qb, puntosA:0, falladosA:0, puntosB:0, falladosB:0 };
+      const tituloEl = document.querySelector('#cal-ej-5vs5 input[name="titulo_5vs5"]');
+      titulo = (tituloEl ? tituloEl.value.trim() : '') || '5vs5';
+      const qa = [...document.querySelectorAll('#cal-qA input:checked')].map(cb => ({
+        id: cb.dataset.pid, nombre: cb.dataset.nombre, dorsal: cb.dataset.dorsal,
+      }));
+      const qb = [...document.querySelectorAll('#cal-qB input:checked')].map(cb => ({
+        id: cb.dataset.pid, nombre: cb.dataset.nombre, dorsal: cb.dataset.dorsal,
+      }));
+      datos = { quintetoA: qa, quintetoB: qb, puntosA: 0, falladosA: 0, puntosB: 0, falladosB: 0 };
+
     } else {
-      titulo = form.titulo_ej?.value || 'Ejercicio';
-      datos  = { descripcion: form.descripcion?.value || '' };
+      const tituloEl = document.querySelector('#cal-ej-libre input[name="titulo_ej"]');
+      const descEl   = document.querySelector('#cal-ej-libre textarea[name="descripcion"]');
+      titulo = (tituloEl ? tituloEl.value.trim() : '') || 'Ejercicio';
+      datos  = { descripcion: descEl ? descEl.value : '' };
     }
+
     const btn = document.getElementById('cal-ej-submit');
     btn.disabled = true; btn.textContent = 'Guardando...';
     try {
       const r = await fetch('/api/entrenos', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ sesion_id:_ejSesionId, tipo:_ejTipo, titulo, datos }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sesion_id: _ejSesionId, tipo: _ejTipo, titulo, datos }),
       });
       if (!r.ok) throw new Error((await r.json()).error);
       const newEj = await r.json();
       planCache[_ejSesionId] = [...(planCache[_ejSesionId]||[]), newEj];
       closeAddEjCal();
       renderPlanContent(_ejSesionId);
-    } catch(err) { alert('Error: ' + err.message); }
+    } catch(err) { alert('Error al añadir ejercicio: ' + err.message); }
     finally { btn.disabled = false; btn.textContent = 'Añadir ejercicio'; }
   }
 
