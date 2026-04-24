@@ -133,11 +133,15 @@ export default async function handler(req, res) {
       // En su lugar se hacen queries individuales por evento_id.
       const recIds = rows.filter(r => r.recurrente).map(r => r.id);
       if (recIds.length > 0) {
-        const excArrays = await Promise.all(recIds.map(rid =>
-          sql`SELECT * FROM eventos_excepciones WHERE evento_id = ${rid}
-              ${desde ? sql`AND fecha >= ${desde}` : sql``}
-              ${hasta ? sql`AND fecha <= ${hasta}` : sql``}`
-        ));
+        const excArrays = await Promise.all(recIds.map(rid => {
+          if (desde && hasta)
+            return sql`SELECT * FROM eventos_excepciones WHERE evento_id = ${rid} AND fecha >= ${desde} AND fecha <= ${hasta}`;
+          if (desde)
+            return sql`SELECT * FROM eventos_excepciones WHERE evento_id = ${rid} AND fecha >= ${desde}`;
+          if (hasta)
+            return sql`SELECT * FROM eventos_excepciones WHERE evento_id = ${rid} AND fecha <= ${hasta}`;
+          return sql`SELECT * FROM eventos_excepciones WHERE evento_id = ${rid}`;
+        }));
         const excs = excArrays.flat();
 
         const excMap = {};
