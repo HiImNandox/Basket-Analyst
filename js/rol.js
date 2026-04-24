@@ -359,6 +359,25 @@
     }
   }
 
+  // ─── SIDEBAR UPDATE ──────────────────────────────────────────────
+  function _updateSidebar() {
+    const sidebarNav = document.querySelector('.sidebar-nav');
+    if (!sidebarNav) return;
+
+    const rol   = getRol();
+    const items = rol === 'jugador' ? NAV_JUGADOR : NAV_STAFF;
+
+    sidebarNav.innerHTML =
+      '<div class="nav-section-label">Navegación</div>' +
+      items.map(item => {
+        const active = isActive(item.href) ? ' active' : '';
+        return `<a href="${item.href}" class="nav-item${active}">
+          ${ICONS[item.icon]}
+          ${item.label}
+        </a>`;
+      }).join('');
+  }
+
   // ─── BOTTOM NAV UPDATE ───────────────────────────────────────────
   function _updateBottomNav() {
     const bnavInner = document.querySelector('.bnav-inner');
@@ -390,6 +409,7 @@
       el.addEventListener('click', _openModal);
     });
 
+    _updateSidebar();
     _updateBottomNav();
     _updateUserCard();
   }
