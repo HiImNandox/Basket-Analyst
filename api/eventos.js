@@ -101,10 +101,12 @@ export default async function handler(req, res) {
   // GET /api/eventos
   // ══════════════════════════════════════════════════════════════════
   if (req.method === 'GET') {
-    const { equipo_id, desde, hasta } = req.query;
+    const { equipo_id: eqRaw, desde, hasta } = req.query;
+    // Sanear equipo_id: solo usar si es un número válido
+    const equipo_id = eqRaw && /^\d+$/.test(eqRaw) ? eqRaw : null;
     try {
       const rows = equipo_id
-        ? await sql`SELECT * FROM eventos WHERE equipo_id = ${equipo_id} ORDER BY created_at`
+        ? await sql`SELECT * FROM eventos WHERE equipo_id = ${parseInt(equipo_id)} ORDER BY created_at`
         : await sql`SELECT * FROM eventos ORDER BY created_at`;
 
       // Expandir todos los eventos (puntual + recurrentes)

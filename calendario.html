@@ -510,15 +510,16 @@
 
   // ─── FETCH EVENTOS (BD) ───────────────────────────────────────
   async function fetchEventos() {
-    if (!equipoId) return;
-    // Rango: mes anterior, actual y siguiente para navegación fluida
+    // Rango: mes anterior + actual + siguiente
     const desde = new Date(currentYear, currentMonth - 1, 1).toISOString().split('T')[0];
-    const hasta  = new Date(currentYear, currentMonth + 2, 0).toISOString().split('T')[0];
+    const hasta  = new Date(currentYear, currentMonth + 1, 31).toISOString().split('T')[0]; // último día del mes siguiente
+    const eqParam = equipoId ? `&equipo_id=${equipoId}` : '';
     try {
-      const data = await fetch(`/api/eventos?equipo_id=${equipoId}&desde=${desde}&hasta=${hasta}`).then(r => r.json());
+      const data = await fetch(`/api/eventos?desde=${desde}&hasta=${hasta}${eqParam}`).then(r => r.json());
       eventosAPI = Array.isArray(data) ? data : [];
+      console.log(`[Calendario] Eventos cargados: ${eventosAPI.length} (equipo_id=${equipoId}, ${desde} → ${hasta})`);
     } catch (e) {
-      console.warn('[Calendario] Error eventos:', e);
+      console.error('[Calendario] Error eventos:', e);
       eventosAPI = [];
     }
   }
@@ -788,13 +789,17 @@
     }
 
     try {
+      console.log('[Calendario] Guardando evento:', JSON.stringify(body));
       const r = await fetch('/api/eventos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (!r.ok) throw new Error((await r.json()).error);
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || r.status);
+      console.log('[Calendario] Evento guardado OK:', data);
       closeAddModal();
       await fetchEventos();
       renderCalendar();
       if (!recurrente && body.fecha) openDayPanel(body.fecha, getEventsForDate(body.fecha));
     } catch (err) {
+      console.error('[Calendario] Error al guardar:', err);
       alert('Error al guardar: ' + err.message);
     } finally {
       btn.disabled = false;
