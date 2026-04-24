@@ -148,6 +148,78 @@
 
   @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
   .fadeup { animation:fadeUp .3s ease both; }
+
+  /* SESSION PLAN TABS */
+  .session-tabs { display:flex; background:var(--panel3); border-bottom:1px solid var(--border); }
+  .s-tab-btn { flex:1; padding:9px 12px; background:none; border:none; border-bottom:2px solid transparent; font-size:11px; font-weight:700; color:var(--muted); cursor:pointer; text-transform:uppercase; letter-spacing:.8px; transition:all .15s; font-family:var(--barlow); margin-bottom:-1px; }
+  .s-tab-btn.active { color:var(--red); border-bottom-color:var(--red); }
+
+  /* PLAN */
+  .plan-body { padding:12px 18px 4px; }
+  .plan-empty { text-align:center; padding:20px; color:var(--muted); font-size:13px; }
+  .btn-add-ej { width:100%; padding:10px; margin:8px 0 4px; border-radius:7px; border:1px dashed var(--border2); background:none; color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--barlow); transition:all .15s; }
+  .btn-add-ej:hover { border-color:var(--red); color:var(--red); background:var(--red-glow); }
+
+  /* EXERCISE CARDS */
+  .ej-card { border-left:3px solid var(--blue); background:var(--panel3); border:1px solid var(--border2); border-radius:8px; margin-bottom:8px; overflow:hidden; border-left-width:3px; }
+  .ej-card.tipo5v5 { border-left-color:var(--yellow) !important; }
+  .ej-card.ejercicio { border-left-color:var(--green) !important; }
+  .ej-hdr { display:flex; align-items:center; gap:8px; padding:10px 12px; }
+  .ej-badge { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:2px 8px; border-radius:4px; flex-shrink:0; }
+  .ej-badge.tiro { background:rgba(52,152,219,.15); color:var(--blue); border:1px solid rgba(52,152,219,.3); }
+  .ej-badge.tipo5v5 { background:rgba(243,156,18,.15); color:var(--yellow); border:1px solid rgba(243,156,18,.3); }
+  .ej-badge.ejercicio { background:var(--green-dim); color:var(--green); border:1px solid var(--green-border); }
+  .ej-title { flex:1; font-size:13px; font-weight:700; color:var(--text); }
+  .ej-del { background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; padding:2px 6px; transition:color .15s; }
+  .ej-del:hover { color:#e74c3c; }
+  .ej-body { border-top:1px solid var(--border2); padding:12px; }
+
+  /* STATS */
+  .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .stat-item { display:flex; flex-direction:column; gap:4px; }
+  .stat-item label { font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; font-weight:700; }
+  .stat-input { width:100%; background:var(--panel2); border:1px solid var(--border2); border-radius:6px; padding:8px; color:var(--text); font-size:16px; font-family:var(--mono); font-weight:700; text-align:center; outline:none; }
+  .stat-input:focus { border-color:var(--red); }
+  .stat-pct { font-size:11px; color:var(--muted); text-align:center; margin-top:6px; font-family:var(--mono); }
+  .ps-row { display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--border2); }
+  .ps-row:last-child { border-bottom:none; }
+  .ps-dorsal { width:26px; font-size:10px; color:var(--muted); font-family:var(--mono); flex-shrink:0; }
+  .ps-name { flex:1; font-size:12px; font-weight:600; color:var(--text2); }
+  .ps-inputs { display:flex; gap:5px; align-items:center; font-size:10px; color:var(--muted); }
+  .ps-inp { width:50px; background:var(--panel2); border:1px solid var(--border2); border-radius:5px; padding:5px; color:var(--text); font-size:14px; font-family:var(--mono); font-weight:700; text-align:center; outline:none; }
+  .ps-inp:focus { border-color:var(--red); }
+
+  /* MODAL BASE */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:500; align-items:center; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal-box { background:var(--panel); border:1px solid var(--border2); border-radius:14px; width:min(460px,calc(100vw - 32px)); max-height:90vh; overflow-y:auto; padding:24px; }
+  .modal-box::-webkit-scrollbar { width:4px; }
+  .modal-box::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+  .modal-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+  .modal-title { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
+  .modal-close { background:var(--panel2); border:1px solid var(--border); color:var(--text2); width:32px; height:32px; border-radius:8px; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .form-group { margin-bottom:14px; }
+  .form-label { display:block; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .form-input { width:100%; background:var(--panel2); border:1px solid var(--border2); border-radius:8px; padding:10px 14px; color:var(--text); font-size:14px; font-family:var(--barlow); outline:none; }
+  .form-input:focus { border-color:var(--red); }
+  .btn-primary { background:var(--red); color:white; border:none; border-radius:8px; padding:12px 24px; font-size:14px; font-weight:700; cursor:pointer; letter-spacing:0.5px; transition:background .15s; font-family:var(--barlow); }
+  .btn-primary:hover { background:var(--red-dim); }
+
+  /* ADD EXERCISE MODAL */
+  .ej-type-btns { display:flex; gap:8px; }
+  .ej-type-btn { flex:1; padding:10px 6px; border-radius:8px; border:1px solid var(--border2); background:var(--panel2); color:var(--text2); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--barlow); letter-spacing:.3px; transition:all .15s; }
+  .ej-type-btn.active { background:var(--red-glow); border-color:var(--red-border); color:var(--red); }
+  .nivel-toggle { display:flex; gap:8px; }
+  .nivel-btn { flex:1; padding:9px; border-radius:8px; border:1px solid var(--border2); background:var(--panel2); color:var(--text2); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--barlow); transition:all .15s; }
+  .nivel-btn.active { background:var(--red-glow); border-color:var(--red-border); color:var(--red); }
+  .player-checks { max-height:140px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; border:1px solid var(--border2); border-radius:8px; padding:6px; background:var(--panel2); }
+  .player-check { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); padding:4px 6px; border-radius:4px; cursor:pointer; }
+  .player-check:hover { background:var(--panel3); }
+  .player-check input { accent-color:var(--red); cursor:pointer; }
+  .quintet-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+  .quintet-col { display:flex; flex-direction:column; gap:6px; }
+  .quintet-hdr { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+  .quintet-label { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
 </style>
 </head>
 <body>
@@ -257,6 +329,11 @@
   let allPlayers  = [];
   let expandedSession = null;
   let currentTab = 'sesiones';
+  let sessionTabs = {};   // sesionId → 'asistencia' | 'plan'
+  let planCache   = {};   // sesionId → ejercicio[]
+  let _addEjSesionId = null;
+  let _addEjTipo     = 'tiro';
+  let _addEjNivel    = 'equipo';
 
   // ─── STORAGE ──────────────────────────────────────────────────
   function getAttendance() {
@@ -349,6 +426,7 @@
   // ─── RENDER SESSIONS TAB ───────────────────────────────────────
   function renderSesiones() {
     const el = document.getElementById('page-content');
+    const isStaff = window.HoopRol && window.HoopRol.getRol() === 'staff';
 
     if (!allSessions.length) {
       el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--muted);">No hay sesiones disponibles</div>';
@@ -357,33 +435,55 @@
 
     el.innerHTML = `<div class="sessions-list fadeup">${allSessions.map(s => {
       const { present, total } = getPresentCount(s.id);
-      const isOpen = expandedSession === s.id;
-      const attendanceHTML = isOpen && allPlayers.length ? allPlayers.map(p => {
-        const pid       = p.id || p._id;
-        const nombre    = (p.nombre || p.name || '').trim();
-        const apellidos = (p.apellidos || p.surname || '').trim();
-        const dorsal    = p.dorsal || p.numero || '–';
-        const pres  = isPresent(s.id, pid);
-        const abs   = isAbsent(s.id, pid);
-        return `<div class="att-row">
-          <div class="att-dorsal">#${dorsal}</div>
-          <div class="att-name">${nombre} ${apellidos}</div>
-          <div class="att-toggle">
-            <button class="att-btn present ${pres ? 'active' : ''}" onclick="toggleAtt('${s.id}','${pid}',true)">Presente</button>
-            <button class="att-btn absent ${abs ? 'active' : ''}" onclick="toggleAtt('${s.id}','${pid}',false)">Ausente</button>
-          </div>
-        </div>`;
-      }).join('') : '';
+      const isOpen   = expandedSession === s.id;
+      const activeTab = sessionTabs[s.id] || 'asistencia';
+
+      let bodyHTML = '';
+      if (isOpen) {
+        // ── Mini tabs (solo staff) ──
+        const tabsBar = isStaff ? `
+          <div class="session-tabs">
+            <button class="s-tab-btn ${activeTab==='asistencia'?'active':''}" onclick="switchSessionTab('${s.id}','asistencia')">Asistencia</button>
+            <button class="s-tab-btn ${activeTab==='plan'?'active':''}" onclick="switchSessionTab('${s.id}','plan')">Plan de sesión</button>
+          </div>` : '';
+
+        // ── Asistencia content ──
+        const attContent = (activeTab === 'asistencia' || !isStaff) ? `
+          <div class="attendance-list">${
+            allPlayers.length ? allPlayers.map(p => {
+              const pid = p.id || p._id;
+              const nombre    = (p.nombre || p.name || '').trim();
+              const apellidos = (p.apellidos || p.surname || '').trim();
+              const dorsal    = p.dorsal || p.numero || '–';
+              const pres = isPresent(s.id, pid);
+              const abs  = isAbsent(s.id, pid);
+              return `<div class="att-row">
+                <div class="att-dorsal">#${dorsal}</div>
+                <div class="att-name">${nombre} ${apellidos}</div>
+                <div class="att-toggle">
+                  <button class="att-btn present ${pres?'active':''}" onclick="toggleAtt('${s.id}','${pid}',true)">Presente</button>
+                  <button class="att-btn absent ${abs?'active':''}" onclick="toggleAtt('${s.id}','${pid}',false)">Ausente</button>
+                </div>
+              </div>`;
+            }).join('')
+            : '<div style="padding:20px;text-align:center;color:var(--muted);">Sin jugadores cargados</div>'
+          }</div>` : '';
+
+        // ── Plan content ──
+        const planContent = (activeTab === 'plan' && isStaff) ? renderPlanContent(s) : '';
+
+        bodyHTML = `<div class="session-body open">${tabsBar}${attContent}${planContent}</div>`;
+      }
 
       return `<div class="session-card">
-        <div class="session-hdr ${isOpen ? 'open' : ''}" onclick="toggleSession('${s.id}')">
+        <div class="session-hdr ${isOpen?'open':''}" onclick="toggleSession('${s.id}')">
           <span class="session-type-badge ${s.tipo}">${typeLabel(s.tipo)}</span>
           <div class="session-title">${s.title}</div>
           <div class="session-date">${formatFecha(s.fecha)}</div>
           ${total > 0 ? `<div class="session-count">${present}/${total}</div>` : ''}
           <span class="session-chevron">▼</span>
         </div>
-        ${isOpen ? `<div class="session-body open"><div class="attendance-list">${attendanceHTML || '<div style="padding:20px;text-align:center;color:var(--muted);">Sin jugadores cargados</div>'}</div></div>` : ''}
+        ${bodyHTML}
       </div>`;
     }).join('')}</div>`;
   }
@@ -404,6 +504,262 @@
       setAttendance(sessionId, playerId, present);
     }
     renderSesiones();
+  }
+
+  // ─── PLAN: SWITCH TAB ──────────────────────────────────────────
+  async function switchSessionTab(sesionId, tab) {
+    sessionTabs[sesionId] = tab;
+    if (tab === 'plan' && planCache[sesionId] === undefined) {
+      planCache[sesionId] = null; // loading sentinel
+      renderSesiones();
+      try {
+        const data = await fetch(`/api/entrenos?sesion_id=${encodeURIComponent(sesionId)}`).then(r => r.json());
+        planCache[sesionId] = Array.isArray(data) ? data : [];
+      } catch(e) { planCache[sesionId] = []; }
+    }
+    renderSesiones();
+  }
+
+  // ─── PLAN: RENDER CONTENT ──────────────────────────────────────
+  function renderPlanContent(s) {
+    const exercises = planCache[s.id];
+    if (exercises === undefined) return `<div class="plan-body"><div class="plan-empty">Cargando plan...</div></div>`;
+    if (exercises === null)      return `<div class="plan-body"><div class="plan-empty">Cargando...</div></div>`;
+
+    const cards = exercises.length
+      ? exercises.map(ej => renderEjCard(ej, s.id)).join('')
+      : '<div class="plan-empty">Sin ejercicios planificados aún</div>';
+
+    const fechaStr = s.fecha ? s.fecha.split('T')[0] : '';
+    return `<div class="plan-body">
+      ${cards}
+      <button class="btn-add-ej" onclick="openAddEj('${s.id}','${fechaStr}')">+ Añadir ejercicio</button>
+    </div>`;
+  }
+
+  // ─── PLAN: RENDER EXERCISE CARD ────────────────────────────────
+  function renderEjCard(ej, sesionId) {
+    const { id, tipo, titulo, datos: d } = ej;
+    const badgeClass = tipo === 'tiro' ? 'tiro' : tipo === '5vs5' ? 'tipo5v5' : 'ejercicio';
+    const badgeLabel = tipo === 'tiro' ? 'Tiro' : tipo === '5vs5' ? '5vs5' : 'Ejercicio';
+    const cardClass  = tipo === 'tiro' ? '' : tipo === '5vs5' ? ' tipo5v5' : ' ejercicio';
+
+    let bodyHTML = '';
+
+    if (tipo === 'tiro') {
+      const sub = `<span style="font-weight:400;color:var(--muted);font-size:11px"> · ${d.zona||''} · ${d.nivel==='jugador'?'Por jugador':'Equipo'}</span>`;
+      if (d.nivel === 'jugador') {
+        const rows = (d.jugadores || []).map((jug, idx) => {
+          const int = jug.intentos ?? 0, ac = jug.aciertos ?? 0;
+          return `<div class="ps-row">
+            <span class="ps-dorsal">#${jug.dorsal||'–'}</span>
+            <span class="ps-name">${jug.nombre||''}</span>
+            <div class="ps-inputs">
+              <input class="ps-inp" type="number" min="0" value="${int}" title="Intentos"
+                onchange="updateTiroJug(${id},${idx},'intentos',this.value,'${sesionId}')">
+              <span>/</span>
+              <input class="ps-inp" type="number" min="0" value="${ac}" title="Aciertos"
+                onchange="updateTiroJug(${id},${idx},'aciertos',this.value,'${sesionId}')">
+            </div>
+          </div>`;
+        }).join('');
+        bodyHTML = `<div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Intentos / Aciertos</div>${rows}`;
+        return `<div class="ej-card${cardClass}">
+          <div class="ej-hdr"><span class="ej-badge ${badgeClass}">${badgeLabel}</span>
+            <span class="ej-title">${titulo}${sub}</span>
+            <button class="ej-del" onclick="deleteEj(${id},'${sesionId}')">✕</button>
+          </div><div class="ej-body">${bodyHTML}</div></div>`;
+      } else {
+        const int = d.intentos ?? 0, ac = d.aciertos ?? 0;
+        const pct = int > 0 ? Math.round(ac/int*100) : 0;
+        bodyHTML = `<div class="stat-grid">
+          <div class="stat-item"><label>Intentos</label>
+            <input class="stat-input" type="number" min="0" value="${int}"
+              onchange="updateTiroEq(${id},'intentos',this.value,'${sesionId}')">
+          </div>
+          <div class="stat-item"><label>Aciertos</label>
+            <input class="stat-input" type="number" min="0" value="${ac}"
+              onchange="updateTiroEq(${id},'aciertos',this.value,'${sesionId}')">
+          </div>
+        </div>
+        <div class="stat-pct" id="pct_${id}">${pct > 0 ? `Efectividad: ${pct}%` : ''}</div>`;
+        return `<div class="ej-card${cardClass}">
+          <div class="ej-hdr"><span class="ej-badge ${badgeClass}">${badgeLabel}</span>
+            <span class="ej-title">${titulo}${sub}</span>
+            <button class="ej-del" onclick="deleteEj(${id},'${sesionId}')">✕</button>
+          </div><div class="ej-body">${bodyHTML}</div></div>`;
+      }
+    }
+
+    if (tipo === '5vs5') {
+      const qa = (d.quintetoA||[]).map(p=>p.nombre||p).join(', ') || '—';
+      const qb = (d.quintetoB||[]).map(p=>p.nombre||p).join(', ') || '—';
+      bodyHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div><div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:4px">Quinteto A</div>
+            <div style="font-size:12px;color:var(--text2)">${qa}</div></div>
+          <div><div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:4px">Quinteto B</div>
+            <div style="font-size:12px;color:var(--text2)">${qb}</div></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-item"><label>Puntos A ✓</label>
+            <input class="stat-input" type="number" min="0" value="${d.puntosA??0}"
+              onchange="update5v5(${id},'puntosA',this.value,'${sesionId}')"></div>
+          <div class="stat-item"><label>Fallados A ✗</label>
+            <input class="stat-input" type="number" min="0" value="${d.falladosA??0}"
+              onchange="update5v5(${id},'falladosA',this.value,'${sesionId}')"></div>
+          <div class="stat-item"><label>Puntos B ✓</label>
+            <input class="stat-input" type="number" min="0" value="${d.puntosB??0}"
+              onchange="update5v5(${id},'puntosB',this.value,'${sesionId}')"></div>
+          <div class="stat-item"><label>Fallados B ✗</label>
+            <input class="stat-input" type="number" min="0" value="${d.falladosB??0}"
+              onchange="update5v5(${id},'falladosB',this.value,'${sesionId}')"></div>
+        </div>`;
+    }
+
+    if (tipo === 'ejercicio') {
+      bodyHTML = `<div style="font-size:13px;color:var(--text2);white-space:pre-line">${d.descripcion || '<span style="color:var(--muted);font-style:italic">Sin descripción</span>'}</div>`;
+    }
+
+    return `<div class="ej-card${cardClass}">
+      <div class="ej-hdr"><span class="ej-badge ${badgeClass}">${badgeLabel}</span>
+        <span class="ej-title">${titulo}</span>
+        <button class="ej-del" onclick="deleteEj(${id},'${sesionId}')">✕</button>
+      </div><div class="ej-body">${bodyHTML}</div></div>`;
+  }
+
+  // ─── PLAN: STAT UPDATES ────────────────────────────────────────
+  async function _saveEjDatos(ejId, sesionId, datos) {
+    const ej = (planCache[sesionId]||[]).find(e => e.id === ejId);
+    if (ej) ej.datos = datos;
+    try {
+      await fetch(`/api/entrenos?id=${ejId}`, {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ datos }),
+      });
+    } catch(e) { console.warn('[Plan] save error:', e); }
+  }
+
+  async function updateTiroEq(ejId, field, val, sesionId) {
+    const ej = (planCache[sesionId]||[]).find(e => e.id === ejId);
+    if (!ej) return;
+    ej.datos[field] = parseInt(val)||0;
+    const int = ej.datos.intentos||0, ac = ej.datos.aciertos||0;
+    const pctEl = document.getElementById('pct_' + ejId);
+    if (pctEl) pctEl.textContent = int > 0 ? `Efectividad: ${Math.round(ac/int*100)}%` : '';
+    await _saveEjDatos(ejId, sesionId, ej.datos);
+  }
+
+  async function updateTiroJug(ejId, idx, field, val, sesionId) {
+    const ej = (planCache[sesionId]||[]).find(e => e.id === ejId);
+    if (!ej || !ej.datos.jugadores?.[idx]) return;
+    ej.datos.jugadores[idx][field] = parseInt(val)||0;
+    await _saveEjDatos(ejId, sesionId, ej.datos);
+  }
+
+  async function update5v5(ejId, field, val, sesionId) {
+    const ej = (planCache[sesionId]||[]).find(e => e.id === ejId);
+    if (!ej) return;
+    ej.datos[field] = parseInt(val)||0;
+    await _saveEjDatos(ejId, sesionId, ej.datos);
+  }
+
+  async function deleteEj(ejId, sesionId) {
+    if (!confirm('¿Eliminar este ejercicio?')) return;
+    try {
+      await fetch(`/api/entrenos?id=${ejId}`, { method:'DELETE' });
+      planCache[sesionId] = (planCache[sesionId]||[]).filter(e => e.id !== ejId);
+      renderSesiones();
+    } catch(e) { alert('Error al eliminar'); }
+  }
+
+  // ─── ADD EXERCISE MODAL ────────────────────────────────────────
+  function openAddEj(sesionId) {
+    _addEjSesionId = sesionId;
+    _addEjTipo = 'tiro';
+    _addEjNivel = 'equipo';
+    document.getElementById('add-ej-form').reset();
+    selectEjTipo('tiro');
+    selectNivel('equipo');
+    _populateQuintets();
+    document.getElementById('add-ej-modal').classList.add('open');
+  }
+  function closeAddEj(e) {
+    if (!e || e.target === document.getElementById('add-ej-modal'))
+      document.getElementById('add-ej-modal').classList.remove('open');
+  }
+  function selectEjTipo(tipo) {
+    _addEjTipo = tipo;
+    document.querySelectorAll('.ej-type-btn').forEach(b => b.classList.toggle('active', b.dataset.tipo === tipo));
+    document.getElementById('ej-tiro-fields').style.display     = tipo==='tiro'      ? 'block':'none';
+    document.getElementById('ej-5vs5-fields').style.display     = tipo==='5vs5'      ? 'block':'none';
+    document.getElementById('ej-ejercicio-fields').style.display = tipo==='ejercicio' ? 'block':'none';
+  }
+  function selectNivel(nivel) {
+    _addEjNivel = nivel;
+    document.querySelectorAll('.nivel-btn').forEach(b => b.classList.toggle('active', b.dataset.nivel === nivel));
+  }
+  function _populateQuintets() {
+    ['quintetA-list','quintetB-list'].forEach((lid, qi) => {
+      const el = document.getElementById(lid);
+      if (!el) return;
+      el.innerHTML = allPlayers.length
+        ? allPlayers.map(p => {
+            const pid = p.id||p._id;
+            const name = `${p.nombre||''} ${p.apellidos||''}`.trim();
+            const drs  = p.dorsal||'–';
+            return `<label class="player-check">
+              <input type="checkbox" name="q${qi===0?'A':'B'}" value="${pid}" data-nombre="${name}" data-dorsal="${drs}">
+              <span>#${drs} ${name}</span></label>`;
+          }).join('')
+        : '<div style="color:var(--muted);font-size:12px;padding:8px;">Sin jugadores</div>';
+    });
+  }
+  async function submitAddEj(e) {
+    e.preventDefault();
+    const form = e.target;
+    let titulo = '', datos = {};
+
+    if (_addEjTipo === 'tiro') {
+      const zonaEl = form.zona;
+      const zonaVal = zonaEl?.value || '2pts-pintura';
+      const zonaText = zonaEl?.options[zonaEl.selectedIndex]?.text || zonaVal;
+      titulo = zonaText;
+      if (_addEjNivel === 'jugador') {
+        datos = { zona: zonaVal, nivel:'jugador', jugadores: allPlayers.map(p => ({
+          id: String(p.id||p._id), nombre:`${p.nombre||''} ${p.apellidos||''}`.trim(),
+          dorsal: p.dorsal||'–', intentos:0, aciertos:0,
+        }))};
+      } else {
+        datos = { zona: zonaVal, nivel:'equipo', intentos:0, aciertos:0 };
+      }
+    } else if (_addEjTipo === '5vs5') {
+      titulo = form.titulo_5vs5?.value || '5vs5';
+      const qa = [...document.querySelectorAll('#quintetA-list input:checked')].map(cb=>({id:cb.value,nombre:cb.dataset.nombre,dorsal:cb.dataset.dorsal}));
+      const qb = [...document.querySelectorAll('#quintetB-list input:checked')].map(cb=>({id:cb.value,nombre:cb.dataset.nombre,dorsal:cb.dataset.dorsal}));
+      datos = { quintetoA:qa, quintetoB:qb, puntosA:0, falladosA:0, puntosB:0, falladosB:0 };
+    } else {
+      titulo = form.titulo_ej?.value || 'Ejercicio';
+      datos  = { descripcion: form.descripcion?.value||'' };
+    }
+
+    const btn = document.getElementById('btn-add-ej-submit');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    try {
+      const r = await fetch('/api/entrenos', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ sesion_id:_addEjSesionId, tipo:_addEjTipo, titulo, datos }),
+      });
+      if (!r.ok) throw new Error((await r.json()).error);
+      const newEj = await r.json();
+      planCache[_addEjSesionId] = [...(planCache[_addEjSesionId]||[]), newEj];
+      closeAddEj();
+      renderSesiones();
+    } catch(err) {
+      alert('Error: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Añadir ejercicio';
+    }
   }
 
   // ─── RENDER RESUMEN TAB ────────────────────────────────────────
@@ -518,5 +874,98 @@
     }
   });
 </script>
+
+<!-- ── ADD EJERCICIO MODAL ─────────────────────────────────────────────── -->
+<div class="modal-overlay" id="add-ej-modal" onclick="closeAddEj(event)">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">Nuevo Ejercicio</div>
+      <button type="button" class="modal-close" onclick="closeAddEj()">✕</button>
+    </div>
+    <form id="add-ej-form" onsubmit="submitAddEj(event)">
+
+      <!-- Tipo selector -->
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <div class="ej-type-btns">
+          <button type="button" class="ej-type-btn active" data-tipo="tiro"      onclick="selectEjTipo('tiro')">🏀 Tiro</button>
+          <button type="button" class="ej-type-btn"        data-tipo="5vs5"      onclick="selectEjTipo('5vs5')">👥 5vs5</button>
+          <button type="button" class="ej-type-btn"        data-tipo="ejercicio" onclick="selectEjTipo('ejercicio')">📋 Ejercicio</button>
+        </div>
+      </div>
+
+      <!-- ── TIRO fields ───────────────────────────────────────────── -->
+      <div id="ej-tiro-fields">
+        <div class="form-group">
+          <label class="form-label">Zona de tiro</label>
+          <select name="zona" class="form-input">
+            <optgroup label="2 puntos">
+              <option value="2pts-pintura">Pintura</option>
+              <option value="2pts-lateral-izq">Lateral izquierdo</option>
+              <option value="2pts-lateral-der">Lateral derecho</option>
+              <option value="2pts-media-izq">Media distancia izq</option>
+              <option value="2pts-media-der">Media distancia der</option>
+              <option value="2pts-frontal">Frontal 2pts</option>
+            </optgroup>
+            <optgroup label="3 puntos">
+              <option value="3pts-esquina-izq">Esquina izquierda</option>
+              <option value="3pts-esquina-der">Esquina derecha</option>
+              <option value="3pts-lateral-izq">Lateral 3pts izq</option>
+              <option value="3pts-lateral-der">Lateral 3pts der</option>
+              <option value="3pts-frontal">Frontal 3pts</option>
+            </optgroup>
+            <optgroup label="Especial">
+              <option value="tl">Tiro libre</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Registro por</label>
+          <div class="nivel-toggle">
+            <button type="button" class="nivel-btn active" data-nivel="equipo"   onclick="selectNivel('equipo')">Equipo</button>
+            <button type="button" class="nivel-btn"        data-nivel="jugador"  onclick="selectNivel('jugador')">Jugador</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 5vs5 fields ───────────────────────────────────────────── -->
+      <div id="ej-5vs5-fields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Nombre del partido</label>
+          <input name="titulo_5vs5" class="form-input" placeholder="Ej: Partido 1" value="5vs5">
+        </div>
+        <div class="quintet-grid">
+          <div class="quintet-col">
+            <div class="quintet-hdr">Quinteto A</div>
+            <div class="player-checks" id="quintetA-list">
+              <div style="color:var(--muted);font-size:12px;padding:8px;">Sin jugadores</div>
+            </div>
+          </div>
+          <div class="quintet-col">
+            <div class="quintet-hdr">Quinteto B</div>
+            <div class="player-checks" id="quintetB-list">
+              <div style="color:var(--muted);font-size:12px;padding:8px;">Sin jugadores</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── EJERCICIO fields ──────────────────────────────────────── -->
+      <div id="ej-ejercicio-fields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Título</label>
+          <input name="titulo_ej" class="form-input" placeholder="Nombre del ejercicio" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción</label>
+          <textarea name="descripcion" class="form-input" rows="3" placeholder="Describe el ejercicio..."></textarea>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary" id="btn-add-ej-submit" style="width:100%;margin-top:8px;">Añadir ejercicio</button>
+    </form>
+  </div>
+</div>
+
 </body>
 </html>
