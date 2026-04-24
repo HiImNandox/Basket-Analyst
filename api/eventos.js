@@ -129,14 +129,17 @@ export default async function handler(req, res) {
       }
 
       // Aplicar excepciones a las ocurrencias recurrentes
+      // Nota: se evita ANY($array) porque neon HTTP no lo soporta bien.
+      // En su lugar se hacen queries individuales por evento_id.
       const recIds = rows.filter(r => r.recurrente).map(r => r.id);
       if (recIds.length > 0) {
-        const excs = await sql`
-          SELECT * FROM eventos_excepciones
-          WHERE evento_id = ANY(${recIds})
-          ${desde ? sql`AND fecha >= ${desde}` : sql``}
-          ${hasta ? sql`AND fecha <= ${hasta}` : sql``}
-        `;
+        const excArrays = await Promise.all(recIds.map(rid =>
+          sql`SELECT * FROM eventos_excepciones WHERE evento_id = ${rid}
+              ${desde ? sql`AND fecha >= ${desde}` : sql``}
+              ${hasta ? sql`AND fecha <= ${hasta}` : sql``}`
+        ));
+        const excs = excArrays.flat();
+
         const excMap = {};
         for (const ex of excs) excMap[`${ex.evento_id}_${toDateStr(ex.fecha)}`] = ex;
 
