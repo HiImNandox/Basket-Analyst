@@ -136,9 +136,9 @@
   .no-events { text-align:center; padding:32px; color:var(--muted); font-size:13px; }
 
   /* MODAL OVERLAY */
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:500; align-items:center; justify-content:center; }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:600; align-items:center; justify-content:center; }
   .modal-overlay.open { display:flex; }
-  .modal-box { background:var(--panel); border:1px solid var(--border2); border-radius:14px; width:min(460px,calc(100vw - 32px)); max-height:90vh; overflow-y:auto; padding:24px; }
+  .modal-box { background:var(--panel); border:1px solid var(--border2); border-radius:14px; width:min(480px,calc(100vw - 32px)); max-height:92vh; overflow-y:auto; padding:24px; position:relative; }
   .modal-box::-webkit-scrollbar { width:4px; }
   .modal-box::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
   .modal-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
@@ -225,11 +225,12 @@
   .nivel-toggle { display:flex; gap:8px; }
   .nivel-btn { flex:1; padding:9px; border-radius:8px; border:1px solid var(--border2); background:var(--panel2); color:var(--text2); font-size:12px; font-weight:700; cursor:pointer; font-family:var(--barlow); transition:all .15s; }
   .nivel-btn.active { background:var(--red-glow); border-color:var(--red-border); color:var(--red); }
-  .player-checks { max-height:130px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; border:1px solid var(--border2); border-radius:8px; padding:6px; background:var(--panel2); }
-  .player-check { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); padding:4px 6px; border-radius:4px; cursor:pointer; transition:opacity .15s; }
-  .player-check:hover:not([style*="pointer-events: none"]) { background:var(--panel3); }
-  .player-check input { accent-color:var(--red); cursor:pointer; }
-  .player-check input:disabled { cursor:not-allowed; }
+  .player-checks { max-height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; border:1px solid var(--border2); border-radius:8px; padding:6px; background:var(--panel2); }
+  .player-check { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); padding:4px 6px; border-radius:4px; cursor:pointer; transition:opacity .15s; user-select:none; }
+  .player-check:hover:not(.q-blocked) { background:var(--panel3); }
+  .player-check input { accent-color:var(--red); cursor:pointer; pointer-events:none; }
+  .player-check.q-blocked { opacity:0.35; cursor:not-allowed; pointer-events:none; }
+  .player-check.q-blocked input { cursor:not-allowed; }
   .quintet-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
   .quintet-col { display:flex; flex-direction:column; gap:6px; }
   .quintet-hdr { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
@@ -411,7 +412,7 @@
 
 <!-- Add event modal -->
 <div class="modal-overlay" id="add-modal" onclick="closeAddModal(event)">
-  <div class="modal-box">
+  <div class="modal-box" onclick="event.stopPropagation()">
     <div class="modal-hdr">
       <div class="modal-title">Nuevo Evento</div>
       <button class="modal-close" onclick="closeAddModal()">✕</button>
@@ -1024,8 +1025,17 @@
   // ─── MODAL AÑADIR EJERCICIO ────────────────────────────────────
   function openAddEjCal(sid) {
     _ejSesionId = sid; _ejTipo = 'tiro'; _ejNivel = 'equipo';
+    // Reset completo del formulario
     document.getElementById('cal-ej-form').reset();
-    calSelTipo('tiro'); calSelNivel('equipo'); calPopQ();
+    // Limpiar estados de bloqueo residuales en quintetos
+    document.querySelectorAll('#cal-ej-5vs5 .player-check').forEach(lbl => {
+      lbl.classList.remove('q-blocked');
+      const cb = lbl.querySelector('input');
+      if (cb) { cb.checked = false; cb.disabled = false; }
+    });
+    calSelTipo('tiro');
+    calSelNivel('equipo');
+    calPopQ();
     document.getElementById('cal-ej-modal').classList.add('open');
   }
   function closeAddEjCal(e) {
@@ -1035,9 +1045,9 @@
   function calSelTipo(t) {
     _ejTipo = t;
     document.querySelectorAll('#cal-ej-modal .ej-type-btn').forEach(b => b.classList.toggle('active', b.dataset.tipo === t));
-    document.getElementById('cal-ej-tiro').style.display    = t==='tiro'      ? 'block':'none';
-    document.getElementById('cal-ej-5vs5').style.display    = t==='5vs5'      ? 'block':'none';
-    document.getElementById('cal-ej-libre').style.display   = t==='ejercicio' ? 'block':'none';
+    document.getElementById('cal-ej-tiro').style.display    = (t === 'tiro')      ? 'block' : 'none';
+    document.getElementById('cal-ej-5vs5').style.display    = (t === '5vs5')      ? 'block' : 'none';
+    document.getElementById('cal-ej-libre').style.display   = (t === 'ejercicio') ? 'block' : 'none';
   }
   function calSelNivel(n) {
     _ejNivel = n;
@@ -1046,14 +1056,17 @@
 
   // Genera las listas de quintetos con exclusión mutua
   function calPopQ() {
-    const noPlayers = '<div style="color:var(--muted);font-size:12px;padding:6px;">Sin jugadores</div>';
+    const noPlayers = '<div style="color:var(--muted);font-size:12px;padding:6px;">Sin jugadores cargados</div>';
     const elA = document.getElementById('cal-qA');
     const elB = document.getElementById('cal-qB');
     if (!elA || !elB) return;
     if (!allPlayersLocal.length) { elA.innerHTML = noPlayers; elB.innerHTML = noPlayers; return; }
 
+    // Ordenar por dorsal
+    const sorted = [...allPlayersLocal].sort((a, b) => (parseInt(a.dorsal)||99) - (parseInt(b.dorsal)||99));
+
     const makeRow = (p, side) => {
-      const pid  = String(p.id || p._id || '');
+      const pid  = String(p.id || p._id || p.actorId || '');
       const name = `${p.nombre||''} ${p.apellidos||''}`.trim();
       const drs  = p.dorsal || '–';
       return `<label class="player-check" id="qlbl-${side}-${pid}">
@@ -1063,8 +1076,8 @@
       </label>`;
     };
 
-    elA.innerHTML = allPlayersLocal.map(p => makeRow(p, 'A')).join('');
-    elB.innerHTML = allPlayersLocal.map(p => makeRow(p, 'B')).join('');
+    elA.innerHTML = sorted.map(p => makeRow(p, 'A')).join('');
+    elB.innerHTML = sorted.map(p => makeRow(p, 'B')).join('');
   }
 
   // Cuando se marca/desmarca en un equipo, bloquea/desbloquea en el otro
@@ -1075,69 +1088,75 @@
     if (!otherLbl) return;
     const otherCb = otherLbl.querySelector('input');
     if (cb.checked) {
-      // Marcado en este equipo → deshabilitar en el otro
+      // Marcado en este equipo → bloquear en el otro
       if (otherCb) { otherCb.checked = false; otherCb.disabled = true; }
-      otherLbl.style.opacity = '0.38';
-      otherLbl.style.pointerEvents = 'none';
+      otherLbl.classList.add('q-blocked');
     } else {
-      // Desmarcado → volver a habilitar en el otro
-      if (otherCb) otherCb.disabled = false;
-      otherLbl.style.opacity = '';
-      otherLbl.style.pointerEvents = '';
+      // Desmarcado → desbloquear en el otro
+      if (otherCb) { otherCb.disabled = false; }
+      otherLbl.classList.remove('q-blocked');
     }
   }
 
-  async function calSubmitEj(e) {
-    e.preventDefault();
-    let titulo = '', datos = {};
-
-    if (_ejTipo === 'tiro') {
-      // Acceso explícito por querySelector para evitar ambigüedad con form.elements
-      const zonaEl  = document.querySelector('#cal-ej-tiro select[name="zona"]');
-      const zonaVal = zonaEl ? zonaEl.value : '2pts-pintura';
-      const zonaText = zonaEl ? zonaEl.options[zonaEl.selectedIndex].text : zonaVal;
-      titulo = zonaText;
-      if (_ejNivel === 'jugador') {
-        datos = { zona: zonaVal, nivel: 'jugador', jugadores: allPlayersLocal.map(p => ({
-          id: String(p.id||p._id), nombre: `${p.nombre||''} ${p.apellidos||''}`.trim(),
-          dorsal: p.dorsal||'–', intentos: 0, aciertos: 0,
-        }))};
-      } else {
-        datos = { zona: zonaVal, nivel: 'equipo', intentos: 0, aciertos: 0 };
-      }
-
-    } else if (_ejTipo === '5vs5') {
-      const tituloEl = document.querySelector('#cal-ej-5vs5 input[name="titulo_5vs5"]');
-      titulo = (tituloEl ? tituloEl.value.trim() : '') || '5vs5';
-      const qa = [...document.querySelectorAll('#cal-qA input:checked')].map(cb => ({
-        id: cb.dataset.pid, nombre: cb.dataset.nombre, dorsal: cb.dataset.dorsal,
-      }));
-      const qb = [...document.querySelectorAll('#cal-qB input:checked')].map(cb => ({
-        id: cb.dataset.pid, nombre: cb.dataset.nombre, dorsal: cb.dataset.dorsal,
-      }));
-      datos = { quintetoA: qa, quintetoB: qb, puntosA: 0, falladosA: 0, puntosB: 0, falladosB: 0 };
-
-    } else {
-      const tituloEl = document.querySelector('#cal-ej-libre input[name="titulo_ej"]');
-      const descEl   = document.querySelector('#cal-ej-libre textarea[name="descripcion"]');
-      titulo = (tituloEl ? tituloEl.value.trim() : '') || 'Ejercicio';
-      datos  = { descripcion: descEl ? descEl.value : '' };
-    }
-
+  async function calSubmitEj() {
     const btn = document.getElementById('cal-ej-submit');
+    if (btn.disabled) return;           // evitar doble envío
     btn.disabled = true; btn.textContent = 'Guardando...';
     try {
+      let titulo = '', datos = {};
+
+      if (_ejTipo === 'tiro') {
+        const zonaEl   = document.querySelector('#cal-ej-tiro select[name="zona"]');
+        const zonaVal  = zonaEl ? zonaEl.value : '2pts-pintura';
+        const zonaText = zonaEl ? zonaEl.options[zonaEl.selectedIndex].text : zonaVal;
+        titulo = zonaText || zonaVal;
+        if (_ejNivel === 'jugador') {
+          datos = { zona: zonaVal, nivel: 'jugador', jugadores: allPlayersLocal.map(p => ({
+            id: String(p.id||p._id||''), nombre: `${p.nombre||''} ${p.apellidos||''}`.trim(),
+            dorsal: p.dorsal||'–', intentos: 0, aciertos: 0,
+          }))};
+        } else {
+          datos = { zona: zonaVal, nivel: 'equipo', intentos: 0, aciertos: 0 };
+        }
+
+      } else if (_ejTipo === '5vs5') {
+        const tituloEl = document.querySelector('#cal-ej-5vs5 input[name="titulo_5vs5"]');
+        titulo = (tituloEl ? tituloEl.value.trim() : '') || '5vs5';
+        const qa = [...document.querySelectorAll('#cal-qA input:checked')].map(cb => ({
+          id: cb.dataset.pid, nombre: cb.dataset.nombre, dorsal: cb.dataset.dorsal,
+        }));
+        const qb = [...document.querySelectorAll('#cal-qB input:checked')].map(cb => ({
+          id: cb.dataset.pid, nombre: cb.dataset.nombre, dorsal: cb.dataset.dorsal,
+        }));
+        datos = { quintetoA: qa, quintetoB: qb, puntosA: 0, falladosA: 0, puntosB: 0, falladosB: 0 };
+
+      } else {
+        const tituloEl = document.querySelector('#cal-ej-libre input[name="titulo_ej"]');
+        const descEl   = document.querySelector('#cal-ej-libre textarea[name="descripcion"]');
+        titulo = (tituloEl ? tituloEl.value.trim() : '') || 'Ejercicio';
+        datos  = { descripcion: descEl ? descEl.value : '' };
+      }
+
+      if (!titulo) titulo = _ejTipo;    // fallback de seguridad
+
       const r = await fetch('/api/entrenos', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sesion_id: _ejSesionId, tipo: _ejTipo, titulo, datos }),
       });
-      if (!r.ok) throw new Error((await r.json()).error);
-      const newEj = await r.json();
-      planCache[_ejSesionId] = [...(planCache[_ejSesionId]||[]), newEj];
-      closeAddEjCal();
+      const payload = await r.json();
+      if (!r.ok) throw new Error(payload.error || `HTTP ${r.status}`);
+
+      // Actualizar caché local y cerrar modal
+      planCache[_ejSesionId] = [...(planCache[_ejSesionId] || []), payload];
+      document.getElementById('cal-ej-modal').classList.remove('open');
       renderPlanContent(_ejSesionId);
-    } catch(err) { alert('Error al añadir ejercicio: ' + err.message); }
-    finally { btn.disabled = false; btn.textContent = 'Añadir ejercicio'; }
+
+    } catch (err) {
+      alert('Error al añadir ejercicio: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Añadir ejercicio';
+    }
   }
 
   // ─── NAV ──────────────────────────────────────────────────────
@@ -1206,12 +1225,12 @@
 
 <!-- ── MODAL: AÑADIR EJERCICIO AL ENTRENO ─────────────────────────────── -->
 <div class="modal-overlay" id="cal-ej-modal" onclick="closeAddEjCal(event)">
-  <div class="modal-box">
+  <div class="modal-box" onclick="event.stopPropagation()">
     <div class="modal-hdr">
       <div class="modal-title">Nuevo Ejercicio</div>
       <button type="button" class="modal-close" onclick="closeAddEjCal()">✕</button>
     </div>
-    <form id="cal-ej-form" onsubmit="calSubmitEj(event)">
+    <form id="cal-ej-form" novalidate>
 
       <!-- Tipo -->
       <div class="form-group">
@@ -1230,17 +1249,23 @@
           <select name="zona" class="form-select">
             <optgroup label="2 puntos">
               <option value="2pts-pintura">Pintura</option>
-              <option value="2pts-lateral-izq">Lateral izquierdo</option>
-              <option value="2pts-lateral-der">Lateral derecho</option>
-              <option value="2pts-media-izq">Media distancia izq</option>
-              <option value="2pts-media-der">Media distancia der</option>
+              <option value="2pts-media-izq">Media distancia izquierda</option>
+              <option value="2pts-media-der">Media distancia derecha</option>
+              <option value="2pts-lateral-izq">Lateral izquierdo (2pts)</option>
+              <option value="2pts-lateral-der">Lateral derecho (2pts)</option>
               <option value="2pts-frontal">Frontal 2pts</option>
             </optgroup>
-            <optgroup label="3 puntos">
+            <optgroup label="3 puntos — Esquina">
               <option value="3pts-esquina-izq">Esquina izquierda</option>
               <option value="3pts-esquina-der">Esquina derecha</option>
-              <option value="3pts-lateral-izq">Lateral 3pts izq</option>
-              <option value="3pts-lateral-der">Lateral 3pts der</option>
+            </optgroup>
+            <optgroup label="3 puntos — 45 grados">
+              <option value="3pts-45-izq">45° Izquierda</option>
+              <option value="3pts-45-der">45° Derecha</option>
+            </optgroup>
+            <optgroup label="3 puntos — Lateral / Frontal">
+              <option value="3pts-lateral-izq">Lateral izquierdo (3pts)</option>
+              <option value="3pts-lateral-der">Lateral derecho (3pts)</option>
               <option value="3pts-frontal">Frontal 3pts</option>
             </optgroup>
             <optgroup label="Especial">
@@ -1287,7 +1312,7 @@
         </div>
       </div>
 
-      <button type="submit" class="btn-primary" id="cal-ej-submit" style="margin-top:8px">Añadir ejercicio</button>
+      <button type="button" class="btn-primary" id="cal-ej-submit" onclick="calSubmitEj()" style="margin-top:8px">Añadir ejercicio</button>
     </form>
   </div>
 </div>
