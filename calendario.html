@@ -228,9 +228,8 @@
   .player-checks { max-height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; border:1px solid var(--border2); border-radius:8px; padding:6px; background:var(--panel2); }
   .player-check { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text2); padding:4px 6px; border-radius:4px; cursor:pointer; transition:opacity .15s; user-select:none; }
   .player-check:hover:not(.q-blocked) { background:var(--panel3); }
-  .player-check input { accent-color:var(--red); cursor:pointer; pointer-events:none; }
+  .player-check input[type=checkbox] { accent-color:var(--red); cursor:pointer; pointer-events:none; flex-shrink:0; width:14px; height:14px; }
   .player-check.q-blocked { opacity:0.35; cursor:not-allowed; pointer-events:none; }
-  .player-check.q-blocked input { cursor:not-allowed; }
   .quintet-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
   .quintet-col { display:flex; flex-direction:column; gap:6px; }
   .quintet-hdr { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
@@ -1027,15 +1026,9 @@
     _ejSesionId = sid; _ejTipo = 'tiro'; _ejNivel = 'equipo';
     // Reset completo del formulario
     document.getElementById('cal-ej-form').reset();
-    // Limpiar estados de bloqueo residuales en quintetos
-    document.querySelectorAll('#cal-ej-5vs5 .player-check').forEach(lbl => {
-      lbl.classList.remove('q-blocked');
-      const cb = lbl.querySelector('input');
-      if (cb) { cb.checked = false; cb.disabled = false; }
-    });
     calSelTipo('tiro');
     calSelNivel('equipo');
-    calPopQ();
+    calPopQ();   // regenera las listas (limpia q-blocked y checked automáticamente)
     document.getElementById('cal-ej-modal').classList.add('open');
   }
   function closeAddEjCal(e) {
@@ -1056,11 +1049,13 @@
 
   // Genera las listas de quintetos con exclusión mutua
   function calPopQ() {
-    const noPlayers = '<div style="color:var(--muted);font-size:12px;padding:6px;">Sin jugadores cargados</div>';
     const elA = document.getElementById('cal-qA');
     const elB = document.getElementById('cal-qB');
     if (!elA || !elB) return;
-    if (!allPlayersLocal.length) { elA.innerHTML = noPlayers; elB.innerHTML = noPlayers; return; }
+    if (!allPlayersLocal.length) {
+      const msg = '<div style="color:var(--muted);font-size:12px;padding:6px;">Sin jugadores cargados</div>';
+      elA.innerHTML = msg; elB.innerHTML = msg; return;
+    }
 
     // Ordenar por dorsal
     const sorted = [...allPlayersLocal].sort((a, b) => (parseInt(a.dorsal)||99) - (parseInt(b.dorsal)||99));
@@ -1069,9 +1064,11 @@
       const pid  = String(p.id || p._id || p.actorId || '');
       const name = `${p.nombre||''} ${p.apellidos||''}`.trim();
       const drs  = p.dorsal || '–';
-      return `<label class="player-check" id="qlbl-${side}-${pid}">
-        <input type="checkbox" data-pid="${pid}" data-nombre="${name}" data-dorsal="${drs}"
-          onchange="calQToggle(this,'${side}')">
+      // Usamos onclick en el label para control total (no onchange en el input)
+      // pointer-events:none en el input hace que el click pase siempre al label
+      return `<label class="player-check" id="qlbl-${side}-${pid}"
+        onclick="calQLblToggle(event,'${pid}','${side}')">
+        <input type="checkbox" tabindex="-1" data-pid="${pid}" data-nombre="${name}" data-dorsal="${drs}">
         <span>#${drs} ${name}</span>
       </label>`;
     };
@@ -1080,20 +1077,31 @@
     elB.innerHTML = sorted.map(p => makeRow(p, 'B')).join('');
   }
 
-  // Cuando se marca/desmarca en un equipo, bloquea/desbloquea en el otro
-  function calQToggle(cb, side) {
-    const pid       = cb.dataset.pid;
+  // Click en un label de jugador: toggle + exclusión mutua
+  // pointer-events:none en el input fuerza que el click llegue aquí via el label
+  function calQLblToggle(e, pid, side) {
+    e.preventDefault();               // evita que el label haga toggle automático (doble toggle)
+    const lbl = e.currentTarget;
+    if (lbl.classList.contains('q-blocked')) return;   // bloqueado: ignorar
+
+    const cb = lbl.querySelector('input[type=checkbox]');
+    if (!cb) return;
+
+    // Toggle manual del checkbox
+    cb.checked = !cb.checked;
+
+    // Exclusión mutua con el otro equipo
     const otherSide = side === 'A' ? 'B' : 'A';
     const otherLbl  = document.getElementById(`qlbl-${otherSide}-${pid}`);
     if (!otherLbl) return;
-    const otherCb = otherLbl.querySelector('input');
+    const otherCb = otherLbl.querySelector('input[type=checkbox]');
+
     if (cb.checked) {
-      // Marcado en este equipo → bloquear en el otro
-      if (otherCb) { otherCb.checked = false; otherCb.disabled = true; }
+      // Seleccionado en este equipo → bloquear en el otro
+      if (otherCb) otherCb.checked = false;
       otherLbl.classList.add('q-blocked');
     } else {
-      // Desmarcado → desbloquear en el otro
-      if (otherCb) { otherCb.disabled = false; }
+      // Deseleccionado → desbloquear en el otro
       otherLbl.classList.remove('q-blocked');
     }
   }
@@ -1150,6 +1158,14 @@
       // Actualizar caché local y cerrar modal
       planCache[_ejSesionId] = [...(planCache[_ejSesionId] || []), payload];
       document.getElementById('cal-ej-modal').classList.remove('open');
+      // Asegurar que el plan queda abierto y visible
+      const contEl = document.getElementById(`pcont-${_ejSesionId}`);
+      if (contEl) {
+        contEl.style.display = 'block';
+        const togBtn = document.getElementById(`ptog-${_ejSesionId}`);
+        if (togBtn) togBtn.classList.add('open');
+        planOpen[_ejSesionId] = true;
+      }
       renderPlanContent(_ejSesionId);
 
     } catch (err) {
