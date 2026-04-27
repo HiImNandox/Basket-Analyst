@@ -297,11 +297,11 @@
   <div class="pbp-wrap" id="pbp-section" style="display:none">
     <div class="section-title">Play by Play</div>
     <div class="pbp-filters" id="pbp-filters">
-      <button class="pbp-filter active" onclick="pbpSetFilter(0,this)">Todos</button>
-      <button class="pbp-filter" onclick="pbpSetFilter(1,this)">Q1</button>
-      <button class="pbp-filter" onclick="pbpSetFilter(2,this)">Q2</button>
-      <button class="pbp-filter" onclick="pbpSetFilter(3,this)">Q3</button>
-      <button class="pbp-filter" onclick="pbpSetFilter(4,this)">Q4</button>
+      <button class="pbp-filter active" data-period="0" onclick="pbpSetFilter(0,this)">Todos</button>
+      <button class="pbp-filter" data-period="1" onclick="pbpSetFilter(1,this)">Q1</button>
+      <button class="pbp-filter" data-period="2" onclick="pbpSetFilter(2,this)">Q2</button>
+      <button class="pbp-filter" data-period="3" onclick="pbpSetFilter(3,this)">Q3</button>
+      <button class="pbp-filter" data-period="4" onclick="pbpSetFilter(4,this)">Q4</button>
     </div>
     <div id="pbp-list"></div>
   </div>
@@ -667,11 +667,39 @@ function pbpShortName(fullName) {
   return first + ' ' + last;
 }
 
+// Conjunto de cuartos activos (vacío = todos)
+const _pbpActive = new Set();
+
 window.pbpSetFilter = function(period, btn) {
-  document.querySelectorAll('.pbp-filter').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (period === 0) {
+    // "Todos": limpiar selección individual y mostrar todo
+    _pbpActive.clear();
+    document.querySelectorAll('.pbp-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  } else {
+    // Desactivar "Todos"
+    const todosBtn = document.querySelector('.pbp-filter[data-period="0"]');
+    if (todosBtn) todosBtn.classList.remove('active');
+
+    // Toggle este cuarto
+    if (_pbpActive.has(period)) {
+      _pbpActive.delete(period);
+      btn.classList.remove('active');
+    } else {
+      _pbpActive.add(period);
+      btn.classList.add('active');
+    }
+
+    // Si no queda ninguno activo → volver a "Todos"
+    if (_pbpActive.size === 0) {
+      if (todosBtn) todosBtn.classList.add('active');
+    }
+  }
+
+  // Aplicar visibilidad
   document.querySelectorAll('.pbp-period').forEach(el => {
-    el.style.display = (period === 0 || parseInt(el.dataset.period) === period) ? '' : 'none';
+    const p = parseInt(el.dataset.period);
+    el.style.display = (_pbpActive.size === 0 || _pbpActive.has(p)) ? '' : 'none';
   });
 };
 
@@ -696,6 +724,7 @@ function renderPBP(pbpEvents, ourId, quarters, sacShort, rivalShort, sacIsLocal)
       const btn = document.createElement('button');
       btn.className = 'pbp-filter';
       btn.textContent = p === 5 ? 'P.E.1' : 'P.E.' + (p - 4);
+      btn.dataset.period = p;
       btn.setAttribute('onclick', `pbpSetFilter(${p},this)`);
       filterEl.appendChild(btn);
     }
