@@ -97,6 +97,35 @@
     .shot-pct-row { grid-template-columns: repeat(2, 1fr); }
   }
 
+  /* ─── PLAY BY PLAY ─── */
+  .pbp-wrap { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+  .pbp-filters { display:flex; gap:4px; margin-bottom:1rem; flex-wrap:wrap; }
+  .pbp-filter { padding:5px 14px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:11px; font-weight:700; cursor:pointer; letter-spacing:0.05em; transition:all 0.12s; }
+  .pbp-filter.active { background:var(--red); color:#fff; border-color:var(--red); }
+  .pbp-period { margin-bottom:1.1rem; }
+  .pbp-period[style*="none"] { display:none !important; }
+  .pbp-period-hdr { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; background:var(--surface2); border-radius:8px; border:1px solid var(--border); margin-bottom:4px; }
+  .pbp-q-name { font-size:10px; font-weight:700; color:var(--red); letter-spacing:0.1em; text-transform:uppercase; }
+  .pbp-q-score { font-size:12px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+  .pbp-q-score strong { color:#fff; }
+  .pbp-event { display:flex; align-items:center; gap:5px; padding:5px 8px; border-radius:5px; font-size:12px; border-left:2px solid transparent; margin-bottom:1px; transition:background 0.08s; }
+  .pbp-event:hover { background:var(--surface2) !important; }
+  .pbp-event.ours { border-left-color:var(--red); background:rgba(192,0,26,0.05); }
+  .pbp-event.rival { border-left-color:#2a2a2a; }
+  .pbp-event.sub-ev { opacity:0.45; font-size:11px; }
+  .pbp-event.timeout-ev { background:rgba(255,255,255,0.018); border-left-color:#444; }
+  .pbp-event.periodend-ev { justify-content:center; color:#333; font-size:10px; letter-spacing:0.12em; border-left:none; padding:8px 0; text-transform:uppercase; }
+  .pbp-time { color:var(--muted); font-size:10px; min-width:30px; flex-shrink:0; font-variant-numeric:tabular-nums; }
+  .pbp-icon { font-size:12px; min-width:18px; text-align:center; flex-shrink:0; line-height:1; }
+  .pbp-player { font-weight:600; color:var(--text); min-width:78px; flex-shrink:0; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:96px; }
+  .pbp-event.rival .pbp-player { color:#999; }
+  .pbp-action { color:var(--muted); flex:1; font-size:11px; }
+  .pbp-event.ours .pbp-action { color:#ccc; }
+  .pbp-score { background:var(--surface2); border:1px solid var(--border); color:#fff; font-size:10px; font-weight:700; padding:1px 7px; border-radius:10px; flex-shrink:0; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .pbp-score.triple { background:rgba(255,200,0,0.1); border-color:rgba(255,200,0,0.28); color:#ffd54f; }
+  .pbp-empty { text-align:center; color:var(--muted); font-size:13px; padding:2.5rem 1rem; }
+  @media(max-width:420px) { .pbp-player{min-width:60px;max-width:70px;} }
+
   /* ─── BOTTOM NAV ─── */
   .bottom-nav {
     display: none;
@@ -264,6 +293,18 @@
     </div>
   </div>
 
+  <!-- ═══ PLAY BY PLAY ═══ -->
+  <div class="pbp-wrap" id="pbp-section" style="display:none">
+    <div class="section-title">Play by Play</div>
+    <div class="pbp-filters" id="pbp-filters">
+      <button class="pbp-filter active" onclick="pbpSetFilter(0,this)">Todos</button>
+      <button class="pbp-filter" onclick="pbpSetFilter(1,this)">Q1</button>
+      <button class="pbp-filter" onclick="pbpSetFilter(2,this)">Q2</button>
+      <button class="pbp-filter" onclick="pbpSetFilter(3,this)">Q3</button>
+      <button class="pbp-filter" onclick="pbpSetFilter(4,this)">Q4</button>
+    </div>
+    <div id="pbp-list"></div>
+  </div>
 
 </div>
 
@@ -593,6 +634,161 @@ function renderAll(data) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// PLAY BY PLAY
+// ══════════════════════════════════════════════════════════════════════════
+
+const PBP_MOVE_ES = {
+  92:'TL anotado', 93:'Canasta de 2', 94:'Triple',
+  96:'TL fallado',  97:'Fallo de 2',   98:'Fallo de 3',
+  106:'Pérdida', 109:'Falta en ataque',
+  112:'entra',  113:'Tiempo muerto', 115:'sale', 116:'Fin de cuarto',
+  159:'Falta personal', 160:'Falta (1 TL)', 161:'Falta (2 TL)',
+  162:'Falta (3 TL)',   166:'Falta antidep.',
+  178:'Salto ganado',   179:'Salto perdido',
+  537:'Falta técnica',  540:'Téc. entrenador', 544:'Téc. banquillo'
+};
+
+const PBP_ICON = {
+  92:'🎯', 93:'🏀', 94:'⭐',
+  96:'✗',  97:'✗',  98:'✗',
+  106:'⚡', 109:'⚠', 112:'↗', 113:'⏸', 115:'↘', 116:'—',
+  159:'⚠', 160:'⚠', 161:'⚠', 162:'⚠', 166:'⚠',
+  537:'⚠', 540:'⚠', 544:'⚠',
+  178:'○', 179:'○'
+};
+
+function pbpShortName(fullName) {
+  if (!fullName) return '—';
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0,12);
+  // "VICTOR HUGO LASTRA ESTUPIÑAN" → "V. LASTRA"
+  const first = parts[0][0] + '.';
+  const last  = parts.length > 2 ? parts[parts.length - 2] : parts[1];
+  return first + ' ' + last;
+}
+
+window.pbpSetFilter = function(period, btn) {
+  document.querySelectorAll('.pbp-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.pbp-period').forEach(el => {
+    el.style.display = (period === 0 || parseInt(el.dataset.period) === period) ? '' : 'none';
+  });
+};
+
+function renderPBP(pbpEvents, ourId, quarters, sacShort, rivalShort, sacIsLocal) {
+  const section = document.getElementById('pbp-section');
+  const list    = document.getElementById('pbp-list');
+  if (!section || !list) return;
+
+  if (!pbpEvents || !pbpEvents.length) {
+    section.style.display = '';
+    list.innerHTML = '<div class="pbp-empty">Sin datos de play by play para este partido.</div>';
+    return;
+  }
+
+  section.style.display = '';
+
+  // Añadir botones de prórroga si hace falta
+  const maxP = Math.max(...pbpEvents.map(e => e.period));
+  if (maxP > 4) {
+    const filterEl = document.getElementById('pbp-filters');
+    for (let p = 5; p <= maxP; p++) {
+      const btn = document.createElement('button');
+      btn.className = 'pbp-filter';
+      btn.textContent = p === 5 ? 'P.E.1' : 'P.E.' + (p - 4);
+      btn.setAttribute('onclick', `pbpSetFilter(${p},this)`);
+      filterEl.appendChild(btn);
+    }
+  }
+
+  // Agrupar por período
+  const groups = {};
+  pbpEvents.forEach(ev => {
+    if (!groups[ev.period]) groups[ev.period] = [];
+    groups[ev.period].push(ev);
+  });
+
+  const pNames = ['1er CUARTO','2do CUARTO','3er CUARTO','4to CUARTO','1er EXTRA','2do EXTRA','3er EXTRA'];
+  let html = '';
+
+  Object.keys(groups).sort((a, b) => +a - +b).forEach((p, idx) => {
+    const evs = groups[p];
+    const q   = quarters[idx];
+    const pLabel = pNames[idx] || 'P.E.' + (idx - 3);
+
+    let qScoreHtml = '';
+    if (q) {
+      const sacPts = sacIsLocal ? q.local : q.visit;
+      const rivPts = sacIsLocal ? q.visit : q.local;
+      qScoreHtml = `<span class="pbp-q-score">${sacShort} <strong>${sacPts}</strong> &nbsp;·&nbsp; ${rivalShort} <strong>${rivPts}</strong></span>`;
+    }
+
+    html += `<div class="pbp-period" data-period="${p}">
+      <div class="pbp-period-hdr">
+        <span class="pbp-q-name">${pLabel}</span>
+        ${qScoreHtml}
+      </div>`;
+
+    evs.forEach(ev => {
+      const isOurs   = ev.idTeam === ourId;
+      const isSub    = ev.idMove === 112 || ev.idMove === 115;
+      const isTimeout = ev.idMove === 113;
+      const isPEnd   = ev.idMove === 116;
+      const isBasket = ev.idMove === 92 || ev.idMove === 93 || ev.idMove === 94;
+      const isTriple = ev.idMove === 94;
+
+      if (isPEnd) {
+        html += `<div class="pbp-event periodend-ev">── fin de cuarto ──</div>`;
+        return;
+      }
+
+      const cls    = ev.idTeam === 0 ? '' : (isOurs ? 'ours' : 'rival');
+      const subCls = isSub ? ' sub-ev' : (isTimeout ? ' timeout-ev' : '');
+      const icon   = PBP_ICON[ev.idMove] || '·';
+      const action = PBP_MOVE_ES[ev.idMove] || ev.move || '—';
+      const time   = String(ev.min).padStart(2,'0') + ':' + String(ev.sec).padStart(2,'0');
+      const dorsal = ev.actorShirtNumber ? '#' + ev.actorShirtNumber : '';
+      const player = ev.actorName ? pbpShortName(ev.actorName) : '';
+      const pHtml  = (dorsal || player) ? (dorsal + ' ' + player).trim() : '—';
+      const sHtml  = isBasket && ev.score
+        ? `<span class="pbp-score${isTriple?' triple':''}">${ev.score}</span>` : '';
+
+      html += `<div class="pbp-event ${cls}${subCls}" title="${ev.actorName||''}">
+        <span class="pbp-time">${time}</span>
+        <span class="pbp-icon">${icon}</span>
+        <span class="pbp-player">${pHtml}</span>
+        <span class="pbp-action">${action}</span>
+        ${sHtml}
+      </div>`;
+    });
+
+    html += '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+async function loadAndRenderPBP(jornada, fileId, rawData, quarters) {
+  const teamsArr  = Object.values(rawData.teams || {});
+  const sacTeam   = teamsArr.find(t => t.shortName === 'SAC');
+  const ourId     = sacTeam ? sacTeam.teamIdIntern : null;
+  const sacIsLocal = ourId === rawData.localId;
+
+  const localT  = teamsArr.find(t => t.teamIdIntern === rawData.localId);
+  const visitT  = teamsArr.find(t => t.teamIdIntern === rawData.visitId);
+  const sacShort   = (sacIsLocal ? localT : visitT)?.shortName || 'SAC';
+  const rivalShort = (sacIsLocal ? visitT : localT)?.shortName || 'RIV';
+
+  let pbpEvents = [];
+  try {
+    const res = await fetch('./data/' + jornada + '/' + fileId + '_pbp.json');
+    if (res.ok) pbpEvents = await res.json();
+  } catch(e) { /* PBP no disponible */ }
+
+  renderPBP(pbpEvents, ourId, quarters, sacShort, rivalShort, sacIsLocal);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // ENTRADA PRINCIPAL — carga el JSON desde ./data/{matchId}_stats.json
 // ══════════════════════════════════════════════════════════════════════════
 
@@ -608,11 +804,11 @@ window.addEventListener('load', async () => {
   // Fade mientras carga
   document.querySelector('.wrap').style.opacity = '0.3';
 
-  let data;
+  let rawData;
   try {
     const res = await fetch(fetchUrl);
     if (!res.ok) throw new Error('HTTP ' + res.status + ' — ¿está el archivo ' + fetchUrl + ' en el repositorio?');
-    data = await res.json();
+    rawData = await res.json();
   } catch (err) {
     showError('No se encontró el partido <code style="color:#4fc3f7;">' + fileId + '</code><br><br><code style="color:#aaa;font-size:11px;">' + err.message + '</code>');
     return;
@@ -620,11 +816,17 @@ window.addEventListener('load', async () => {
 
   document.querySelector('.wrap').style.opacity = '1';
 
+  let parsed;
   try {
-    renderAll(parseMatchData(data));
+    parsed = parseMatchData(rawData);
+    renderAll(parsed);
   } catch(err) {
     showError('Error al procesar el JSON del partido.<br><br><code style="color:#aaa;font-size:11px;">' + err.message + '</code>');
+    return;
   }
+
+  // Cargar PBP de forma no bloqueante
+  loadAndRenderPBP(jornada, fileId, rawData, parsed.quarters);
 });
 </script>
 <script src="js/rol.js"></script>
