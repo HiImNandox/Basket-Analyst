@@ -396,8 +396,8 @@ function render(jugadores, playerStats, matches) {
   // Leaders (per game)
   const withStats = playerStats.filter(s=>s.pj>0);
   _topPts  = [...withStats].sort((a,b)=>b.pts/b.pj-a.pts/a.pj)[0];
-  const topReb   = [...withStats].sort((a,b)=>b.reb/b.pj-a.reb/a.pj)[0];
-  const topAst   = [...withStats].sort((a,b)=>b.ast/b.pj-a.ast/a.pj)[0];
+  const topMin   = [...withStats].sort((a,b)=>b.min/b.pj-a.min/a.pj)[0];
+  const topT3    = [...withStats].sort((a,b)=>b.t3m/b.pj-a.t3m/a.pj)[0];
   const topPM    = [...withStats].sort((a,b)=>b.pm-a.pm)[0];
 
   function leaderCard(type, p, val) {
@@ -470,8 +470,8 @@ function render(jugadores, playerStats, matches) {
     <div class="section-hdr"><div class="section-title">Líderes de la temporada</div><div class="section-sub">Medias por partido</div></div>
     <div class="leaders-grid">
       ${leaderCard('Máximo anotador',  _topPts, _topPts ? avg(_topPts.pts,_topPts.pj)+' pts' : '—')}
-      ${leaderCard('Mejor reboteador', topReb,  topReb  ? avg(topReb.reb,topReb.pj)+' reb'   : '—')}
-      ${leaderCard('Mejor asistente',  topAst,  topAst  ? avg(topAst.ast,topAst.pj)+' ast'   : '—')}
+      ${leaderCard('Más minutos',   topMin, topMin ? avg(topMin.min,topMin.pj)+' min' : '—')}
+      ${leaderCard('Más triples',   topT3,  topT3  ? avg(topT3.t3m,topT3.pj)+' 3pt' : '—')}
       ${leaderCard('Mejor +/−',        topPM,   topPM   ? sign(topPM.pm)                     : '—')}
     </div>
 
