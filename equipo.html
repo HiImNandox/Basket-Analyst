@@ -6,8 +6,9 @@
 <title>HoopStats · Mi Equipo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
   :root {
     --red:#cc1414; --red-dim:#991010; --red-glow:rgba(204,20,20,0.12); --red-border:rgba(204,20,20,0.3);
     --bg:#111111; --panel:#1a1a1a; --panel2:#222222; --panel3:#2a2a2a;
@@ -50,126 +51,115 @@
   .content::-webkit-scrollbar { width:4px; }
   .content::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
 
-  /* ─── TEAM HEADER ─── */
-  .team-header {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 24px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin-bottom: 20px;
-  }
-  .team-badge {
-    width: 64px; height: 64px; border-radius: 14px;
-    background: var(--red); display: flex; align-items: center; justify-content: center;
-    font-family: var(--bebas); font-size: 22px; letter-spacing: 2px; color: white;
-    flex-shrink: 0;
-  }
-  .team-info-name { font-family: var(--bebas); font-size: 26px; letter-spacing: 2px; line-height: 1; }
-  .team-info-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
-  .team-info-meta { display: flex; gap: 12px; margin-top: 10px; }
-  .team-meta-pill {
-    background: var(--panel2); border: 1px solid var(--border);
-    border-radius: 4px; padding: 3px 10px;
-    font-size: 11px; font-family: var(--mono); color: var(--text2);
-  }
-  .team-meta-pill span { color: var(--red); font-weight: 700; }
+  /* ─── HERO ─── */
+  .team-hero { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px 24px; margin-bottom:16px; display:flex; align-items:flex-start; gap:20px; }
+  .team-badge { width:64px; height:64px; border-radius:14px; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:22px; letter-spacing:2px; color:white; flex-shrink:0; }
+  .hero-body { flex:1; min-width:0; }
+  .hero-name { font-family:var(--bebas); font-size:26px; letter-spacing:2px; line-height:1; }
+  .hero-sub { font-size:12px; color:var(--text2); margin-top:3px; margin-bottom:12px; }
+  .hero-record { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .record-big { font-family:var(--bebas); font-size:32px; letter-spacing:2px; line-height:1; }
+  .record-big .v { color:var(--green); }
+  .record-big .sep { color:var(--muted); margin:0 2px; }
+  .record-big .d { color:var(--red); }
+  .streak-pill { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; letter-spacing:0.5px; }
+  .streak-v { background:var(--green-dim); border:1px solid var(--green-border); color:var(--green); }
+  .streak-d { background:var(--red-glow); border:1px solid var(--red-border); color:var(--red); }
+  .game-dots { display:flex; gap:4px; flex-wrap:wrap; }
+  .gdot { width:20px; height:20px; border-radius:5px; font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .gdot-v { background:var(--green-dim); border:1px solid var(--green-border); color:var(--green); }
+  .gdot-d { background:var(--red-glow); border:1px solid var(--red-border); color:var(--red); }
 
-  /* ─── LÍDERES ─── */
-  .leaders-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-  .leader-card {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px;
-    position: relative; overflow: hidden;
-  }
-  .leader-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: var(--red);
-  }
-  .leader-type { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
-  .leader-val { font-family: var(--bebas); font-size: 36px; letter-spacing: 1px; color: var(--red); line-height: 1; }
-  .leader-name { font-size: 13px; font-weight: 700; color: var(--text); margin-top: 4px; }
-  .leader-dorsal { font-size: 11px; color: var(--muted); }
+  /* ─── METRIC STRIP ─── */
+  .metrics-strip { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-bottom:20px; }
+  .metric-tile { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:14px 14px 12px; text-align:center; }
+  .metric-val { font-family:var(--bebas); font-size:28px; letter-spacing:1px; line-height:1; color:var(--text); }
+  .metric-val.pos { color:var(--green); }
+  .metric-val.neg { color:var(--red); }
+  .metric-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-top:4px; }
 
-  /* ─── TABLA JUGADORES ─── */
-  .section-title { font-family: var(--bebas); font-size: 20px; letter-spacing: 2px; color: var(--text); margin-bottom: 4px; }
-  .section-sub { font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  /* ─── CHARTS ─── */
+  .chart-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+  .chart-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; }
+  .chart-title { font-family:var(--bebas); font-size:16px; letter-spacing:1.5px; color:var(--text); margin-bottom:2px; }
+  .chart-sub { font-size:10px; color:var(--muted); margin-bottom:12px; }
+  .chart-canvas-wrap { position:relative; width:100%; height:160px; }
 
-  .players-table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
-  table.ptbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.ptbl thead th {
-    padding: 10px 12px; font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
-    color: var(--muted); text-transform: uppercase; background: var(--panel2);
-    border-bottom: 1px solid var(--border); white-space: nowrap; text-align: right;
-  }
-  table.ptbl thead th:first-child,
-  table.ptbl thead th:nth-child(2) { text-align: left; }
-  table.ptbl tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
-  table.ptbl tbody tr:last-child { border-bottom: none; }
-  table.ptbl tbody tr:hover { background: var(--panel2); }
-  table.ptbl tbody td { padding: 11px 12px; color: var(--text2); text-align: right; }
-  table.ptbl tbody td:first-child { text-align: left; }
-  table.ptbl tbody td:nth-child(2) { text-align: left; font-weight: 700; color: var(--text); }
+  /* ─── SECTION ─── */
+  .section-hdr { display:flex; align-items:baseline; gap:10px; margin-bottom:14px; }
+  .section-title { font-family:var(--bebas); font-size:20px; letter-spacing:2px; color:var(--text); }
+  .section-sub { font-size:11px; color:var(--muted); }
 
-  .dorsal-badge {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 28px; height: 28px; border-radius: 6px;
-    background: var(--panel2); border: 1px solid var(--border2);
-    font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text2);
-  }
-  .dorsal-badge.top { background: var(--red-glow); border-color: var(--red-border); color: var(--red); }
+  /* ─── LEADERS ─── */
+  .leaders-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+  .leader-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:16px; position:relative; overflow:hidden; }
+  .leader-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--red); }
+  .leader-type { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:8px; }
+  .leader-val { font-family:var(--bebas); font-size:36px; letter-spacing:1px; color:var(--red); line-height:1; }
+  .leader-name { font-size:13px; font-weight:700; color:var(--text); margin-top:4px; }
+  .leader-dorsal { font-size:11px; color:var(--muted); }
 
-  .stat-hi { color: var(--text); font-weight: 700; }
-  .pj-0 { color: var(--muted); font-style: italic; }
+  /* ─── TABLA ─── */
+  .players-table-wrap { overflow-x:auto; border-radius:var(--radius); border:1px solid var(--border); margin-bottom:24px; }
+  table.ptbl { width:100%; border-collapse:collapse; font-size:13px; }
+  table.ptbl thead th { padding:10px 12px; font-size:9px; font-weight:700; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; background:var(--panel2); border-bottom:1px solid var(--border); white-space:nowrap; text-align:right; cursor:pointer; user-select:none; }
+  table.ptbl thead th:hover { color:var(--text2); }
+  table.ptbl thead th.sort-asc::after { content:' ↑'; color:var(--red); }
+  table.ptbl thead th.sort-desc::after { content:' ↓'; color:var(--red); }
+  table.ptbl thead th:first-child, table.ptbl thead th:nth-child(2) { text-align:left; cursor:default; }
+  table.ptbl tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
+  table.ptbl tbody tr:last-child { border-bottom:none; }
+  table.ptbl tbody tr:hover { background:var(--panel2); }
+  table.ptbl tbody td { padding:11px 12px; color:var(--text2); text-align:right; }
+  table.ptbl tbody td:first-child { text-align:left; }
+  table.ptbl tbody td:nth-child(2) { text-align:left; font-weight:700; color:var(--text); }
+  .dorsal-badge { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:6px; background:var(--panel2); border:1px solid var(--border2); font-family:var(--mono); font-size:11px; font-weight:700; color:var(--text2); }
+  .dorsal-badge.top { background:var(--red-glow); border-color:var(--red-border); color:var(--red); }
+  .stat-hi { color:var(--text); font-weight:700; }
+  .pm-pos { color:#4caf50; font-weight:700; }
+  .pm-neg { color:#e05555; font-weight:700; }
+  .pj-0 { color:var(--muted); font-style:italic; }
 
   /* ─── LOADING ─── */
-  .loading { padding: 60px; text-align: center; color: var(--muted); font-size: 14px; }
+  .loading { padding:60px; text-align:center; color:var(--muted); font-size:14px; }
 
-  /* ─── MOBILE TOPBAR ─── */
+  /* ─── MOBILE ─── */
   .mobile-topbar { display:none; padding:14px 18px 10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg); }
   .mob-logo { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
   .mob-logo span { color:var(--red); }
-  .mob-right { display:flex; align-items:center; gap:10px; }
   .mob-avatar { width:32px; height:32px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:12px; color:white; }
-
-  /* ─── BOTTOM NAV ─── */
   .bottom-nav { display:none; height:calc(56px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
   .bnav-inner { display:flex; height:100%; width:100%; }
   .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; transition:background 0.1s; }
   .bnav-item:active { background:var(--panel2); }
-  .bnav-icon { width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
   .bnav-icon svg { width:22px; height:22px; }
   .bnav-item.active .bnav-icon svg { stroke:var(--red); }
   .bnav-item:not(.active) .bnav-icon svg { stroke:var(--muted); }
-  .bnav-label { display:none; font-size:11px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); line-height:1; letter-spacing:0; }
+  .bnav-label { display:none; font-size:11px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); line-height:1; }
   .bnav-item.active .bnav-label { color:var(--red); }
   .bnav-dot { width:4px; height:4px; border-radius:50%; background:var(--red); }
-  @media (min-width:360px) { .bnav-label { display:block; } .bottom-nav { height:calc(66px + env(safe-area-inset-bottom)); } }
+  @media(min-width:360px) { .bnav-label{display:block;} .bottom-nav{height:calc(66px + env(safe-area-inset-bottom));} }
 
-  /* ─── RESPONSIVE ─── */
-  @media (max-width:768px) {
+  @media(max-width:768px) {
     .app { flex-direction:column; }
     .sidebar { display:none; }
     .mobile-topbar { display:flex; width:100%; }
     .bottom-nav { display:flex; width:100%; }
     .topbar { display:none; }
     .content { padding:14px 14px 16px; }
-    .leaders-grid { grid-template-columns: repeat(2, 1fr); }
-    .team-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .metrics-strip { grid-template-columns:repeat(3,1fr); }
+    .chart-row { grid-template-columns:1fr; }
+    .leaders-grid { grid-template-columns:repeat(2,1fr); }
+    .team-hero { flex-direction:column; gap:12px; }
+  }
+  @media(max-width:420px) {
+    .metrics-strip { grid-template-columns:repeat(2,1fr); }
   }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- ═══ SIDEBAR ═══ -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-eyebrow">Temporada 2025–26</div>
@@ -179,270 +169,412 @@
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Principal</div>
-      <a href="index.html" class="nav-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        Inicio
-      </a>
-      <a href="liga.html" class="nav-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-        Liga
-      </a>
-      <a href="partidos.html" class="nav-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-        Partidos
-      </a>
-      <a href="jugadores.html" class="nav-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg>
-        Jugadores
-      </a>
-      <a href="calendario.html" class="nav-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Calendario
-      </a>
+      <a href="index.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Inicio</a>
+      <a href="liga.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Liga</a>
+      <a href="partidos.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Partidos</a>
+      <a href="jugadores.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg>Jugadores</a>
+      <a href="calendario.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendario</a>
       <div class="nav-section-label">Equipo</div>
-      <a href="equipo.html" class="nav-item active">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Mi equipo
-      </a>
+      <a href="equipo.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Mi equipo</a>
     </nav>
     <div class="sidebar-bottom">
       <div class="user-card">
         <div class="user-avatar">JP</div>
-        <div class="user-info">
-          <div class="user-name">Jordi P.</div>
-          <div class="user-role">Entrenador</div>
-        </div>
+        <div class="user-info"><div class="user-name">Jordi P.</div><div class="user-role">Entrenador</div></div>
       </div>
     </div>
   </aside>
 
-  <!-- ═══ MAIN ═══ -->
   <div class="main">
-
     <div class="mobile-topbar">
       <div class="mob-logo">Hoop<span>Stats</span></div>
-      <div class="mob-right"><div class="mob-avatar">JP</div></div>
+      <div class="mob-avatar">JP</div>
     </div>
-
     <div class="topbar">
       <div>
         <div class="topbar-breadcrumb">Sa Cabaneta A · Temporada 2025–26</div>
         <div class="topbar-title">Mi Equipo</div>
       </div>
     </div>
-
     <div class="content" id="content">
-      <div class="loading">Cargando plantilla…</div>
+      <div class="loading">Cargando…</div>
     </div>
-
-    <!-- Bottom nav -->
     <nav class="bottom-nav">
       <div class="bnav-inner">
-        <a href="index.html" class="bnav-item">
-          <div class="bnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
-          <div class="bnav-label">Inicio</div>
-        </a>
-        <a href="liga.html" class="bnav-item">
-          <div class="bnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></div>
-          <div class="bnav-label">Liga</div>
-        </a>
-        <a href="partidos.html" class="bnav-item">
-          <div class="bnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
-          <div class="bnav-label">Partidos</div>
-        </a>
-        <a href="jugadores.html" class="bnav-item">
-          <div class="bnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg></div>
-          <div class="bnav-label">Jugadores</div>
-        </a>
-        <a href="equipo.html" class="bnav-item active">
-          <div class="bnav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-          <div class="bnav-label">Equipo</div>
-          <div class="bnav-dot"></div>
-        </a>
+        <a href="index.html" class="bnav-item"><div class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div><div class="bnav-label">Inicio</div></a>
+        <a href="liga.html" class="bnav-item"><div class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></div><div class="bnav-label">Liga</div></a>
+        <a href="partidos.html" class="bnav-item"><div class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div><div class="bnav-label">Partidos</div></a>
+        <a href="jugadores.html" class="bnav-item"><div class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg></div><div class="bnav-label">Jugadores</div></a>
+        <a href="equipo.html" class="bnav-item active"><div class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="bnav-label">Equipo</div><div class="bnav-dot"></div></a>
       </div>
     </nav>
   </div>
 </div>
 
 <script>
-const SAC_SHORT = 'SAC';
-
-// ─── HELPERS ─────────────────────────────────────────────
-function avg(val, pj) {
-  if (!pj) return '—';
-  return (val / pj).toFixed(1);
-}
-function pct(made, att) {
-  if (!att) return '—';
-  return Math.round(made / att * 100) + '%';
-}
-function cleanPlayerName(n = '') {
-  return n.trim().toLowerCase().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function avg(val, pj) { return pj ? (val/pj).toFixed(1) : '—'; }
+function pct(m, a)    { return a  ? Math.round(m/a*100)+'%' : '—'; }
+function sign(n)      { return n > 0 ? '+'+n : String(n); }
+function cleanName(n='') {
+  return n.trim().toLowerCase().split(/\s+/).map(w=>w[0].toUpperCase()+w.slice(1)).join(' ');
 }
 
-// ─── ACUMULAR STATS SAC DE TODOS LOS PARTIDOS (desde /api/matches) ───
+// ─── ACUMULAR STATS SAC ───────────────────────────────────────────────────────
 function buildPlayerStats(partidos) {
   const stats = {};
   for (const p of partidos) {
     if (!p.esCabaneta) continue;
     const sacKey = p.esCasa ? p.local.shortName : p.visit.shortName;
-    const players = (p.players || {})[sacKey] || [];
+    const players = (p.players||{})[sacKey] || [];
     for (const pl of players) {
       if (!pl.actorId) continue;
-      if (!stats[pl.actorId]) {
-        stats[pl.actorId] = {
-          actorId: pl.actorId, name: pl.name, dorsal: pl.dorsal,
-          pj: 0, pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0, pir: 0,
-          t1m: 0, t1a: 0, t2m: 0, t2a: 0, t3m: 0, t3a: 0
-        };
-      }
+      if (!stats[pl.actorId]) stats[pl.actorId] = {
+        actorId:pl.actorId, name:pl.name, dorsal:pl.dorsal,
+        pj:0, pts:0, reb:0, ast:0, stl:0, blk:0, to:0, pf:0, pir:0, pm:0,
+        t1m:0, t1a:0, t2m:0, t2a:0, t3m:0, t3a:0,
+        ptsByGame:[]
+      };
       const s = stats[pl.actorId];
       s.pj++;
-      s.pts += pl.pts || 0; s.reb += pl.reb || 0; s.ast += pl.ast || 0;
-      s.stl += pl.stl || 0; s.blk += pl.blk || 0; s.to  += pl.to  || 0;
-      s.pf  += pl.pf  || 0; s.pir += pl.pir || 0;
-      const [t1m,t1a] = (pl.t1||'0/0').split('/').map(Number);
-      const [t2m,t2a] = (pl.t2||'0/0').split('/').map(Number);
-      const [t3m,t3a] = (pl.t3||'0/0').split('/').map(Number);
+      s.pts+=pl.pts||0; s.reb+=pl.reb||0; s.ast+=pl.ast||0;
+      s.stl+=pl.stl||0; s.blk+=pl.blk||0; s.to+=pl.to||0;
+      s.pf+=pl.pf||0;   s.pir+=pl.pir||0; s.pm+=pl.pm||0;
+      s.ptsByGame.push(pl.pts||0);
+      const [t1m,t1a]=(pl.t1||'0/0').split('/').map(Number);
+      const [t2m,t2a]=(pl.t2||'0/0').split('/').map(Number);
+      const [t3m,t3a]=(pl.t3||'0/0').split('/').map(Number);
       s.t1m+=t1m; s.t1a+=t1a; s.t2m+=t2m; s.t2a+=t2a; s.t3m+=t3m; s.t3a+=t3a;
     }
   }
   return Object.values(stats);
 }
 
-// ─── RENDER ───────────────────────────────────────────────
-function render(jugadores, playerStats, sacPartidos) {
-  // Cruzar por dorsal: jugadores (BD) ↔ stats (JSON)
+// ─── RACHA ACTUAL ─────────────────────────────────────────────────────────────
+function calcStreak(sacGames) {
+  if (!sacGames.length) return {tipo:'—', n:0};
+  const last = sacGames[sacGames.length-1].resultado;
+  let n = 0;
+  for (let i = sacGames.length-1; i >= 0; i--) {
+    if (sacGames[i].resultado === last) n++; else break;
+  }
+  return {tipo: last, n};
+}
+
+// ─── PROMEDIOS POR CUARTO ─────────────────────────────────────────────────────
+function getQuarterAvgs(sacGames) {
+  const qS=[0,0,0,0], qR=[0,0,0,0];
+  sacGames.forEach(g => {
+    const s = g.esCasa ? g.cuartos.local : g.cuartos.visit;
+    const r = g.esCasa ? g.cuartos.visit : g.cuartos.local;
+    for (let i=0;i<4;i++) { qS[i]+=(s[i]||0); qR[i]+=(r[i]||0); }
+  });
+  const n = sacGames.length || 1;
+  return {
+    sac: qS.map(v=>Math.round(v/n*10)/10),
+    riv: qR.map(v=>Math.round(v/n*10)/10)
+  };
+}
+
+// ─── CHART HELPERS ────────────────────────────────────────────────────────────
+let _charts = [];
+function mkChart(id, cfg) {
+  const existing = _charts.find(c => c.canvas.id === id);
+  if (existing) existing.destroy();
+  const c = new Chart(document.getElementById(id), cfg);
+  _charts.push(c);
+  return c;
+}
+
+const CHART_OPTS_BASE = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{ legend:{display:false}, tooltip:{
+    backgroundColor:'#1e1e1e', borderColor:'#333', borderWidth:1,
+    titleColor:'#aaa', bodyColor:'#fff'
+  }},
+  scales:{
+    x:{ ticks:{color:'#555',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'}, border:{color:'#2a2a2a'} },
+    y:{ ticks:{color:'#555',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'}, border:{color:'#2a2a2a'} }
+  }
+};
+
+// ─── SORT TABLE ───────────────────────────────────────────────────────────────
+let _sortCol = 'pts', _sortDir = -1;
+window.sortTable = function(col) {
+  if (_sortCol === col) _sortDir *= -1; else { _sortCol = col; _sortDir = -1; }
+  renderTable();
+};
+
+let _playerStats = [], _jugadores = [], _topPts = null;
+function renderTable() {
   const statsByDorsal = {};
-  for (const s of playerStats) statsByDorsal[s.dorsal] = s;
+  for (const s of _playerStats) statsByDorsal[s.dorsal] = s;
 
-  // Ordenar por dorsal
-  const roster = jugadores.sort((a, b) => (a.dorsal || 999) - (b.dorsal || 999));
+  const withStats = _playerStats.filter(s=>s.pj>0);
+  let sorted = [...withStats];
 
-  // Líderes
-  const withStats = playerStats.filter(s => s.pj > 0);
-  const topPts = withStats.sort((a,b) => b.pts/b.pj - a.pts/a.pj)[0];
-  const topReb = [...withStats].sort((a,b) => b.reb/b.pj - a.reb/a.pj)[0];
-  const topAst = [...withStats].sort((a,b) => b.ast/b.pj - a.ast/a.pj)[0];
-  const topPir = [...withStats].sort((a,b) => b.pir/b.pj - a.pir/a.pj)[0];
-
-  function leaderCard(type, player, val) {
-    if (!player) return `<div class="leader-card"><div class="leader-type">${type}</div><div class="leader-val">—</div></div>`;
-    return `
-      <div class="leader-card">
-        <div class="leader-type">${type}</div>
-        <div class="leader-val">${val}</div>
-        <div class="leader-name">${player.name}</div>
-        <div class="leader-dorsal">#${player.dorsal} · ${player.pj} PJ</div>
-      </div>`;
+  const numFields = ['pj','pts','reb','ast','stl','blk','pm','pir','t2pct','t3pct'];
+  if (numFields.includes(_sortCol)) {
+    sorted.sort((a,b) => {
+      const va = _sortCol==='t2pct' ? (a.t2a?a.t2m/a.t2a:0) : _sortCol==='t3pct' ? (a.t3a?a.t3m/a.t3a:0) : (a[_sortCol]/a.pj);
+      const vb = _sortCol==='t2pct' ? (b.t2a?b.t2m/b.t2a:0) : _sortCol==='t3pct' ? (b.t3a?b.t3m/b.t3a:0) : (b[_sortCol]/b.pj);
+      return (vb-va)*_sortDir;
+    });
   }
 
-  // Tabla de jugadores
-  const rows = roster.map(j => {
-    const s = statsByDorsal[j.dorsal];
-    const fullName = `${j.nombre} ${j.apellidos}`;
-    const isTop = topPts && s && s.dorsal === topPts.dorsal;
-    if (!s || s.pj === 0) {
-      return `<tr>
-        <td><span class="dorsal-badge">${j.dorsal ?? '—'}</span></td>
-        <td>${fullName}</td>
-        <td colspan="9" class="pj-0">Sin minutos esta temporada</td>
-      </tr>`;
-    }
+  // add no-stats rows
+  const noStats = _jugadores
+    .map(j=>statsByDorsal[j.dorsal])
+    .filter(s=>!s||s.pj===0)
+    .map(s=>s||null);
+
+  const rows = sorted.map(s => {
+    const isTop = _topPts && s.actorId === _topPts.actorId;
+    const pmCls = s.pm > 0 ? 'pm-pos' : s.pm < 0 ? 'pm-neg' : '';
+    const pmStr = s.pm > 0 ? '+'+s.pm : String(s.pm);
+    // mini sparkline: last 3 pts vs avg
+    const last3 = s.ptsByGame.slice(-3);
+    const l3avg = last3.length ? last3.reduce((a,b)=>a+b,0)/last3.length : 0;
+    const trend = l3avg > s.pts/s.pj+1.5 ? '↑' : l3avg < s.pts/s.pj-1.5 ? '↓' : '→';
+    const trendCls = trend==='↑' ? 'color:#4caf50' : trend==='↓' ? 'color:#e05555' : 'color:#888';
     return `<tr>
-      <td><span class="dorsal-badge${isTop?' top':''}">${j.dorsal}</span></td>
-      <td>${fullName}</td>
+      <td><span class="dorsal-badge${isTop?' top':''}">${s.dorsal}</span></td>
+      <td>${s.name} <span style="font-size:11px;${trendCls};font-weight:700">${trend}</span></td>
       <td>${s.pj}</td>
-      <td class="${s.pts/s.pj >= 10 ? 'stat-hi' : ''}">${avg(s.pts, s.pj)}</td>
-      <td>${avg(s.reb, s.pj)}</td>
-      <td>${avg(s.ast, s.pj)}</td>
-      <td>${avg(s.stl, s.pj)}</td>
-      <td>${avg(s.blk, s.pj)}</td>
-      <td>${pct(s.t2m, s.t2a)}</td>
-      <td>${pct(s.t3m, s.t3a)}</td>
-      <td class="${s.pir/s.pj > 0 ? 'stat-hi' : ''}">${avg(s.pir, s.pj)}</td>
+      <td class="${s.pts/s.pj>=10?'stat-hi':''}">${avg(s.pts,s.pj)}</td>
+      <td>${avg(s.reb,s.pj)}</td>
+      <td>${avg(s.ast,s.pj)}</td>
+      <td>${avg(s.stl,s.pj)}</td>
+      <td>${avg(s.blk,s.pj)}</td>
+      <td>${pct(s.t2m,s.t2a)}</td>
+      <td>${pct(s.t3m,s.t3a)}</td>
+      <td class="${pmCls}">${pmStr}</td>
+      <td class="${s.pir/s.pj>0?'stat-hi':''}">${avg(s.pir,s.pj)}</td>
     </tr>`;
-  }).join('');
+  });
+
+  const th = col => {
+    const cls = _sortCol===col ? (_sortDir===-1?'sort-desc':'sort-asc') : '';
+    const labels = {pj:'PJ',pts:'PTS',reb:'REB',ast:'AST',stl:'ROB',blk:'TAP',t2pct:'%T2',t3pct:'%T3',pm:'±',pir:'PIR'};
+    return `<th class="${cls}" onclick="sortTable('${col}')">${labels[col]||col}</th>`;
+  };
+
+  document.getElementById('ptbl-body').innerHTML = rows.join('');
+  document.querySelectorAll('table.ptbl thead th[data-col]').forEach(el => {
+    const col = el.dataset.col;
+    el.className = _sortCol===col ? (_sortDir===-1?'sort-desc':'sort-asc') : '';
+  });
+}
+
+// ─── RENDER PRINCIPAL ─────────────────────────────────────────────────────────
+function render(jugadores, playerStats, matches) {
+  _playerStats = playerStats;
+  _jugadores   = jugadores;
+
+  const allPartidos = matches.partidos || [];
+  const sacGames = allPartidos.filter(p=>p.esCabaneta).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+
+  const victorias = sacGames.filter(g=>g.resultado==='V').length;
+  const derrotas  = sacGames.filter(g=>g.resultado==='D').length;
+  const pj        = sacGames.length;
+
+  const avgFavor  = pj ? Math.round(sacGames.reduce((s,g)=>s+(g.sacPuntos||0),0)/pj*10)/10 : 0;
+  const avgContra = pj ? Math.round(sacGames.reduce((s,g)=>s+(g.rivalPuntos||0),0)/pj*10)/10 : 0;
+  const avgMargin = Math.round((avgFavor - avgContra)*10)/10;
+
+  const streak  = calcStreak(sacGames);
+  const qAvgs   = getQuarterAvgs(sacGames);
+
+  // Team shooting totals
+  let t2m=0,t2a=0,t3m=0,t3a=0,t1m=0,t1a=0;
+  playerStats.forEach(s=>{t2m+=s.t2m;t2a+=s.t2a;t3m+=s.t3m;t3a+=s.t3a;t1m+=s.t1m;t1a+=s.t1a;});
+
+  // Leaders (per game)
+  const withStats = playerStats.filter(s=>s.pj>0);
+  _topPts = [...withStats].sort((a,b)=>b.pts/b.pj-a.pts/a.pj)[0];
+  const topReb   = [...withStats].sort((a,b)=>b.reb/b.pj-a.reb/a.pj)[0];
+  const topAst   = [...withStats].sort((a,b)=>b.ast/b.pj-a.ast/a.pj)[0];
+  const topPM    = [...withStats].sort((a,b)=>b.pm-a.pm)[0];
+
+  function leaderCard(type, p, val) {
+    if (!p) return `<div class="leader-card"><div class="leader-type">${type}</div><div class="leader-val">—</div></div>`;
+    return `<div class="leader-card">
+      <div class="leader-type">${type}</div>
+      <div class="leader-val">${val}</div>
+      <div class="leader-name">${p.name}</div>
+      <div class="leader-dorsal">#${p.dorsal} · ${p.pj} PJ</div>
+    </div>`;
+  }
+
+  // Trend chart data
+  const trendLabels = sacGames.map(g=>`J${g.jornada}`);
+  const trendData   = sacGames.map(g=>(g.sacPuntos||0)-(g.rivalPuntos||0));
+  const trendColors = trendData.map(v=>v>=0?'rgba(39,174,96,0.8)':'rgba(204,20,20,0.8)');
+  const trendBorders= trendData.map(v=>v>=0?'#27ae60':'#cc1414');
+
+  // Last games dots
+  const dotsHtml = sacGames.map(g=>`<div class="gdot gdot-${g.resultado==='V'?'v':'d'}" title="J${g.jornada}: ${g.sacPuntos}-${g.rivalPuntos}">${g.resultado}</div>`).join('');
+
+  const streakLabel = streak.n > 0 && streak.tipo!=='—'
+    ? `${streak.n} ${streak.tipo==='V'?'victoria':'derrota'}${streak.n>1?'s':''} seguidas`
+    : '';
+  const streakCls = streak.tipo==='V' ? 'streak-v' : 'streak-d';
+
+  const marginStr = avgMargin >= 0 ? '+'+avgMargin : String(avgMargin);
+  const marginCls = avgMargin >= 0 ? 'pos' : 'neg';
 
   document.getElementById('content').innerHTML = `
-    <!-- TEAM HEADER -->
-    <div class="team-header">
+    <!-- HERO -->
+    <div class="team-hero">
       <div class="team-badge">SAC</div>
-      <div class="team-info">
-        <div class="team-info-name">Sa Cabaneta A</div>
-        <div class="team-info-sub">Fontaneria Jose Puerta / Espais Integrals</div>
-        <div class="team-info-meta">
-          <div class="team-meta-pill"><span>${jugadores.length}</span> jugadores</div>
-          <div class="team-meta-pill"><span>${sacPartidos}</span> partidos jugados</div>
-          <div class="team-meta-pill">Temporada <span>2025–26</span></div>
+      <div class="hero-body">
+        <div class="hero-name">Sa Cabaneta A</div>
+        <div class="hero-sub">Fontaneria Jose Puerta / Espais Integrals · Temporada 2025–26</div>
+        <div class="hero-record">
+          <div class="record-big"><span class="v">${victorias}V</span><span class="sep"> · </span><span class="d">${derrotas}D</span></div>
+          ${streakLabel ? `<div class="streak-pill ${streakCls}">${streakLabel}</div>` : ''}
         </div>
+        <div class="game-dots">${dotsHtml}</div>
+      </div>
+    </div>
+
+    <!-- MÉTRICAS -->
+    <div class="metrics-strip">
+      <div class="metric-tile"><div class="metric-val">${avgFavor}</div><div class="metric-lbl">PTS / partido</div></div>
+      <div class="metric-tile"><div class="metric-val">${avgContra}</div><div class="metric-lbl">OPP / partido</div></div>
+      <div class="metric-tile"><div class="metric-val ${marginCls}">${marginStr}</div><div class="metric-lbl">Diferencial</div></div>
+      <div class="metric-tile"><div class="metric-val">${pct(t2m,t2a)}</div><div class="metric-lbl">% Tiros 2</div></div>
+      <div class="metric-tile"><div class="metric-val">${pct(t3m,t3a)}</div><div class="metric-lbl">% Triples</div></div>
+      <div class="metric-tile"><div class="metric-val">${pct(t1m,t1a)}</div><div class="metric-lbl">% T. libres</div></div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="chart-row">
+      <div class="chart-card">
+        <div class="chart-title">Evolución de la temporada</div>
+        <div class="chart-sub">Diferencial de puntos por partido</div>
+        <div class="chart-canvas-wrap"><canvas id="trendChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Rendimiento por cuarto</div>
+        <div class="chart-sub">Media de puntos anotados y encajados</div>
+        <div class="chart-canvas-wrap"><canvas id="quartersChart"></canvas></div>
       </div>
     </div>
 
     <!-- LÍDERES -->
-    <div class="section-title">Líderes de la temporada</div>
-    <div class="section-sub">Medias por partido</div>
+    <div class="section-hdr"><div class="section-title">Líderes de la temporada</div><div class="section-sub">Medias por partido</div></div>
     <div class="leaders-grid">
-      ${leaderCard('Máximo anotador',  topPts, topPts ? avg(topPts.pts, topPts.pj)+' pts' : '—')}
-      ${leaderCard('Mejor reboteador', topReb, topReb ? avg(topReb.reb, topReb.pj)+' reb' : '—')}
-      ${leaderCard('Mejor asistente',  topAst, topAst ? avg(topAst.ast, topAst.pj)+' ast' : '—')}
-      ${leaderCard('Mejor valoración', topPir, topPir ? avg(topPir.pir, topPir.pj)+' PIR' : '—')}
+      ${leaderCard('Máximo anotador',  _topPts, _topPts ? avg(_topPts.pts,_topPts.pj)+' pts' : '—')}
+      ${leaderCard('Mejor reboteador', topReb,  topReb  ? avg(topReb.reb,topReb.pj)+' reb'   : '—')}
+      ${leaderCard('Mejor asistente',  topAst,  topAst  ? avg(topAst.ast,topAst.pj)+' ast'   : '—')}
+      ${leaderCard('Mejor +/−',        topPM,   topPM   ? sign(topPM.pm)                     : '—')}
     </div>
 
-    <!-- ROSTER -->
-    <div class="section-title">Plantilla</div>
-    <div class="section-sub">Estadísticas medias por partido · Temporada 2025–26</div>
+    <!-- PLANTILLA -->
+    <div class="section-hdr"><div class="section-title">Plantilla</div><div class="section-sub">Medias por partido · haz clic en una columna para ordenar · ↑↓ indica tendencia últimos 3 partidos</div></div>
     <div class="players-table-wrap">
       <table class="ptbl">
-        <thead>
-          <tr>
-            <th style="text-align:left">#</th>
-            <th style="text-align:left">Jugador</th>
-            <th>PJ</th>
-            <th>PTS</th>
-            <th>REB</th>
-            <th>AST</th>
-            <th>ROB</th>
-            <th>TAP</th>
-            <th>%T2</th>
-            <th>%T3</th>
-            <th>PIR</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
+        <thead><tr>
+          <th style="text-align:left">#</th>
+          <th style="text-align:left">Jugador</th>
+          <th data-col="pj" onclick="sortTable('pj')">PJ</th>
+          <th data-col="pts" onclick="sortTable('pts')">PTS</th>
+          <th data-col="reb" onclick="sortTable('reb')">REB</th>
+          <th data-col="ast" onclick="sortTable('ast')">AST</th>
+          <th data-col="stl" onclick="sortTable('stl')">ROB</th>
+          <th data-col="blk" onclick="sortTable('blk')">TAP</th>
+          <th data-col="t2pct" onclick="sortTable('t2pct')">%T2</th>
+          <th data-col="t3pct" onclick="sortTable('t3pct')">%T3</th>
+          <th data-col="pm" onclick="sortTable('pm')">±</th>
+          <th data-col="pir" onclick="sortTable('pir')">PIR</th>
+        </tr></thead>
+        <tbody id="ptbl-body"></tbody>
       </table>
     </div>
   `;
+
+  // Dibujar charts
+  mkChart('trendChart', {
+    type:'bar',
+    data:{
+      labels: trendLabels,
+      datasets:[{
+        data: trendData,
+        backgroundColor: trendColors,
+        borderColor: trendBorders,
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options:{
+      ...CHART_OPTS_BASE,
+      plugins:{
+        ...CHART_OPTS_BASE.plugins,
+        tooltip:{ ...CHART_OPTS_BASE.plugins.tooltip,
+          callbacks:{
+            label: ctx => {
+              const g = sacGames[ctx.dataIndex];
+              const rival = g.esCasa ? g.visit.nombre : g.local.nombre;
+              const v = ctx.raw >= 0 ? 'V' : 'D';
+              return ` ${v} vs ${rival}  ${g.sacPuntos}-${g.rivalPuntos}  (${ctx.raw>=0?'+':''}${ctx.raw})`
+            }
+          }
+        }
+      },
+      scales:{
+        x:{...CHART_OPTS_BASE.scales.x},
+        y:{...CHART_OPTS_BASE.scales.y,
+          ticks:{...CHART_OPTS_BASE.scales.y.ticks,
+            callback: v => v>=0?'+'+v:v
+          }
+        }
+      }
+    }
+  });
+
+  mkChart('quartersChart', {
+    type:'bar',
+    data:{
+      labels:['Q1','Q2','Q3','Q4'],
+      datasets:[
+        { label:'SAC',  data:qAvgs.sac, backgroundColor:'rgba(204,20,20,0.75)',  borderColor:'#cc1414', borderWidth:1, borderRadius:3 },
+        { label:'Rival',data:qAvgs.riv, backgroundColor:'rgba(100,100,100,0.5)', borderColor:'#555',    borderWidth:1, borderRadius:3 }
+      ]
+    },
+    options:{
+      ...CHART_OPTS_BASE,
+      plugins:{
+        ...CHART_OPTS_BASE.plugins,
+        legend:{
+          display:true,
+          labels:{ color:'#888', font:{size:11}, boxWidth:12, padding:14 }
+        }
+      }
+    }
+  });
+
+  renderTable();
 }
 
-// ─── INIT ─────────────────────────────────────────────────
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
   try {
-    // 1. Obtener id de SAC
-    const equipos = await fetch('/api/equipos').then(r => r.json());
-    const sac = equipos.find(e => e.short_name === 'SAC');
-    if (!sac) throw new Error('Equipo SAC no encontrado en la BD');
+    const equipos = await fetch('/api/equipos').then(r=>r.json());
+    const sac = equipos.find(e=>e.short_name==='SAC');
+    if (!sac) throw new Error('Equipo SAC no encontrado');
 
-    // 2. Carga en paralelo: jugadores (BD) + partidos jugados (BD) + todos los partidos con stats (JSON)
-    const [jugadores, partidosRaw, matches] = await Promise.all([
-      fetch(`/api/jugadores?equipo_id=${sac.id}`).then(r => r.json()),
-      fetch(`/api/partidos?equipo_id=${sac.id}`).then(r => r.json()),
-      fetch('/api/matches?v=5').then(r => r.json())
+    const [jugadores, matches] = await Promise.all([
+      fetch(`/api/jugadores?equipo_id=${sac.id}`).then(r=>r.json()),
+      fetch('/api/matches?v=5').then(r=>r.json())
     ]);
 
-    // Número real de partidos jugados desde la BD
-    const totalJugados = Array.isArray(partidosRaw)
-      ? partidosRaw.filter(p => !p.estado || p.estado === 'jugado').length
-      : 0;
+    const playerStats = buildPlayerStats(matches.partidos||[]);
+    render(jugadores, playerStats, matches);
 
-    // Stats de jugadores desde los JSON locales (todos los de SAC disponibles)
-    const playerStats = buildPlayerStats(matches.partidos || []);
-
-    render(jugadores, playerStats, totalJugados);
-
-  } catch (err) {
+  } catch(err) {
     document.getElementById('content').innerHTML =
-      `<div class="loading">Error al cargar: ${err.message}</div>`;
+      `<div class="loading">Error: ${err.message}</div>`;
     console.error(err);
   }
 }
@@ -450,6 +582,6 @@ async function init() {
 document.addEventListener('DOMContentLoaded', init);
 </script>
 <script src="js/rol.js"></script>
-<script>document.addEventListener('DOMContentLoaded', () => HoopRol.init());</script>
+<script>document.addEventListener('DOMContentLoaded', ()=>HoopRol.init());</script>
 </body>
 </html>
