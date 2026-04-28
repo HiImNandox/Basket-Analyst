@@ -145,6 +145,17 @@
   .rot-total.neg { color:#e05555; }
   .rot-total.neu { color:#666; }
   .rot-sep { height:1px; background:#1c1c1c; margin:2px 0 2px 108px; }
+  .rot-info { display:none; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-top:10px; }
+  .rot-info.show { display:flex; align-items:center; justify-content:space-between; gap:12px; animation:rotFadeIn 0.13s ease; }
+  @keyframes rotFadeIn { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:translateY(0)} }
+  .rot-info-left { flex:1; min-width:0; }
+  .rot-info-name { font-weight:700; color:#fff; font-size:13px; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rot-info-row { font-size:11px; color:var(--muted); margin-bottom:3px; }
+  .rot-info-row strong { color:var(--text); font-weight:600; }
+  .rot-info-right { text-align:right; flex-shrink:0; }
+  .rot-info-pm { font-size:26px; font-weight:700; line-height:1; }
+  .rot-info-min { font-size:11px; color:var(--muted); margin-top:3px; }
+  .rot-stint { cursor:pointer; }  /* asegurar cursor correcto */
 
   /* ─── BOTTOM NAV ─── */
   .bottom-nav {
@@ -314,11 +325,12 @@
   </div>
 
   <!-- ═══ ROTACIONES ═══ -->
-  <div class="rot-wrap" id="rot-section" style="display:none">
+  <div class="rot-wrap" id="rot-section" style="display:none" onclick="rotCloseInfo(event)">
     <div class="section-title">Rotaciones</div>
     <div class="rot-scroll">
       <div class="rot-chart" id="rot-chart"></div>
     </div>
+    <div class="rot-info" id="rot-info"></div>
   </div>
 
   <!-- ═══ PLAY BY PLAY ═══ -->
@@ -912,6 +924,47 @@ function pmColor(pm) {
   return '#b71c1c';
 }
 
+window.rotShowInfo = function(e) {
+  e.stopPropagation();
+  const el   = e.currentTarget;
+  const info = document.getElementById('rot-info');
+  if (!info) return;
+
+  // Toggle: cerrar si se toca el mismo tramo dos veces
+  if (info.classList.contains('show') && info._active === el) {
+    info.classList.remove('show');
+    info._active = null;
+    return;
+  }
+  info._active = el;
+
+  const pm       = parseInt(el.dataset.pm);
+  const pmStr    = pm > 0 ? '+' + pm : String(pm);
+  const col      = el.dataset.col;
+  const sacShort = el.dataset.sac;
+  const rivShort = el.dataset.riv;
+
+  info.innerHTML = `
+    <div class="rot-info-left">
+      <div class="rot-info-name">${el.dataset.name}</div>
+      <div class="rot-info-row">Entrada &nbsp;·&nbsp; <strong>${sacShort} ${el.dataset.sacIn} – ${rivShort} ${el.dataset.rivIn}</strong></div>
+      <div class="rot-info-row">Salida &nbsp;·&nbsp; <strong>${sacShort} ${el.dataset.sacOut} – ${rivShort} ${el.dataset.rivOut}</strong></div>
+    </div>
+    <div class="rot-info-right">
+      <div class="rot-info-pm" style="color:${col}">${pmStr}</div>
+      <div class="rot-info-min">${el.dataset.mins} min</div>
+    </div>`;
+  info.classList.add('show');
+};
+
+window.rotCloseInfo = function(e) {
+  // Cierra si el clic no viene de un tramo
+  if (!e.target.classList.contains('rot-stint')) {
+    const info = document.getElementById('rot-info');
+    if (info) { info.classList.remove('show'); info._active = null; }
+  }
+};
+
 function renderRotations(pbpEvents, ourId, sacIsLocal, sacShort, rivalShort) {
   const section = document.getElementById('rot-section');
   const chart   = document.getElementById('rot-chart');
@@ -979,7 +1032,18 @@ function renderRotations(pbpEvents, ourId, sacIsLocal, sacShort, rivalShort) {
       const tip    = `${p.name}\n${mins}min  ${pmStr}\nEntrada: ${tipIn}\nSalida:  ${tipOut}`;
       const label  = parseFloat(width) > 9 ? pmStr : '';
 
-      html += `<div class="rot-stint" style="left:${left}%;width:${width}%;background:${col}" title="${tip}">${label}</div>`;
+      html += `<div class="rot-stint"
+        style="left:${left}%;width:${width}%;background:${col}"
+        title="${tip}"
+        onclick="rotShowInfo(event)"
+        data-name="${p.name}"
+        data-mins="${mins}"
+        data-pm="${st.pm}"
+        data-sac-in="${st.sacIn}" data-riv-in="${st.rivIn}"
+        data-sac-out="${st.sacOut}" data-riv-out="${st.rivOut}"
+        data-sac="${sacShort}" data-riv="${rivalShort}"
+        data-col="${col}"
+      >${label}</div>`;
     });
 
     html += `</div>
