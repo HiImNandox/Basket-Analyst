@@ -136,10 +136,11 @@
   .rot-label { width:108px; flex-shrink:0; display:flex; align-items:center; gap:5px; padding-right:6px; overflow:hidden; }
   .rot-dorsal { background:var(--red); color:#fff; border-radius:3px; padding:1px 5px; font-size:9px; font-weight:700; flex-shrink:0; min-width:20px; text-align:center; }
   .rot-pname { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; color:#888; }
-  .rot-track { flex:1; position:relative; height:22px; background:#161616; border-radius:3px; }
+  .rot-track { flex:1; position:relative; height:22px; background:#161616; border-radius:3px; overflow:visible; }
   .rot-qline { position:absolute; top:0; bottom:0; width:1px; background:#2c2c2c; pointer-events:none; z-index:1; }
-  .rot-stint { position:absolute; top:2px; bottom:2px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:rgba(255,255,255,0.92); text-shadow:0 1px 2px rgba(0,0,0,0.7); overflow:hidden; cursor:default; transition:filter 0.1s; z-index:2; }
+  .rot-stint { position:absolute; top:2px; bottom:2px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:rgba(255,255,255,0.92); text-shadow:0 1px 2px rgba(0,0,0,0.8); overflow:visible; cursor:pointer; transition:filter 0.1s; z-index:2; min-width:3px; }
   .rot-stint:hover { filter:brightness(1.3); z-index:5; }
+  .rot-stint .rot-lbl { white-space:nowrap; pointer-events:none; }
   .rot-total { width:38px; flex-shrink:0; text-align:right; font-size:11px; font-weight:700; padding-left:6px; white-space:nowrap; }
   .rot-total.pos { color:#4caf50; }
   .rot-total.neg { color:#e05555; }
@@ -1030,8 +1031,6 @@ function renderRotations(pbpEvents, ourId, sacIsLocal, sacShort, rivalShort) {
       const tipIn  = `${sacShort} ${st.sacIn} – ${rivalShort} ${st.rivIn}`;
       const tipOut = `${sacShort} ${st.sacOut} – ${rivalShort} ${st.rivOut}`;
       const tip    = `${p.name}\n${mins}min  ${pmStr}\nEntrada: ${tipIn}\nSalida:  ${tipOut}`;
-      const label  = parseFloat(width) > 9 ? pmStr : '';
-
       html += `<div class="rot-stint"
         style="left:${left}%;width:${width}%;background:${col}"
         title="${tip}"
@@ -1043,7 +1042,7 @@ function renderRotations(pbpEvents, ourId, sacIsLocal, sacShort, rivalShort) {
         data-sac-out="${st.sacOut}" data-riv-out="${st.rivOut}"
         data-sac="${sacShort}" data-riv="${rivalShort}"
         data-col="${col}"
-      >${label}</div>`;
+      ><span class="rot-lbl">${pmStr}</span></div>`;
     });
 
     html += `</div>
