@@ -221,6 +221,8 @@ function cleanName(n='') {
 }
 
 // ─── ACUMULAR STATS SAC ───────────────────────────────────────────────────────
+// IMPORTANTE: actorId varía entre jornadas para el mismo jugador.
+// Usamos dorsal como clave estable (único dentro del equipo).
 function buildPlayerStats(partidos) {
   const stats = {};
   for (const p of partidos) {
@@ -228,14 +230,17 @@ function buildPlayerStats(partidos) {
     const sacKey = p.esCasa ? p.local.shortName : p.visit.shortName;
     const players = (p.players||{})[sacKey] || [];
     for (const pl of players) {
-      if (!pl.actorId) continue;
-      if (!stats[pl.actorId]) stats[pl.actorId] = {
-        actorId:pl.actorId, name:pl.name, dorsal:pl.dorsal,
+      const key = String(pl.dorsal || pl.name || '?');
+      if (!stats[key]) stats[key] = {
+        key, name:pl.name, dorsal:pl.dorsal,
         pj:0, pts:0, reb:0, ast:0, stl:0, blk:0, to:0, pf:0, pir:0, pm:0,
         t1m:0, t1a:0, t2m:0, t2a:0, t3m:0, t3a:0,
         ptsByGame:[]
       };
-      const s = stats[pl.actorId];
+      const s = stats[key];
+      // Actualiza nombre y dorsal con el último dato disponible
+      s.name   = pl.name   || s.name;
+      s.dorsal = pl.dorsal || s.dorsal;
       s.pj++;
       s.pts+=pl.pts||0; s.reb+=pl.reb||0; s.ast+=pl.ast||0;
       s.stl+=pl.stl||0; s.blk+=pl.blk||0; s.to+=pl.to||0;
@@ -307,8 +312,8 @@ window.sortTable = function(col) {
 
 let _playerStats = [], _jugadores = [], _topPts = null;
 function renderTable() {
-  const statsByDorsal = {};
-  for (const s of _playerStats) statsByDorsal[s.dorsal] = s;
+  const statsByKey = {};
+  for (const s of _playerStats) statsByKey[s.key] = s;
 
   const withStats = _playerStats.filter(s=>s.pj>0);
   let sorted = [...withStats];
@@ -322,14 +327,10 @@ function renderTable() {
     });
   }
 
-  // add no-stats rows
-  const noStats = _jugadores
-    .map(j=>statsByDorsal[j.dorsal])
-    .filter(s=>!s||s.pj===0)
-    .map(s=>s||null);
+  // (jugadores sin minutos no se muestran en la tabla)
 
   const rows = sorted.map(s => {
-    const isTop = _topPts && s.actorId === _topPts.actorId;
+    const isTop = _topPts && s.key === _topPts.key;
     const pmCls = s.pm > 0 ? 'pm-pos' : s.pm < 0 ? 'pm-neg' : '';
     const pmStr = s.pm > 0 ? '+'+s.pm : String(s.pm);
     // mini sparkline: last 3 pts vs avg
@@ -391,7 +392,7 @@ function render(jugadores, playerStats, matches) {
 
   // Leaders (per game)
   const withStats = playerStats.filter(s=>s.pj>0);
-  _topPts = [...withStats].sort((a,b)=>b.pts/b.pj-a.pts/a.pj)[0];
+  _topPts  = [...withStats].sort((a,b)=>b.pts/b.pj-a.pts/a.pj)[0];
   const topReb   = [...withStats].sort((a,b)=>b.reb/b.pj-a.reb/a.pj)[0];
   const topAst   = [...withStats].sort((a,b)=>b.ast/b.pj-a.ast/a.pj)[0];
   const topPM    = [...withStats].sort((a,b)=>b.pm-a.pm)[0];
