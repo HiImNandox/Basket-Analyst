@@ -126,6 +126,26 @@
   .pbp-empty { text-align:center; color:var(--muted); font-size:13px; padding:2.5rem 1rem; }
   @media(max-width:420px) { .pbp-player{min-width:60px;max-width:70px;} }
 
+  /* ─── ROTACIONES ─── */
+  .rot-wrap { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+  .rot-scroll { overflow-x: auto; padding-bottom: 2px; }
+  .rot-chart { min-width: 300px; }
+  .rot-axis { display:flex; padding-left:108px; padding-right:46px; margin-bottom:4px; }
+  .rot-axis-q { font-size:9px; color:#3a3a3a; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; text-align:left; padding-left:2px; }
+  .rot-row { display:flex; align-items:center; margin-bottom:2px; }
+  .rot-label { width:108px; flex-shrink:0; display:flex; align-items:center; gap:5px; padding-right:6px; overflow:hidden; }
+  .rot-dorsal { background:var(--red); color:#fff; border-radius:3px; padding:1px 5px; font-size:9px; font-weight:700; flex-shrink:0; min-width:20px; text-align:center; }
+  .rot-pname { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; color:#888; }
+  .rot-track { flex:1; position:relative; height:22px; background:#161616; border-radius:3px; }
+  .rot-qline { position:absolute; top:0; bottom:0; width:1px; background:#2c2c2c; pointer-events:none; z-index:1; }
+  .rot-stint { position:absolute; top:2px; bottom:2px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:rgba(255,255,255,0.92); text-shadow:0 1px 2px rgba(0,0,0,0.7); overflow:hidden; cursor:default; transition:filter 0.1s; z-index:2; }
+  .rot-stint:hover { filter:brightness(1.3); z-index:5; }
+  .rot-total { width:38px; flex-shrink:0; text-align:right; font-size:11px; font-weight:700; padding-left:6px; white-space:nowrap; }
+  .rot-total.pos { color:#4caf50; }
+  .rot-total.neg { color:#e05555; }
+  .rot-total.neu { color:#666; }
+  .rot-sep { height:1px; background:#1c1c1c; margin:2px 0 2px 108px; }
+
   /* ─── BOTTOM NAV ─── */
   .bottom-nav {
     display: none;
@@ -290,6 +310,14 @@
       <div class="player-legend" id="legend-visit"></div>
       <div class="section-title" style="margin-top:1.25rem;">Líderes — Sa Cabaneta A</div>
       <div class="leaders" id="leaders-visit"></div>
+    </div>
+  </div>
+
+  <!-- ═══ ROTACIONES ═══ -->
+  <div class="rot-wrap" id="rot-section" style="display:none">
+    <div class="section-title">Rotaciones</div>
+    <div class="rot-scroll">
+      <div class="rot-chart" id="rot-chart"></div>
     </div>
   </div>
 
@@ -797,6 +825,173 @@ function renderPBP(pbpEvents, ourId, quarters, sacShort, rivalShort, sacIsLocal)
   list.innerHTML = html;
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// ROTACIONES
+// ══════════════════════════════════════════════════════════════════════════
+
+function rotToAbsSec(period, min, sec) {
+  if (period <= 4) return (period - 1) * 600 + (600 - (min * 60 + sec));
+  return 2400 + (period - 5) * 300 + (300 - (min * 60 + sec));
+}
+
+function buildStints(pbpEvents, ourId, sacIsLocal) {
+  const parseSac = s => { if (!s) return 0; const [l,v]=s.split('-').map(Number); return sacIsLocal?l:v; };
+  const parseRiv = s => { if (!s) return 0; const [l,v]=s.split('-').map(Number); return sacIsLocal?v:l; };
+
+  // Registro de jugadores SAC
+  const pMap = {};
+  pbpEvents.forEach(e => {
+    if (e.idTeam !== ourId || !e.actorId) return;
+    if (!pMap[e.actorId]) pMap[e.actorId] = {
+      id: e.actorId, name: e.actorName, dorsal: e.actorShirtNumber,
+      stints: [], _since: null, _sacIn: 0, _rivIn: 0
+    };
+  });
+
+  // Detectar titulares: su primer evento de cambio es "surt" (115), no "entra" (112)
+  Object.values(pMap).forEach(p => {
+    const evs = pbpEvents.filter(e => e.idTeam === ourId && e.actorId === p.id);
+    const firstEntry = evs.find(e => e.idMove === 112);
+    const firstExit  = evs.find(e => e.idMove === 115);
+    const entAbs = firstEntry ? rotToAbsSec(firstEntry.period, firstEntry.min, firstEntry.sec) : Infinity;
+    const extAbs = firstExit  ? rotToAbsSec(firstExit.period,  firstExit.min,  firstExit.sec)  : Infinity;
+    // Es titular si sale antes de entrar (o nunca entra)
+    if (!firstEntry || extAbs <= entAbs) {
+      p._since = 0; p._sacIn = 0; p._rivIn = 0;
+    }
+  });
+
+  // Procesar cambios en orden de aparición
+  pbpEvents
+    .filter(e => e.idTeam === ourId && (e.idMove === 112 || e.idMove === 115) && e.actorId)
+    .forEach(ev => {
+      const p = pMap[ev.actorId];
+      if (!p) return;
+      const absSec = rotToAbsSec(ev.period, ev.min, ev.sec);
+      const curSac = parseSac(ev.score);
+      const curRiv = parseRiv(ev.score);
+
+      if (ev.idMove === 115) {           // sale
+        if (p._since !== null) {
+          p.stints.push({ from: p._since, to: absSec,
+            pm: (curSac - p._sacIn) - (curRiv - p._rivIn),
+            sacIn: p._sacIn, sacOut: curSac, rivIn: p._rivIn, rivOut: curRiv });
+          p._since = null;
+        }
+      } else {                           // entra
+        p._since = absSec; p._sacIn = curSac; p._rivIn = curRiv;
+      }
+    });
+
+  // Cerrar tramos que quedaron abiertos al final
+  const lastEv  = [...pbpEvents].reverse().find(e => e.score);
+  const finSac  = parseSac(lastEv?.score);
+  const finRiv  = parseRiv(lastEv?.score);
+  const finSec  = lastEv ? rotToAbsSec(lastEv.period, lastEv.min, lastEv.sec) : 2400;
+
+  Object.values(pMap).forEach(p => {
+    if (p._since !== null) {
+      p.stints.push({ from: p._since, to: finSec,
+        pm: (finSac - p._sacIn) - (finRiv - p._rivIn),
+        sacIn: p._sacIn, sacOut: finSac, rivIn: p._rivIn, rivOut: finRiv });
+    }
+    p.totalPM  = p.stints.reduce((s, st) => s + st.pm, 0);
+    p.totalMin = Math.round(p.stints.reduce((s, st) => s + st.to - st.from, 0) / 60);
+  });
+
+  return { players: Object.values(pMap).filter(p => p.stints.length), totalSec: Math.max(finSec, 2400) };
+}
+
+function pmColor(pm) {
+  if (pm >=  8) return '#388e3c';
+  if (pm >=  4) return '#66bb6a';
+  if (pm >=  1) return '#a5d6a7';
+  if (pm === 0) return '#546e7a';
+  if (pm >= -3) return '#ffa726';
+  if (pm >= -7) return '#ef5350';
+  return '#b71c1c';
+}
+
+function renderRotations(pbpEvents, ourId, sacIsLocal, sacShort, rivalShort) {
+  const section = document.getElementById('rot-section');
+  const chart   = document.getElementById('rot-chart');
+  if (!section || !chart || !pbpEvents.length) return;
+
+  const { players, totalSec } = buildStints(pbpEvents, ourId, sacIsLocal);
+  if (!players.length) return;
+
+  section.style.display = '';
+
+  // Ordenar: titulares (primer tramo = 0) al principio, luego por minutos totales
+  players.sort((a, b) => {
+    const aIsStarter = a.stints[0]?.from === 0 ? 0 : 1;
+    const bIsStarter = b.stints[0]?.from === 0 ? 0 : 1;
+    if (aIsStarter !== bIsStarter) return aIsStarter - bIsStarter;
+    return b.totalMin - a.totalMin;
+  });
+
+  // Líneas divisorias de cuarto (%)
+  const qLines = [];
+  for (let q = 1; q <= 3; q++) qLines.push((q * 600 / totalSec) * 100);
+  if (totalSec > 2400) {
+    for (let ot = 0; ot < Math.ceil((totalSec - 2400) / 300); ot++)
+      qLines.push(((2400 + ot * 300) / totalSec) * 100);
+  }
+
+  // Etiquetas del eje X
+  const numQ    = totalSec <= 2400 ? 4 : 4 + Math.ceil((totalSec - 2400) / 300);
+  const qLabels = Array.from({length: numQ}, (_, i) => i < 4 ? `Q${i+1}` : `P.E.${i-3}`);
+  const qW  = (600 / totalSec * 100).toFixed(2);
+  const otW = (300 / totalSec * 100).toFixed(2);
+
+  let html = '';
+
+  // Eje X
+  html += `<div class="rot-axis">${qLabels.map((l, i) =>
+    `<div class="rot-axis-q" style="width:${i<4?qW:otW}%">${l}</div>`).join('')}</div>`;
+
+  // Fila por jugador
+  players.forEach((p, idx) => {
+    const shortN = pbpShortName(p.name);
+    const pmCls  = p.totalPM > 0 ? 'pos' : p.totalPM < 0 ? 'neg' : 'neu';
+    const pmTxt  = p.totalPM > 0 ? '+' + p.totalPM : String(p.totalPM);
+
+    html += `<div class="rot-row">
+      <div class="rot-label">
+        <span class="rot-dorsal">${p.dorsal}</span>
+        <span class="rot-pname" title="${p.name}">${shortN}</span>
+      </div>
+      <div class="rot-track">`;
+
+    // Líneas de cuarto
+    qLines.forEach(pct =>
+      html += `<div class="rot-qline" style="left:${pct.toFixed(2)}%"></div>`);
+
+    // Tramos
+    p.stints.forEach(st => {
+      const left  = (st.from / totalSec * 100).toFixed(2);
+      const width = ((st.to - st.from) / totalSec * 100).toFixed(2);
+      const col   = pmColor(st.pm);
+      const mins  = Math.round((st.to - st.from) / 60);
+      const pmStr = st.pm > 0 ? '+' + st.pm : String(st.pm);
+      const tipIn  = `${sacShort} ${st.sacIn} – ${rivalShort} ${st.rivIn}`;
+      const tipOut = `${sacShort} ${st.sacOut} – ${rivalShort} ${st.rivOut}`;
+      const tip    = `${p.name}\n${mins}min  ${pmStr}\nEntrada: ${tipIn}\nSalida:  ${tipOut}`;
+      const label  = parseFloat(width) > 9 ? pmStr : '';
+
+      html += `<div class="rot-stint" style="left:${left}%;width:${width}%;background:${col}" title="${tip}">${label}</div>`;
+    });
+
+    html += `</div>
+      <div class="rot-total ${pmCls}">${pmTxt}</div>
+    </div>`;
+
+    if (idx < players.length - 1) html += `<div class="rot-sep"></div>`;
+  });
+
+  chart.innerHTML = html;
+}
+
 async function loadAndRenderPBP(jornada, fileId, rawData, quarters) {
   const teamsArr  = Object.values(rawData.teams || {});
   const sacTeam   = teamsArr.find(t => t.shortName === 'SAC');
@@ -814,6 +1009,7 @@ async function loadAndRenderPBP(jornada, fileId, rawData, quarters) {
     if (res.ok) pbpEvents = await res.json();
   } catch(e) { /* PBP no disponible */ }
 
+  renderRotations(pbpEvents, ourId, sacIsLocal, sacShort, rivalShort);
   renderPBP(pbpEvents, ourId, quarters, sacShort, rivalShort, sacIsLocal);
 }
 
