@@ -233,7 +233,7 @@ function buildPlayerStats(partidos) {
       const key = String(pl.dorsal || pl.name || '?');
       if (!stats[key]) stats[key] = {
         key, name:pl.name, dorsal:pl.dorsal,
-        pj:0, pts:0, reb:0, ast:0, stl:0, blk:0, to:0, pf:0, pir:0, pm:0,
+        pj:0, min:0, pts:0, to:0, pf:0, pir:0, pm:0,
         t1m:0, t1a:0, t2m:0, t2a:0, t3m:0, t3a:0,
         ptsByGame:[]
       };
@@ -242,9 +242,9 @@ function buildPlayerStats(partidos) {
       s.name   = pl.name   || s.name;
       s.dorsal = pl.dorsal || s.dorsal;
       s.pj++;
-      s.pts+=pl.pts||0; s.reb+=pl.reb||0; s.ast+=pl.ast||0;
-      s.stl+=pl.stl||0; s.blk+=pl.blk||0; s.to+=pl.to||0;
-      s.pf+=pl.pf||0;   s.pir+=pl.pir||0; s.pm+=pl.pm||0;
+      s.min+=pl.min||0; s.pts+=pl.pts||0;
+      s.to+=pl.to||0;   s.pf+=pl.pf||0;
+      s.pir+=pl.pir||0; s.pm+=pl.pm||0;
       s.ptsByGame.push(pl.pts||0);
       const [t1m,t1a]=(pl.t1||'0/0').split('/').map(Number);
       const [t2m,t2a]=(pl.t2||'0/0').split('/').map(Number);
@@ -318,13 +318,15 @@ function renderTable() {
   const withStats = _playerStats.filter(s=>s.pj>0);
   let sorted = [...withStats];
 
-  const numFields = ['pj','pts','reb','ast','stl','blk','pm','pir','t2pct','t3pct'];
-  if (numFields.includes(_sortCol)) {
-    sorted.sort((a,b) => {
-      const va = _sortCol==='t2pct' ? (a.t2a?a.t2m/a.t2a:0) : _sortCol==='t3pct' ? (a.t3a?a.t3m/a.t3a:0) : (a[_sortCol]/a.pj);
-      const vb = _sortCol==='t2pct' ? (b.t2a?b.t2m/b.t2a:0) : _sortCol==='t3pct' ? (b.t3a?b.t3m/b.t3a:0) : (b[_sortCol]/b.pj);
-      return (vb-va)*_sortDir;
-    });
+  const pctFields = { t2pct: s=>s.t2a?s.t2m/s.t2a:0, t3pct: s=>s.t3a?s.t3m/s.t3a:0, t1pct: s=>s.t1a?s.t1m/s.t1a:0 };
+  const totFields = ['pm']; // estos son totales, no medias
+  if (_sortCol in pctFields) {
+    sorted.sort((a,b)=>(pctFields[_sortCol](b)-pctFields[_sortCol](a))*_sortDir);
+  } else if (totFields.includes(_sortCol)) {
+    sorted.sort((a,b)=>(b[_sortCol]-a[_sortCol])*_sortDir);
+  } else {
+    // media por partido
+    sorted.sort((a,b)=>((b[_sortCol]||0)/b.pj - (a[_sortCol]||0)/a.pj)*_sortDir);
   }
 
   // (jugadores sin minutos no se muestran en la tabla)
@@ -342,13 +344,14 @@ function renderTable() {
       <td><span class="dorsal-badge${isTop?' top':''}">${s.dorsal}</span></td>
       <td>${s.name} <span style="font-size:11px;${trendCls};font-weight:700">${trend}</span></td>
       <td>${s.pj}</td>
+      <td>${avg(s.min,s.pj)}</td>
       <td class="${s.pts/s.pj>=10?'stat-hi':''}">${avg(s.pts,s.pj)}</td>
-      <td>${avg(s.reb,s.pj)}</td>
-      <td>${avg(s.ast,s.pj)}</td>
-      <td>${avg(s.stl,s.pj)}</td>
-      <td>${avg(s.blk,s.pj)}</td>
       <td>${pct(s.t2m,s.t2a)}</td>
       <td>${pct(s.t3m,s.t3a)}</td>
+      <td>${pct(s.t1m,s.t1a)}</td>
+      <td>${avg(s.t3m,s.pj)}</td>
+      <td>${avg(s.pf,s.pj)}</td>
+      <td>${avg(s.to,s.pj)}</td>
       <td class="${pmCls}">${pmStr}</td>
       <td class="${s.pir/s.pj>0?'stat-hi':''}">${avg(s.pir,s.pj)}</td>
     </tr>`;
@@ -479,16 +482,17 @@ function render(jugadores, playerStats, matches) {
         <thead><tr>
           <th style="text-align:left">#</th>
           <th style="text-align:left">Jugador</th>
-          <th data-col="pj" onclick="sortTable('pj')">PJ</th>
-          <th data-col="pts" onclick="sortTable('pts')">PTS</th>
-          <th data-col="reb" onclick="sortTable('reb')">REB</th>
-          <th data-col="ast" onclick="sortTable('ast')">AST</th>
-          <th data-col="stl" onclick="sortTable('stl')">ROB</th>
-          <th data-col="blk" onclick="sortTable('blk')">TAP</th>
+          <th data-col="pj"   onclick="sortTable('pj')">PJ</th>
+          <th data-col="min"  onclick="sortTable('min')">MIN</th>
+          <th data-col="pts"  onclick="sortTable('pts')">PTS</th>
           <th data-col="t2pct" onclick="sortTable('t2pct')">%T2</th>
           <th data-col="t3pct" onclick="sortTable('t3pct')">%T3</th>
-          <th data-col="pm" onclick="sortTable('pm')">±</th>
-          <th data-col="pir" onclick="sortTable('pir')">PIR</th>
+          <th data-col="t1pct" onclick="sortTable('t1pct')">%TL</th>
+          <th data-col="t3m"  onclick="sortTable('t3m')">3PT</th>
+          <th data-col="pf"   onclick="sortTable('pf')">PF</th>
+          <th data-col="to"   onclick="sortTable('to')">TO</th>
+          <th data-col="pm"   onclick="sortTable('pm')">±</th>
+          <th data-col="pir"  onclick="sortTable('pir')">PIR</th>
         </tr></thead>
         <tbody id="ptbl-body"></tbody>
       </table>
