@@ -134,6 +134,54 @@
     padding: 2px 6px; border-radius: 4px;
   }
 
+  /* ─── PERFIL JUGADOR ─── */
+  .player-profile-hero {
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px 24px; margin-bottom:16px; display:flex; align-items:center; gap:20px;
+  }
+  .profile-avatar {
+    width:72px; height:72px; border-radius:16px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--bebas); font-size:26px; letter-spacing:2px;
+    background:color-mix(in srgb, var(--player-color,var(--red)) 15%, var(--panel2));
+    border:2px solid color-mix(in srgb, var(--player-color,var(--red)) 35%, transparent);
+    color:var(--player-color,var(--red));
+  }
+  .profile-info { flex:1; min-width:0; }
+  .profile-name { font-family:var(--bebas); font-size:26px; letter-spacing:2px; line-height:1; }
+  .profile-sub  { font-size:12px; color:var(--text2); margin-top:4px; }
+  .profile-dorsal {
+    font-family:var(--bebas); font-size:42px; letter-spacing:2px; line-height:1;
+    color:color-mix(in srgb, var(--player-color,var(--red)) 40%, var(--border2));
+    flex-shrink:0;
+  }
+
+  .prof-metrics { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:20px; }
+  .prof-tile { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:14px 10px 12px; text-align:center; }
+  .prof-val { font-family:var(--bebas); font-size:26px; letter-spacing:1px; line-height:1; color:var(--text); }
+  .prof-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-top:4px; }
+
+  .gamelog-wrap { overflow-x:auto; border-radius:var(--radius); border:1px solid var(--border); margin-bottom:24px; }
+  table.gltbl { width:100%; border-collapse:collapse; font-size:13px; }
+  table.gltbl thead th { padding:9px 10px; font-size:9px; font-weight:700; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; background:var(--panel2); border-bottom:1px solid var(--border); white-space:nowrap; text-align:right; }
+  table.gltbl thead th:first-child, table.gltbl thead th:nth-child(2), table.gltbl thead th:nth-child(3) { text-align:left; }
+  table.gltbl tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
+  table.gltbl tbody tr:last-child { border-bottom:none; }
+  table.gltbl tbody tr:hover { background:var(--panel2); }
+  table.gltbl tbody td { padding:10px 10px; color:var(--text2); text-align:right; white-space:nowrap; }
+  table.gltbl tbody td:first-child, table.gltbl tbody td:nth-child(2), table.gltbl tbody td:nth-child(3) { text-align:left; }
+  .gl-win { color:var(--green); font-weight:700; }
+  .gl-loss { color:var(--red); font-weight:700; }
+  .gl-hi { color:var(--text); font-weight:700; }
+  .gl-pm-pos { color:#4caf50; font-weight:700; }
+  .gl-pm-neg { color:#e05555; font-weight:700; }
+
+  @media(max-width:768px) {
+    .prof-metrics { grid-template-columns:repeat(3,1fr); }
+    .player-profile-hero { flex-wrap:wrap; }
+    .profile-dorsal { display:none; }
+  }
+
   /* ─── VISTA JUGADORES ─── */
   .team-header-bar {
     display: flex; align-items: center; gap: 16px;
@@ -298,7 +346,7 @@
 
     <div class="topbar">
       <div class="topbar-left">
-        <button class="back-btn" id="back-btn" onclick="showTeams()">
+        <button class="back-btn" id="back-btn" onclick="handleBack()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           Equipos
         </button>
@@ -381,9 +429,21 @@ function initials(nombre, apellidos) {
 
 // ─── ESTADO ──────────────────────────────────────────────
 let allEquipos = [];
+let _matchesCache = null;
+let _currentTeam  = null; // { id, shortName, nombre }
+
+async function getMatches() {
+  if (!_matchesCache) _matchesCache = await fetch('/api/matches').then(r => r.json());
+  return _matchesCache;
+}
+
+function pct(m, a) { return a ? Math.round(m / a * 100) + '%' : '—'; }
+function avg(v, n) { return n ? (v / n).toFixed(1) : '—'; }
+function sign(n)   { return n > 0 ? '+' + n : String(n); }
 
 // ─── VISTA EQUIPOS ───────────────────────────────────────
 function showTeams() {
+  _currentTeam = null;
   document.getElementById('back-btn').classList.remove('visible');
   document.getElementById('topbar-breadcrumb').textContent = 'Liga · Temporada 2025–26';
   document.getElementById('topbar-title').textContent = 'Jugadores';
@@ -428,7 +488,8 @@ function renderTeams(equipos) {
 
 // ─── VISTA JUGADORES ─────────────────────────────────────
 async function showPlayers(equipoId, shortName, nombre) {
-  const color = teamColor(shortName);
+  _currentTeam = { id: equipoId, shortName, nombre };
+  const color  = teamColor(shortName);
 
   document.getElementById('back-btn').classList.add('visible');
   document.getElementById('topbar-breadcrumb').textContent = 'Equipos · Temporada 2025–26';
@@ -440,8 +501,9 @@ async function showPlayers(equipoId, shortName, nombre) {
 
     const cards = jugadores.map(j => {
       const ini = initials(j.nombre, j.apellidos);
+      const jData = encodeURIComponent(JSON.stringify({ nombre: j.nombre, apellidos: j.apellidos, dorsal: j.dorsal }));
       return `
-        <div class="player-card">
+        <div class="player-card" style="cursor:pointer" onclick='showPlayer(${JSON.stringify(j)}, "${shortName}", "${nombre}")'>
           <div class="player-photo-wrap">
             <div class="player-initials">${ini}</div>
             <div class="player-dorsal-overlay">#${j.dorsal ?? '—'}</div>
@@ -463,13 +525,149 @@ async function showPlayers(equipoId, shortName, nombre) {
         ${headerBadge}
         <div>
           <div class="team-header-name">${nombre}</div>
-          <div class="team-header-meta">${jugadores.length} jugadores registrados</div>
+          <div class="team-header-meta">${jugadores.length} jugadores registrados · toca un jugador para ver su perfil</div>
         </div>
       </div>
       <div class="players-grid">${cards || '<div class="loading">Sin jugadores registrados</div>'}</div>
     `;
   } catch (err) {
     document.getElementById('content').innerHTML = `<div class="loading">Error: ${err.message}</div>`;
+  }
+}
+
+// ─── VISTA PERFIL JUGADOR ────────────────────────────────
+async function showPlayer(jugador, shortName, teamNombre) {
+  const color  = teamColor(shortName);
+  const ini    = initials(jugador.nombre, jugador.apellidos);
+  const fullName = (jugador.nombre + ' ' + (jugador.apellidos || '')).trim().toLowerCase();
+
+  document.getElementById('back-btn').classList.add('visible');
+  document.getElementById('topbar-breadcrumb').textContent = teamNombre + ' · Temporada 2025–26';
+  document.getElementById('topbar-title').textContent = jugador.nombre + ' ' + (jugador.apellidos || '');
+  document.getElementById('content').innerHTML = '<div class="loading">Cargando estadísticas…</div>';
+
+  try {
+    const data    = await getMatches();
+    const partidos = data.partidos || [];
+
+    // Acumular stats del jugador buscando por dorsal en su equipo
+    const stats = { pj:0, min:0, pts:0, t1m:0,t1a:0, t2m:0,t2a:0, t3m:0,t3a:0, pf:0, to:0, pm:0, pir:0 };
+    const games  = [];
+
+    for (const p of partidos) {
+      const teamPlayers = (p.players || {})[shortName];
+      if (!teamPlayers) continue;
+
+      // Buscar por dorsal primero, luego por nombre como fallback
+      let pl = teamPlayers.find(x => String(x.dorsal) === String(jugador.dorsal));
+      if (!pl) pl = teamPlayers.find(x => x.name.toLowerCase() === fullName);
+      if (!pl) continue;
+
+      // Determinar rival
+      const isCasa  = p.local.shortName  === shortName;
+      const rival   = isCasa ? p.visit.nombre : p.local.nombre;
+      const sacPts  = isCasa ? p.local.puntos  : p.visit.puntos;
+      const rivPts  = isCasa ? p.visit.puntos  : p.local.puntos;
+      const result  = sacPts > rivPts ? 'V' : 'D';
+
+      const [t1m,t1a] = (pl.t1||'0/0').split('/').map(Number);
+      const [t2m,t2a] = (pl.t2||'0/0').split('/').map(Number);
+      const [t3m,t3a] = (pl.t3||'0/0').split('/').map(Number);
+
+      stats.pj++;
+      stats.min += pl.min||0; stats.pts += pl.pts||0;
+      stats.t1m += t1m; stats.t1a += t1a;
+      stats.t2m += t2m; stats.t2a += t2a;
+      stats.t3m += t3m; stats.t3a += t3a;
+      stats.pf  += pl.pf||0;  stats.to  += pl.to||0;
+      stats.pm  += pl.pm||0;  stats.pir += pl.pir||0;
+
+      games.push({ jornada: p.jornada, rival, result, sacPts, rivPts,
+        min: pl.min||0, pts: pl.pts||0,
+        t1: pl.t1||'0/0', t2: pl.t2||'0/0', t3: pl.t3||'0/0',
+        pf: pl.pf||0, to: pl.to||0, pm: pl.pm||0, pir: pl.pir||0 });
+    }
+    games.sort((a,b) => a.jornada - b.jornada);
+
+    const pmStr  = sign(stats.pm);
+    const pmCls  = stats.pm > 0 ? 'gl-pm-pos' : stats.pm < 0 ? 'gl-pm-neg' : '';
+
+    // Game log rows
+    const glRows = games.map(g => {
+      const pmG    = sign(g.pm);
+      const pmGCls = g.pm > 0 ? 'gl-pm-pos' : g.pm < 0 ? 'gl-pm-neg' : '';
+      return `<tr>
+        <td>J${g.jornada}</td>
+        <td>${g.rival}</td>
+        <td class="${g.result==='V'?'gl-win':'gl-loss'}">${g.result} ${g.sacPts}–${g.rivPts}</td>
+        <td>${g.min}'</td>
+        <td class="${g.pts>=15?'gl-hi':''}">${g.pts}</td>
+        <td>${g.t2}</td>
+        <td>${g.t3}</td>
+        <td>${g.t1}</td>
+        <td>${g.pf}</td>
+        <td>${g.to}</td>
+        <td class="${pmGCls}">${pmG}</td>
+        <td class="${g.pir>10?'gl-hi':''}">${g.pir}</td>
+      </tr>`;
+    }).join('');
+
+    const noStats = stats.pj === 0
+      ? `<div class="loading" style="padding:40px">Sin partidos registrados este jugador</div>`
+      : '';
+
+    document.getElementById('content').innerHTML = `
+      <div class="player-profile-hero" style="--player-color:${color}">
+        <div class="profile-avatar">${ini}</div>
+        <div class="profile-info">
+          <div class="profile-name">${jugador.nombre} ${jugador.apellidos||''}</div>
+          <div class="profile-sub">${teamNombre} · ${stats.pj} partido${stats.pj!==1?'s':''} jugado${stats.pj!==1?'s':''}</div>
+        </div>
+        <div class="profile-dorsal">#${jugador.dorsal??'—'}</div>
+      </div>
+
+      ${stats.pj > 0 ? `
+      <div class="prof-metrics">
+        <div class="prof-tile"><div class="prof-val">${avg(stats.pts, stats.pj)}</div><div class="prof-lbl">PTS</div></div>
+        <div class="prof-tile"><div class="prof-val">${avg(stats.min, stats.pj)}'</div><div class="prof-lbl">MIN</div></div>
+        <div class="prof-tile"><div class="prof-val">${pct(stats.t2m, stats.t2a)}</div><div class="prof-lbl">%T2</div></div>
+        <div class="prof-tile"><div class="prof-val">${pct(stats.t3m, stats.t3a)}</div><div class="prof-lbl">%T3</div></div>
+        <div class="prof-tile"><div class="prof-val">${pct(stats.t1m, stats.t1a)}</div><div class="prof-lbl">%TL</div></div>
+        <div class="prof-tile"><div class="prof-val">${avg(stats.t3m, stats.pj)}</div><div class="prof-lbl">3PT</div></div>
+        <div class="prof-tile"><div class="prof-val">${avg(stats.pf, stats.pj)}</div><div class="prof-lbl">Faltas</div></div>
+        <div class="prof-tile"><div class="prof-val">${avg(stats.to, stats.pj)}</div><div class="prof-lbl">TO</div></div>
+        <div class="prof-tile"><div class="prof-val ${pmCls}">${pmStr}</div><div class="prof-lbl">±</div></div>
+        <div class="prof-tile"><div class="prof-val">${avg(stats.pir, stats.pj)}</div><div class="prof-lbl">PIR</div></div>
+      </div>
+
+      <div class="section-hdr" style="margin-bottom:12px">
+        <div class="section-title" style="font-size:16px;letter-spacing:1.5px">Registro de partidos</div>
+      </div>
+      <div class="gamelog-wrap">
+        <table class="gltbl">
+          <thead><tr>
+            <th>J</th><th>Rival</th><th>Res</th>
+            <th>MIN</th><th>PTS</th><th>T2</th><th>T3</th><th>TL</th>
+            <th>PF</th><th>TO</th><th>±</th><th>PIR</th>
+          </tr></thead>
+          <tbody>${glRows}</tbody>
+        </table>
+      </div>` : noStats}
+    `;
+  } catch (err) {
+    document.getElementById('content').innerHTML = `<div class="loading">Error: ${err.message}</div>`;
+  }
+}
+
+// ─── BACK ────────────────────────────────────────────────
+let _viewStack = []; // 'teams' | { type:'players', ... } | { type:'player', ... }
+
+function handleBack() {
+  // Si hay equipo actual, volvemos a él; si no, a la lista de equipos
+  if (_currentTeam) {
+    showPlayers(_currentTeam.id, _currentTeam.shortName, _currentTeam.nombre);
+  } else {
+    showTeams();
   }
 }
 
