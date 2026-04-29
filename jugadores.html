@@ -6,6 +6,7 @@
 <title>HoopStats · Jugadores</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -160,6 +161,17 @@
   .prof-tile { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:14px 10px 12px; text-align:center; }
   .prof-val { font-family:var(--bebas); font-size:26px; letter-spacing:1px; line-height:1; color:var(--text); }
   .prof-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-top:4px; }
+
+  /* ─── CHARTS PERFIL ─── */
+  .prof-charts { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+  .prof-chart-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; }
+  .prof-chart-title { font-family:var(--bebas); font-size:15px; letter-spacing:1.5px; color:var(--text); margin-bottom:2px; }
+  .prof-chart-sub   { font-size:10px; color:var(--muted); margin-bottom:12px; }
+  .prof-chart-wrap  { position:relative; width:100%; height:160px; }
+  .prof-chart-wrap.tall { height:200px; }
+  @media(max-width:768px) {
+    .prof-charts { grid-template-columns:1fr; }
+  }
 
   .gamelog-wrap { overflow-x:auto; border-radius:var(--radius); border:1px solid var(--border); margin-bottom:24px; }
   table.gltbl { width:100%; border-collapse:collapse; font-size:13px; }
@@ -630,6 +642,30 @@ async function showPlayer(jugador, shortName, teamNombre) {
       </div>
 
       ${stats.pj > 0 ? `
+      <!-- CHARTS -->
+      <div class="prof-charts">
+        <div class="prof-chart-card">
+          <div class="prof-chart-title">Puntos por partido</div>
+          <div class="prof-chart-sub">Verde = victoria · Rojo = derrota</div>
+          <div class="prof-chart-wrap"><canvas id="chart-pts"></canvas></div>
+        </div>
+        <div class="prof-chart-card">
+          <div class="prof-chart-title">Distribución de puntos</div>
+          <div class="prof-chart-sub">T1 · T2 · Triples</div>
+          <div class="prof-chart-wrap"><canvas id="chart-dist"></canvas></div>
+        </div>
+        <div class="prof-chart-card">
+          <div class="prof-chart-title">Radar de perfil</div>
+          <div class="prof-chart-sub">Normalizado respecto a referencia de liga</div>
+          <div class="prof-chart-wrap tall"><canvas id="chart-radar"></canvas></div>
+        </div>
+        <div class="prof-chart-card">
+          <div class="prof-chart-title">Tendencia PIR</div>
+          <div class="prof-chart-sub">Valoración partido a partido</div>
+          <div class="prof-chart-wrap"><canvas id="chart-pir"></canvas></div>
+        </div>
+      </div>
+
       <div class="prof-metrics">
         <div class="prof-tile"><div class="prof-val">${avg(stats.pts, stats.pj)}</div><div class="prof-lbl">PTS</div></div>
         <div class="prof-tile"><div class="prof-val">${avg(stats.min, stats.pj)}'</div><div class="prof-lbl">MIN</div></div>
@@ -657,9 +693,153 @@ async function showPlayer(jugador, shortName, teamNombre) {
         </table>
       </div>` : noStats}
     `;
+    // Dibujar charts tras renderizar el DOM
+    if (stats.pj > 0) renderProfCharts(games, stats, color);
   } catch (err) {
     document.getElementById('content').innerHTML = `<div class="loading">Error: ${err.message}</div>`;
   }
+}
+
+// ─── CHART HELPERS ───────────────────────────────────────
+let _profCharts = [];
+function destroyProfCharts() {
+  _profCharts.forEach(c => c.destroy());
+  _profCharts = [];
+}
+function mkProfChart(id, cfg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const c = new Chart(el, cfg);
+  _profCharts.push(c);
+}
+
+const CHART_BASE = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: { backgroundColor:'#1e1e1e', borderColor:'#333', borderWidth:1, titleColor:'#aaa', bodyColor:'#fff' }
+  },
+  scales: {
+    x: { ticks:{color:'#555',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'}, border:{color:'#2a2a2a'} },
+    y: { ticks:{color:'#555',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'}, border:{color:'#2a2a2a'} }
+  }
+};
+
+function renderProfCharts(games, stats, color) {
+  destroyProfCharts();
+
+  const labels  = games.map(g => `J${g.jornada}`);
+  const winColor = 'rgba(39,174,96,0.8)', lossColor = 'rgba(204,20,20,0.8)';
+  const winBorder= '#27ae60', lossBorder = '#cc1414';
+
+  // 1. Puntos por partido
+  mkProfChart('chart-pts', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: games.map(g => g.pts),
+        backgroundColor: games.map(g => g.result==='V' ? winColor : lossColor),
+        borderColor:     games.map(g => g.result==='V' ? winBorder : lossBorder),
+        borderWidth: 1, borderRadius: 4
+      }]
+    },
+    options: {
+      ...CHART_BASE,
+      plugins: { ...CHART_BASE.plugins, tooltip: { ...CHART_BASE.plugins.tooltip,
+        callbacks: { label: ctx => ` ${games[ctx.dataIndex].result} vs ${games[ctx.dataIndex].rival}  ${ctx.raw} pts` }
+      }}
+    }
+  });
+
+  // 2. Distribución de puntos (donut)
+  const ptT1 = stats.t1m * 1;
+  const ptT2 = stats.t2m * 2;
+  const ptT3 = stats.t3m * 3;
+  const totalPts = ptT1 + ptT2 + ptT3 || 1;
+  mkProfChart('chart-dist', {
+    type: 'doughnut',
+    data: {
+      labels: ['Tiros libres', 'Tiros de 2', 'Triples'],
+      datasets: [{
+        data: [ptT1, ptT2, ptT3],
+        backgroundColor: ['rgba(255,213,79,0.8)','rgba(204,20,20,0.8)','rgba(100,181,246,0.8)'],
+        borderColor:     ['#ffd54f','#cc1414','#64b5f6'],
+        borderWidth: 2, hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position:'right', labels:{ color:'#888', font:{size:11}, boxWidth:12, padding:10 } },
+        tooltip: { ...CHART_BASE.plugins.tooltip,
+          callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} pts (${Math.round(ctx.raw/totalPts*100)}%)` }
+        }
+      }
+    }
+  });
+
+  // 3. Radar de perfil
+  // Normalizamos respecto a referencias de liga amateur
+  const refs = { pts: 15, t3: 2, pctT2: 60, pctT3: 40, pctTL: 80, pir: 15 };
+  const radarData = [
+    Math.min(100, (stats.pj ? stats.pts/stats.pj : 0) / refs.pts  * 100),
+    Math.min(100, (stats.pj ? stats.t3m/stats.pj : 0) / refs.t3   * 100),
+    Math.min(100, (stats.t2a ? stats.t2m/stats.t2a*100 : 0) / refs.pctT2 * 100),
+    Math.min(100, (stats.t3a ? stats.t3m/stats.t3a*100 : 0) / refs.pctT3 * 100),
+    Math.min(100, (stats.t1a ? stats.t1m/stats.t1a*100 : 0) / refs.pctTL * 100),
+    Math.min(100, (stats.pj ? stats.pir/stats.pj : 0)  / refs.pir * 100),
+  ];
+  const hexAlpha = (hex, a) => hex + Math.round(a*255).toString(16).padStart(2,'0');
+  mkProfChart('chart-radar', {
+    type: 'radar',
+    data: {
+      labels: ['Anotación','Triples','%T2','%T3','%TL','PIR'],
+      datasets: [{
+        data: radarData,
+        backgroundColor: hexAlpha(color, 0.15),
+        borderColor: color, borderWidth: 2,
+        pointBackgroundColor: color, pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{display:false}, tooltip:{ ...CHART_BASE.plugins.tooltip,
+        callbacks:{ label: ctx => ` ${Math.round(ctx.raw)}%` }
+      }},
+      scales: { r: {
+        min:0, max:100,
+        ticks:{ display:false, stepSize:25 },
+        grid:{ color:'rgba(255,255,255,0.07)' },
+        angleLines:{ color:'rgba(255,255,255,0.07)' },
+        pointLabels:{ color:'#888', font:{size:11} }
+      }}
+    }
+  });
+
+  // 4. PIR por partido (línea)
+  mkProfChart('chart-pir', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: games.map(g => g.pir),
+        borderColor: color, backgroundColor: hexAlpha(color, 0.12),
+        borderWidth: 2, pointRadius: 4, pointBackgroundColor: color,
+        tension: 0.3, fill: true
+      }]
+    },
+    options: {
+      ...CHART_BASE,
+      plugins: { ...CHART_BASE.plugins, tooltip: { ...CHART_BASE.plugins.tooltip,
+        callbacks: { label: ctx => ` PIR ${ctx.raw}  vs ${games[ctx.dataIndex].rival}` }
+      }},
+      scales: {
+        x: CHART_BASE.scales.x,
+        y: { ...CHART_BASE.scales.y, beginAtZero: true }
+      }
+    }
+  });
 }
 
 // ─── BACK ────────────────────────────────────────────────
@@ -667,11 +847,10 @@ async function showPlayer(jugador, shortName, teamNombre) {
 let _viewLevel = 0;
 
 function handleBack() {
+  destroyProfCharts();
   if (_viewLevel === 2) {
-    // Perfil → lista del equipo
     showPlayers(_currentTeam.id, _currentTeam.shortName, _currentTeam.nombre);
   } else {
-    // Lista del equipo → equipos
     showTeams();
   }
 }
