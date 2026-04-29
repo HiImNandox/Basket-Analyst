@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>HoopStats · Editor de Ejercicio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --red:#cc1414; --red-dim:#991010;
+  --bg:#111111; --panel:#1a1a1a; --panel2:#222222; --panel3:#2a2a2a;
+  --border:#2e2e2e; --border2:#3a3a3a;
+  --text:#f0f0f0; --text2:#aaaaaa; --muted:#666666;
+  --bebas:'Bebas Neue',sans-serif; --barlow:'Barlow Condensed',sans-serif;
+  --off:#2980b9; --def:#c0392b;
+}
+
+html, body {
+  height: 100%; background: var(--bg); color: var(--text);
+  font-family: var(--barlow); overflow: hidden;
+  user-select: none; -webkit-user-select: none;
+  touch-action: none;
+}
+
+/* ── LAYOUT ── */
+.app { display: flex; flex-direction: column; height: 100dvh; }
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  border-bottom: 1px solid var(--border);
+  background: var(--panel); flex-shrink: 0;
+}
+.btn-back {
+  display: flex; align-items: center; gap: 5px;
+  color: var(--text2); font-size: 13px; font-weight: 600;
+  text-decoration: none; padding: 6px 10px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: none; cursor: pointer; font-family: var(--barlow);
+  transition: color .15s, border-color .15s;
+}
+.btn-back svg { width: 14px; height: 14px; }
+.btn-back:hover { color: var(--text); border-color: var(--border2); }
+
+.topbar-title { flex: 1; font-family: var(--bebas); font-size: 22px; letter-spacing: 2px; }
+
+.btn-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--panel2); color: var(--text2); cursor: pointer;
+  font-family: var(--barlow); transition: all .12s;
+}
+.btn-icon svg { width: 16px; height: 16px; }
+.btn-icon:hover { color: var(--text); border-color: var(--border2); }
+.btn-icon.danger:hover { color: #e74c3c; border-color: rgba(231,76,60,.4); background: rgba(231,76,60,.08); }
+
+.btn-save {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; background: var(--red); border: none;
+  border-radius: 6px; color: #fff; font-size: 13px; font-weight: 700;
+  font-family: var(--barlow); letter-spacing: .5px; cursor: pointer;
+  transition: background .15s;
+}
+.btn-save:hover { background: var(--red-dim); }
+.btn-save svg { width: 14px; height: 14px; }
+
+/* ── COURT AREA ── */
+.court-area {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 14px; min-height: 0; overflow: hidden;
+  background: var(--bg);
+}
+.court-wrap {
+  position: relative;
+  width: 100%; max-width: 460px;
+}
+.court-svg {
+  display: block; width: 100%; height: auto;
+  border-radius: 10px; pointer-events: none;
+}
+.court-overlay {
+  position: absolute; inset: 0;
+  border-radius: 10px; overflow: visible;
+}
+
+/* ── ITEMS ON COURT ── */
+.ci {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: grab; touch-action: none;
+  z-index: 2;
+  transition: filter .1s;
+}
+.ci:active { cursor: grabbing; }
+.ci.selected { z-index: 10; filter: drop-shadow(0 0 5px rgba(255,255,255,.55)); }
+.ci.dragging { opacity: .9; z-index: 20; transition: none; }
+
+/* Item shapes */
+.sh-player {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--bebas); font-size: 13px; letter-spacing: .5px;
+  border: 2px solid rgba(255,255,255,.25);
+  box-shadow: 0 2px 6px rgba(0,0,0,.6);
+}
+.sh-cone {
+  width: 0; height: 0;
+  border-left: 13px solid transparent;
+  border-right: 13px solid transparent;
+  border-bottom: 22px solid #e67e22;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
+}
+.sh-chair {
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; line-height: 1;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,.7));
+}
+.sh-bench {
+  position: relative;
+  width: 52px; height: 13px;
+  background: #6d4c41; border-radius: 3px;
+  border: 2px solid #8d6e63;
+  box-shadow: 0 2px 5px rgba(0,0,0,.6);
+}
+.sh-bench::before, .sh-bench::after {
+  content: ''; position: absolute;
+  width: 5px; height: 9px;
+  background: #4e342e; border-radius: 0 0 2px 2px;
+  bottom: -9px;
+}
+.sh-bench::before { left: 7px; }
+.sh-bench::after  { right: 7px; }
+.sh-ball {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f0a040, #b84800);
+  border: 1.5px solid #803000;
+  box-shadow: 0 2px 5px rgba(0,0,0,.6);
+  position: relative; overflow: hidden;
+}
+/* ball lines */
+.sh-ball::before, .sh-ball::after {
+  content: ''; position: absolute; border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,.35);
+}
+.sh-ball::before { width: 150%; height: 150%; top: -25%; left: -25%; }
+.sh-ball::after  { width: 28px; height: 28px; top: 0; left: -14px; }
+
+/* ── DELETE BADGE on selected ── */
+.ci.selected::after {
+  content: '✕'; position: absolute;
+  top: -8px; right: -8px;
+  width: 16px; height: 16px;
+  background: #e74c3c; color: #fff; border-radius: 50%;
+  font-size: 9px; line-height: 16px; text-align: center; font-weight: 700;
+  cursor: pointer; z-index: 5; pointer-events: none;
+}
+
+/* ── SELECTED BAR ── */
+.sel-bar {
+  display: none; align-items: center; gap: 10px;
+  padding: 8px 16px; background: var(--panel2);
+  border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.sel-bar.show { display: flex; }
+.sel-name { font-size: 12px; font-weight: 600; color: var(--text2); flex: 1; }
+.btn-del {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 12px;
+  background: rgba(231,76,60,.12); border: 1px solid rgba(231,76,60,.3);
+  border-radius: 5px; color: #e74c3c; font-size: 11px; font-weight: 700;
+  font-family: var(--barlow); cursor: pointer; letter-spacing: .5px;
+  transition: background .12s;
+}
+.btn-del:hover { background: rgba(231,76,60,.22); }
+.btn-del svg { width: 12px; height: 12px; }
+
+/* ── PALETTE ── */
+.palette {
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  padding: 10px 14px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  flex-shrink: 0;
+}
+.palette-scroll {
+  display: flex; gap: 6px; align-items: center;
+  overflow-x: auto; scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.palette-scroll::-webkit-scrollbar { display: none; }
+
+.pal-sep { width: 1px; height: 38px; background: var(--border); flex-shrink: 0; margin: 0 3px; }
+
+.pal-lbl {
+  font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+  writing-mode: horizontal-tb; flex-shrink: 0;
+}
+
+.pal-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: grab; flex-shrink: 0; touch-action: none;
+  padding: 4px 2px; border-radius: 6px;
+  transition: background .12s;
+}
+.pal-item:hover { background: var(--panel2); }
+.pal-item:active { cursor: grabbing; }
+.pal-label {
+  font-size: 9px; color: var(--muted); font-family: var(--barlow);
+  font-weight: 600; letter-spacing: .3px; white-space: nowrap;
+  pointer-events: none;
+}
+/* palette versions slightly smaller */
+.pal-item .sh-player { width: 26px; height: 26px; font-size: 11px; pointer-events: none; }
+.pal-item .sh-cone   { border-left-width: 11px; border-right-width: 11px; border-bottom-width: 19px; pointer-events: none; }
+.pal-item .sh-chair  { width: 26px; height: 26px; font-size: 19px; pointer-events: none; }
+.pal-item .sh-bench  { width: 44px; height: 11px; pointer-events: none; }
+.pal-item .sh-ball   { width: 24px; height: 24px; pointer-events: none; }
+
+/* ── DRAG GHOST ── */
+#ghost {
+  position: fixed; pointer-events: none; z-index: 9999;
+  transform: translate(-50%, -50%) scale(1.12);
+  opacity: .85; display: none;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 100px; left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: #27ae60; color: #fff;
+  padding: 9px 20px; border-radius: 20px;
+  font-size: 13px; font-weight: 700; font-family: var(--barlow);
+  letter-spacing: .5px; opacity: 0;
+  transition: opacity .25s, transform .25s;
+  pointer-events: none; z-index: 1000; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── HINT ── */
+.court-hint {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.court-hint span {
+  font-size: 12px; color: rgba(255,255,255,.22);
+  font-family: var(--barlow); font-weight: 600; letter-spacing: .5px;
+  text-align: center; line-height: 1.6;
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <a href="ejercicios.html" class="btn-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Volver
+    </a>
+    <div class="topbar-title">Editor de Ejercicio</div>
+    <!-- Undo -->
+    <button class="btn-icon" id="btn-undo" title="Deshacer (Ctrl+Z)" onclick="undoLast()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5 8 9 5 14 5a9 9 0 0 1 0 18c-4 0-7-2-9-5"/></svg>
+    </button>
+    <!-- Clear -->
+    <button class="btn-icon danger" title="Limpiar pista" onclick="clearCourt()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </button>
+    <!-- Save -->
+    <button class="btn-save" onclick="saveExercise()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Guardar
+    </button>
+  </div>
+
+  <!-- COURT -->
+  <div class="court-area">
+    <div class="court-wrap" id="court-wrap">
+
+      <!-- Half-court SVG background -->
+      <svg class="court-svg" viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg" style="background:#0d1b2a;">
+        <!-- 3 sides boundary -->
+        <path d="M4,4 L4,80 L116,80 L116,4" stroke="rgba(255,255,255,.65)" stroke-width="1.5" fill="none"/>
+        <!-- Half-court dashed line -->
+        <line x1="4" y1="4" x2="116" y2="4" stroke="rgba(255,255,255,.3)" stroke-width="1" stroke-dasharray="4 3"/>
+        <!-- Backboard -->
+        <line x1="50" y1="77" x2="70" y2="77" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-linecap="round"/>
+        <!-- Rim -->
+        <circle cx="60" cy="73" r="3.5" stroke="rgba(255,255,255,.65)" stroke-width="1.2" fill="none"/>
+        <!-- Paint zone -->
+        <rect x="42" y="48" width="36" height="32" stroke="rgba(255,255,255,.45)" stroke-width="1" fill="rgba(255,255,255,.025)"/>
+        <!-- FT circle solid half -->
+        <path d="M44,48 A16,16 0 0,1 76,48" stroke="rgba(255,255,255,.45)" stroke-width="1" fill="none"/>
+        <!-- FT circle dashed half -->
+        <path d="M44,48 A16,16 0 0,0 76,48" stroke="rgba(255,255,255,.35)" stroke-width="1" fill="none" stroke-dasharray="3 2"/>
+        <!-- 3pt corners -->
+        <line x1="22" y1="80" x2="22" y2="68" stroke="rgba(255,255,255,.45)" stroke-width="1"/>
+        <line x1="98" y1="80" x2="98" y2="68" stroke="rgba(255,255,255,.45)" stroke-width="1"/>
+        <!-- 3pt arc -->
+        <path d="M22,68 A38,38 0 0,1 98,68" stroke="rgba(255,255,255,.45)" stroke-width="1" fill="none"/>
+        <!-- Restricted area arc -->
+        <path d="M54,80 A6,6 0 0,1 66,80" stroke="rgba(255,255,255,.3)" stroke-width=".8" fill="none"/>
+      </svg>
+
+      <!-- Overlay for placed items -->
+      <div class="court-overlay" id="overlay">
+        <div class="court-hint" id="hint">
+          <span>Arrastra elementos<br>desde la paleta</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SELECTED BAR -->
+  <div class="sel-bar" id="sel-bar">
+    <span class="sel-name" id="sel-name">—</span>
+    <button class="btn-del" onclick="deleteSelected()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+      Eliminar
+    </button>
+  </div>
+
+  <!-- PALETTE -->
+  <div class="palette">
+    <div class="palette-scroll" id="palette">
+
+      <span class="pal-lbl">ATAQUE</span>
+
+      <div class="pal-item" data-type="off" data-num="1">
+        <div class="sh-player" style="background:var(--off);color:#fff;">1</div>
+        <span class="pal-label">Jug 1</span>
+      </div>
+      <div class="pal-item" data-type="off" data-num="2">
+        <div class="sh-player" style="background:var(--off);color:#fff;">2</div>
+        <span class="pal-label">Jug 2</span>
+      </div>
+      <div class="pal-item" data-type="off" data-num="3">
+        <div class="sh-player" style="background:var(--off);color:#fff;">3</div>
+        <span class="pal-label">Jug 3</span>
+      </div>
+      <div class="pal-item" data-type="off" data-num="4">
+        <div class="sh-player" style="background:var(--off);color:#fff;">4</div>
+        <span class="pal-label">Jug 4</span>
+      </div>
+      <div class="pal-item" data-type="off" data-num="5">
+        <div class="sh-player" style="background:var(--off);color:#fff;">5</div>
+        <span class="pal-label">Jug 5</span>
+      </div>
+
+      <div class="pal-sep"></div>
+      <span class="pal-lbl">DEFENSA</span>
+
+      <div class="pal-item" data-type="def" data-num="1">
+        <div class="sh-player" style="background:var(--def);color:#fff;">D1</div>
+        <span class="pal-label">Def 1</span>
+      </div>
+      <div class="pal-item" data-type="def" data-num="2">
+        <div class="sh-player" style="background:var(--def);color:#fff;">D2</div>
+        <span class="pal-label">Def 2</span>
+      </div>
+      <div class="pal-item" data-type="def" data-num="3">
+        <div class="sh-player" style="background:var(--def);color:#fff;">D3</div>
+        <span class="pal-label">Def 3</span>
+      </div>
+      <div class="pal-item" data-type="def" data-num="4">
+        <div class="sh-player" style="background:var(--def);color:#fff;">D4</div>
+        <span class="pal-label">Def 4</span>
+      </div>
+      <div class="pal-item" data-type="def" data-num="5">
+        <div class="sh-player" style="background:var(--def);color:#fff;">D5</div>
+        <span class="pal-label">Def 5</span>
+      </div>
+
+      <div class="pal-sep"></div>
+      <span class="pal-lbl">OBJETOS</span>
+
+      <div class="pal-item" data-type="cone">
+        <div class="sh-cone"></div>
+        <span class="pal-label">Cono</span>
+      </div>
+      <div class="pal-item" data-type="chair">
+        <div class="sh-chair">🪑</div>
+        <span class="pal-label">Silla</span>
+      </div>
+      <div class="pal-item" data-type="bench">
+        <div class="sh-bench"></div>
+        <span class="pal-label">Banco</span>
+      </div>
+      <div class="pal-item" data-type="ball">
+        <div class="sh-ball"></div>
+        <span class="pal-label">Pelota</span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- DRAG GHOST -->
+<div id="ghost"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let items    = [];   // { id, type, num, x, y }   x/y = % of court
+let selId    = null;
+let uid      = 0;
+let snapStack = [];  // undo history
+
+// ── DOM ───────────────────────────────────────────────────────────────────────
+const overlay   = document.getElementById('overlay');
+const courtWrap = document.getElementById('court-wrap');
+const selBar    = document.getElementById('sel-bar');
+const selName   = document.getElementById('sel-name');
+const hint      = document.getElementById('hint');
+const ghost     = document.getElementById('ghost');
+const toast     = document.getElementById('toast');
+
+// ── Drag state ────────────────────────────────────────────────────────────────
+let drag = null;
+// palette drag: { src:'pal', type, num, pointerId }
+// court drag:   { src:'ci', id, startClientX, startClientY, origX, origY, pointerId }
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function nextId()  { return ++uid; }
+
+function snap() {
+  snapStack.push(JSON.parse(JSON.stringify(items)));
+  if (snapStack.length > 50) snapStack.shift();
+}
+
+function pctOf(clientX, clientY) {
+  const r = courtWrap.getBoundingClientRect();
+  return {
+    x: clamp((clientX - r.left) / r.width  * 100, 2, 98),
+    y: clamp((clientY - r.top)  / r.height * 100, 2, 98)
+  };
+}
+
+function overCourt(clientX, clientY) {
+  const r = courtWrap.getBoundingClientRect();
+  return clientX >= r.left && clientX <= r.right &&
+         clientY >= r.top  && clientY <= r.bottom;
+}
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+// ── Item HTML builders ────────────────────────────────────────────────────────
+const OFF_BG = '#2980b9', DEF_BG = '#c0392b';
+
+function shapeHTML(type, num) {
+  if (type === 'off')   return `<div class="sh-player" style="background:${OFF_BG};color:#fff;">${num}</div>`;
+  if (type === 'def')   return `<div class="sh-player" style="background:${DEF_BG};color:#fff;">D${num}</div>`;
+  if (type === 'cone')  return `<div class="sh-cone"></div>`;
+  if (type === 'chair') return `<div class="sh-chair">🪑</div>`;
+  if (type === 'bench') return `<div class="sh-bench"></div>`;
+  if (type === 'ball')  return `<div class="sh-ball"></div>`;
+  return '';
+}
+
+function itemLabel(type, num) {
+  if (type === 'off')   return `Jugador ${num}`;
+  if (type === 'def')   return `Defensor D${num}`;
+  if (type === 'cone')  return 'Cono';
+  if (type === 'chair') return 'Silla';
+  if (type === 'bench') return 'Banco';
+  if (type === 'ball')  return 'Pelota';
+  return 'Elemento';
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  // Keep hint visibility
+  hint.style.display = items.length ? 'none' : 'flex';
+
+  // Sync DOM with items array (add missing, remove stale, update positions)
+  const existing = new Map();
+  overlay.querySelectorAll('.ci').forEach(el => existing.set(Number(el.dataset.id), el));
+
+  // Remove stale
+  existing.forEach((el, id) => {
+    if (!items.find(i => i.id === id)) el.remove();
+  });
+
+  // Add or update
+  items.forEach(item => {
+    let el = existing.get(item.id);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'ci';
+      el.dataset.id = item.id;
+      el.innerHTML = shapeHTML(item.type, item.num);
+      el.addEventListener('pointerdown', onCIDown, { passive: false });
+      overlay.appendChild(el);
+    }
+    el.style.left = item.x + '%';
+    el.style.top  = item.y + '%';
+    el.classList.toggle('selected', item.id === selId);
+  });
+
+  // Selection bar
+  if (selId !== null) {
+    const it = items.find(i => i.id === selId);
+    if (it) {
+      selBar.classList.add('show');
+      selName.textContent = itemLabel(it.type, it.num);
+    }
+  } else {
+    selBar.classList.remove('show');
+  }
+}
+
+// ── Palette drag start ────────────────────────────────────────────────────────
+document.querySelectorAll('.pal-item').forEach(pi => {
+  pi.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    pi.setPointerCapture(e.pointerId);
+
+    const type = pi.dataset.type;
+    const num  = pi.dataset.num || null;
+
+    ghost.innerHTML = shapeHTML(type, num);
+    ghost.style.display = 'block';
+    ghost.style.left = e.clientX + 'px';
+    ghost.style.top  = e.clientY + 'px';
+
+    drag = { src: 'pal', type, num, pointerId: e.pointerId };
+    deselect();
+  }, { passive: false });
+});
+
+// ── Court item drag start ─────────────────────────────────────────────────────
+function onCIDown(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const el   = e.currentTarget;
+  const id   = Number(el.dataset.id);
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+
+  selId = id;
+  render();
+
+  el.setPointerCapture(e.pointerId);
+  el.classList.add('dragging');
+
+  drag = {
+    src: 'ci', id,
+    startClientX: e.clientX, startClientY: e.clientY,
+    origX: item.x, origY: item.y,
+    pointerId: e.pointerId,
+    moved: false
+  };
+}
+
+// ── Pointer move ──────────────────────────────────────────────────────────────
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+
+  if (drag.src === 'pal') {
+    ghost.style.left = e.clientX + 'px';
+    ghost.style.top  = e.clientY + 'px';
+  }
+
+  if (drag.src === 'ci') {
+    const item = items.find(i => i.id === drag.id);
+    if (!item) return;
+    const r  = courtWrap.getBoundingClientRect();
+    const dx = (e.clientX - drag.startClientX) / r.width  * 100;
+    const dy = (e.clientY - drag.startClientY) / r.height * 100;
+    item.x = clamp(drag.origX + dx, 2, 98);
+    item.y = clamp(drag.origY + dy, 2, 98);
+    drag.moved = true;
+
+    // Update position directly (skip full re-render for performance)
+    const el = overlay.querySelector('[data-id="' + drag.id + '"]');
+    if (el) { el.style.left = item.x + '%'; el.style.top = item.y + '%'; }
+  }
+}, { passive: true });
+
+// ── Pointer up ────────────────────────────────────────────────────────────────
+document.addEventListener('pointerup', e => {
+  if (!drag) return;
+
+  if (drag.src === 'pal') {
+    ghost.style.display = 'none';
+    if (overCourt(e.clientX, e.clientY)) {
+      snap();
+      const pct  = pctOf(e.clientX, e.clientY);
+      const item = { id: nextId(), type: drag.type, num: drag.num, x: pct.x, y: pct.y };
+      items.push(item);
+      selId = item.id;
+    }
+    render();
+  }
+
+  if (drag.src === 'ci') {
+    const el = overlay.querySelector('[data-id="' + drag.id + '"]');
+    if (el) el.classList.remove('dragging');
+    if (drag.moved) snap();
+  }
+
+  drag = null;
+}, { passive: true });
+
+// ── Pointer cancel ────────────────────────────────────────────────────────────
+document.addEventListener('pointercancel', () => {
+  if (!drag) return;
+  if (drag.src === 'pal') ghost.style.display = 'none';
+  if (drag.src === 'ci') {
+    const el = overlay.querySelector('[data-id="' + drag.id + '"]');
+    if (el) el.classList.remove('dragging');
+  }
+  drag = null;
+});
+
+// ── Overlay background tap → deselect ────────────────────────────────────────
+overlay.addEventListener('pointerdown', e => {
+  if (e.target === overlay || e.target === hint || e.target.tagName === 'SPAN') deselect();
+}, { passive: true });
+
+function deselect() { selId = null; render(); }
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+window.deleteSelected = function() {
+  if (selId === null) return;
+  snap();
+  items = items.filter(i => i.id !== selId);
+  selId = null;
+  render();
+};
+
+window.undoLast = function() {
+  if (!snapStack.length) return;
+  items = snapStack.pop();
+  selId = null;
+  render();
+  showToast('Deshecho');
+};
+
+window.clearCourt = function() {
+  if (!items.length) return;
+  snap();
+  items = [];
+  selId = null;
+  render();
+};
+
+window.saveExercise = function() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('hoopstats_ejercicios') || '[]');
+    const ej = {
+      id:         Date.now(),
+      nombre:     'Ejercicio',
+      tipo:       'tactico',
+      duracion:   '—',
+      jugadores:  '—',
+      desc:       '',
+      courtItems: JSON.parse(JSON.stringify(items))
+    };
+    stored.push(ej);
+    localStorage.setItem('hoopstats_ejercicios', JSON.stringify(stored));
+    showToast('Guardado ✓');
+    setTimeout(() => { window.location.href = 'ejercicios.html'; }, 900);
+  } catch (err) {
+    showToast('Error al guardar');
+  }
+};
+
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+// ── Keyboard ──────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (document.activeElement === document.body) deleteSelected();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.preventDefault();
+    undoLast();
+  }
+  if (e.key === 'Escape') deselect();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
