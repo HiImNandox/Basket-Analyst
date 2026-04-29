@@ -500,6 +500,16 @@
       .bmore-item.active .bmore-icon svg { stroke:var(--red); }
       .bmore-label  { flex:1; font-size:15px; font-weight:700; letter-spacing:.3px; font-family:var(--barlow); }
       .bmore-check  { width:16px; height:16px; stroke:var(--red); flex-shrink:0; }
+      button.bnav-item {
+        background:none; border:none; padding:0; cursor:pointer;
+        font-family:var(--barlow); color:var(--muted);
+        -webkit-tap-highlight-color:transparent;
+      }
+      button.bnav-item .bnav-label { color:var(--muted); }
+      button.bnav-item.active { color:var(--red); }
+      button.bnav-item.active .bnav-label { color:var(--red); }
+      button.bnav-item .bnav-icon svg { stroke:var(--muted); }
+      button.bnav-item.active .bnav-icon svg { stroke:var(--red); }
     `;
     document.head.appendChild(s);
   }
