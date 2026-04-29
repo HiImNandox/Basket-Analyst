@@ -214,29 +214,27 @@ const JUGADAS_EJEMPLO = [
 // ── SVG de pistas ────────────────────────────────────────────────────────────
 function courtSVG(pista) {
   if (pista === 'media') {
-    // Media pista — viewBox izquierda de la pista completa
-    return `<svg class="court" viewBox="0 0 84 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- 3 lados del campo (derecha = línea de medio) -->
-      <path d="M80,4 L4,4 L4,116 L80,116" stroke="white" stroke-width="1.5" fill="none"/>
-      <!-- Línea de medio campo (punteada) -->
-      <line x1="80" y1="4" x2="80" y2="116" stroke="white" stroke-width="1" stroke-dasharray="4 3"/>
-      <!-- Arco del círculo central (solo la mitad visible) -->
-      <path d="M80,46 A14,14 0 0,0 80,74" stroke="white" stroke-width="1" fill="none"/>
-      <!-- Tablero -->
-      <line x1="8" y1="53" x2="8" y2="67" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    // Media pista horizontal — aro abajo, campo hacia arriba
+    return `<svg class="court" viewBox="0 0 120 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- 3 lados del campo (arriba = línea de medio campo) -->
+      <path d="M4,4 L4,80 L116,80 L116,4" stroke="white" stroke-width="1.5" fill="none"/>
+      <!-- Línea de medio campo (arriba, punteada) -->
+      <line x1="4" y1="4" x2="116" y2="4" stroke="white" stroke-width="1" stroke-dasharray="4 3"/>
+      <!-- Tablero (horizontal, en el fondo) -->
+      <line x1="50" y1="77" x2="70" y2="77" stroke="white" stroke-width="2" stroke-linecap="round"/>
       <!-- Aro -->
-      <circle cx="13" cy="60" r="3" stroke="white" stroke-width="1"/>
+      <circle cx="60" cy="73" r="3.5" stroke="white" stroke-width="1"/>
       <!-- Zona pintada -->
-      <rect x="4" y="37" width="32" height="46" stroke="white" stroke-width="1"/>
-      <!-- Círculo de tiro libre — mitad sólida (mirando al centro) -->
-      <path d="M36,43 A17,17 0 0,1 36,77" stroke="white" stroke-width="1" fill="none"/>
-      <!-- Círculo de tiro libre — mitad punteada (mirando al aro) -->
-      <path d="M36,43 A17,17 0 0,0 36,77" stroke="white" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
-      <!-- Líneas de esquina (triples) -->
-      <line x1="4" y1="21" x2="27" y2="21" stroke="white" stroke-width="1"/>
-      <line x1="4" y1="99" x2="27" y2="99" stroke="white" stroke-width="1"/>
+      <rect x="42" y="48" width="36" height="32" stroke="white" stroke-width="1"/>
+      <!-- Círculo TL — mitad sólida (mirando al centro, hacia arriba) -->
+      <path d="M44,48 A16,16 0 0,1 76,48" stroke="white" stroke-width="1" fill="none"/>
+      <!-- Círculo TL — mitad punteada (mirando al aro, hacia abajo) -->
+      <path d="M44,48 A16,16 0 0,0 76,48" stroke="white" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
+      <!-- Esquinas de triples -->
+      <line x1="22" y1="80" x2="22" y2="68" stroke="white" stroke-width="1"/>
+      <line x1="98" y1="80" x2="98" y2="68" stroke="white" stroke-width="1"/>
       <!-- Arco de 3 puntos -->
-      <path d="M27,21 A41,41 0 0,1 27,99" stroke="white" stroke-width="1" fill="none"/>
+      <path d="M22,68 A38,38 0 0,1 98,68" stroke="white" stroke-width="1" fill="none"/>
     </svg>`;
   }
   // Pista completa
