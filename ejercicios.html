@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HoopStats · Ejercicios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root {
+    --red:#cc1414; --red-dim:#991010; --red-glow:rgba(204,20,20,0.12);
+    --bg:#111111; --panel:#1a1a1a; --panel2:#222222; --panel3:#2a2a2a;
+    --border:#2e2e2e; --border2:#3a3a3a;
+    --text:#f0f0f0; --text2:#aaaaaa; --muted:#666666;
+    --green:#27ae60; --green-dim:rgba(39,174,96,0.15); --green-border:rgba(39,174,96,0.3);
+    --red-border:rgba(204,20,20,0.3);
+    --bebas:'Bebas Neue',sans-serif; --barlow:'Barlow Condensed',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+    --sidebar-w:230px; --radius:10px;
+  }
+
+  html, body { height:100%; background:var(--bg); color:var(--text); font-family:var(--barlow); overflow:hidden; }
+  button { font-family:var(--barlow); cursor:pointer; }
+
+  .app { display:flex; height:100vh; height:100dvh; overflow:hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width:var(--sidebar-w); min-width:var(--sidebar-w); background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; height:100dvh; z-index:10; }
+  .sidebar-logo { padding:28px 22px 22px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .logo-eyebrow { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+  .logo-name { font-family:var(--bebas); font-size:28px; letter-spacing:3px; line-height:1; }
+  .logo-club { font-size:11px; color:var(--text2); font-weight:600; margin-top:4px; }
+  .logo-accent { width:40px; height:3px; background:var(--red); margin-top:12px; border-radius:2px; }
+  .sidebar-nav { flex:1; padding:16px 0; overflow-y:auto; }
+  .nav-section-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:14px 22px 6px; }
+  .nav-item { display:flex; align-items:center; gap:12px; padding:11px 22px; font-size:14px; font-weight:600; letter-spacing:0.5px; color:var(--text2); border-left:3px solid transparent; transition:background .15s,color .15s; text-decoration:none; }
+  .nav-item:hover { background:var(--panel2); color:var(--text); }
+  .nav-item.active { color:var(--red); border-left-color:var(--red); background:var(--red-glow); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; opacity:.7; }
+  .nav-item.active svg { opacity:1; }
+  .sidebar-bottom { padding:16px; border-top:1px solid var(--border); flex-shrink:0; }
+  .user-card { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:background .15s; }
+  .user-card:hover { background:var(--panel3); }
+  .user-avatar { width:34px; height:34px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:13px; color:white; flex-shrink:0; }
+  .user-info { flex:1; min-width:0; }
+  .user-name { font-size:13px; font-weight:700; }
+  .user-role { font-size:11px; color:var(--muted); }
+
+  /* MAIN */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+  .topbar { padding:20px 28px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:var(--bg); }
+  .topbar-left { display:flex; flex-direction:column; gap:2px; }
+  .topbar-breadcrumb { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+  .topbar-title { font-family:var(--bebas); font-size:30px; letter-spacing:2px; line-height:1; }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .topbar-pill { background:var(--red-glow); border:1px solid var(--red-border); color:var(--red); font-size:11px; font-weight:700; padding:5px 14px; border-radius:4px; }
+  .btn-primary { display:flex; align-items:center; gap:7px; padding:9px 18px; background:var(--red); border:none; border-radius:7px; color:white; font-size:13px; font-weight:700; letter-spacing:0.5px; cursor:pointer; transition:background .15s; }
+  .btn-primary:hover { background:var(--red-dim); }
+  .btn-primary svg { width:15px; height:15px; }
+
+  /* CONTENT */
+  .content { flex:1; overflow-y:auto; padding:24px 28px 32px; }
+  .content::-webkit-scrollbar { width:4px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+  /* EMPTY STATE */
+  .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; min-height:300px; gap:16px; text-align:center; padding:40px; }
+  .empty-icon { width:72px; height:72px; border-radius:50%; background:var(--panel); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; }
+  .empty-icon svg { width:32px; height:32px; stroke:var(--muted); }
+  .empty-title { font-family:var(--bebas); font-size:26px; letter-spacing:2px; color:var(--text2); }
+  .empty-sub { font-size:14px; color:var(--muted); max-width:340px; line-height:1.5; }
+
+  /* ACCESS DENIED */
+  .access-denied { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:16px; text-align:center; padding:40px; }
+  .access-icon { width:80px; height:80px; border-radius:50%; background:rgba(204,20,20,0.08); border:1px solid var(--red-border); display:flex; align-items:center; justify-content:center; }
+  .access-icon svg { width:36px; height:36px; stroke:var(--red); opacity:.6; }
+  .access-title { font-family:var(--bebas); font-size:30px; letter-spacing:3px; color:var(--text2); }
+  .access-sub { font-size:14px; color:var(--muted); max-width:320px; line-height:1.5; }
+
+  /* EJERCICIOS GRID */
+  .ej-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px; }
+  .ej-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:18px; cursor:pointer; transition:border-color .15s, background .15s; }
+  .ej-card:hover { border-color:var(--border2); background:var(--panel2); }
+  .ej-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:8px; }
+  .ej-name { font-size:15px; font-weight:700; color:var(--text); line-height:1.2; }
+  .ej-tag { font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; padding:2px 8px; border-radius:3px; flex-shrink:0; }
+  .ej-tag.fisico    { background:rgba(52,152,219,0.15);  color:#3498db;  border:1px solid rgba(52,152,219,0.3); }
+  .ej-tag.tecnico   { background:rgba(39,174,96,0.15);   color:#27ae60;  border:1px solid rgba(39,174,96,0.3); }
+  .ej-tag.tactico   { background:rgba(155,89,182,0.15);  color:#9b59b6;  border:1px solid rgba(155,89,182,0.3); }
+  .ej-tag.colectivo { background:rgba(243,156,18,0.15);  color:#f39c12;  border:1px solid rgba(243,156,18,0.3); }
+  .ej-desc { font-size:13px; color:var(--text2); line-height:1.45; }
+  .ej-meta { display:flex; align-items:center; gap:12px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+  .ej-meta-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); }
+  .ej-meta-item svg { width:12px; height:12px; }
+
+  /* SUBNAV */
+  .subnav { display:flex; padding:0 28px; border-bottom:1px solid var(--border); background:var(--bg); flex-shrink:0; overflow-x:auto; scrollbar-width:none; }
+  .subnav::-webkit-scrollbar { display:none; }
+  .subnav-btn { padding:11px 14px; background:none; border:none; border-bottom:2px solid transparent; font-size:12px; font-weight:700; letter-spacing:0.8px; color:var(--muted); cursor:pointer; transition:all .15s; white-space:nowrap; text-transform:uppercase; margin-bottom:-1px; }
+  .subnav-btn.active { color:var(--red); border-bottom-color:var(--red); }
+  .subnav-btn:hover { color:var(--text); }
+
+  /* BOTTOM NAV */
+  .bottom-nav { display:none; height:calc(56px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
+  .bnav-inner { display:flex; height:100%; width:100%; }
+  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; transition:background .1s; }
+  .bnav-item:active { background:var(--panel2); }
+  .bnav-icon { width:20px; height:20px; display:flex; align-items:center; justify-content:center; }
+  .bnav-icon svg { width:18px; height:18px; }
+  .bnav-item.active .bnav-icon svg { stroke:var(--red); }
+  .bnav-item:not(.active) .bnav-icon svg { stroke:var(--muted); }
+  .bnav-label { display:none; font-size:9px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); line-height:1; letter-spacing:0; }
+  .bnav-item.active .bnav-label { color:var(--red); }
+  .bnav-dot { width:3px; height:3px; border-radius:50%; background:var(--red); }
+  @media (min-width:360px) { .bnav-label { display:block; } .bottom-nav { height:calc(60px + env(safe-area-inset-bottom)); } }
+
+  /* MOBILE TOPBAR */
+  .mobile-topbar { display:none; padding:14px 18px 10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg); }
+  .mob-logo { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
+  .mob-logo span { color:var(--red); }
+  .mob-right { display:flex; align-items:center; gap:10px; }
+  .mob-avatar { width:32px; height:32px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:12px; color:white; }
+
+  @media (max-width:768px) {
+    .app { flex-direction:column; }
+    .sidebar { display:none; }
+    .mobile-topbar { display:flex; width:100%; }
+    .bottom-nav { display:flex; width:100%; }
+    .topbar { display:none; }
+    .content { padding:14px 14px 16px; }
+    .subnav { padding:0 14px; }
+    .ej-grid { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-eyebrow">Club Bàsquet</div>
+      <div class="logo-name">Hoop<span style="color:var(--red)">Stats</span></div>
+      <div class="logo-club">Sa Cabaneta A · 25/26</div>
+      <div class="logo-accent"></div>
+    </div>
+    <nav class="sidebar-nav">
+      <!-- populated by rol.js -->
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">JP</div>
+        <div class="user-info">
+          <div class="user-name">Jordi P.</div>
+          <div class="user-role">Entrenador</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Mobile topbar -->
+    <div class="mobile-topbar">
+      <div class="mob-logo">Hoop<span>Stats</span></div>
+      <div class="mob-right">
+        <div class="mob-avatar">JP</div>
+      </div>
+    </div>
+
+    <!-- Desktop topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-breadcrumb">Sa Cabaneta A · Temporada 2025–26</div>
+        <div class="topbar-title">Ejercicios</div>
+      </div>
+      <div class="topbar-right" id="topbar-actions">
+        <span class="topbar-pill">Staff</span>
+      </div>
+    </div>
+
+    <!-- Subnav — solo visible para staff -->
+    <div class="subnav" id="page-subnav" style="display:none">
+      <button class="subnav-btn active" onclick="filterEj('todos', this)">Todos</button>
+      <button class="subnav-btn" onclick="filterEj('fisico', this)">Físico</button>
+      <button class="subnav-btn" onclick="filterEj('tecnico', this)">Técnico</button>
+      <button class="subnav-btn" onclick="filterEj('tactico', this)">Táctico</button>
+      <button class="subnav-btn" onclick="filterEj('colectivo', this)">Colectivo</button>
+    </div>
+
+    <!-- Content -->
+    <div class="content" id="page-content">
+      <div style="text-align:center;padding:60px;color:var(--muted);">Cargando...</div>
+    </div>
+
+    <!-- Bottom nav -->
+    <nav class="bottom-nav">
+      <div class="bnav-inner">
+        <!-- populated by rol.js -->
+      </div>
+    </nav>
+
+  </div>
+</div>
+
+<script src="js/rol.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => HoopRol.init());
+
+// ── Datos de ejemplo ────────────────────────────────────────────────────────
+const EJ_EJEMPLO = [
+  { id:1, nombre:'Tiro en movimiento',    tipo:'tecnico',   duracion:'15 min', jugadores:'Individual', desc:'Recepción en media distancia y tiro con pie de pívot correcto.' },
+  { id:2, nombre:'Carrera interválica',   tipo:'fisico',    duracion:'20 min', jugadores:'Grupo',      desc:'Series de aceleración en las líneas del campo. 6×40m con 45s de recuperación.' },
+  { id:3, nombre:'3 contra 2 con rotación', tipo:'tactico', duracion:'12 min', jugadores:'6 jugadores',desc:'Transición ofensiva con superioridad numérica. Trabajo de toma de decisión.' },
+  { id:4, nombre:'Bloqueo directo 2×2',   tipo:'colectivo', duracion:'18 min', jugadores:'4 jugadores',desc:'Fundamentos del bloqueo-continuación. Ajustes defensivos incluidos.' },
+  { id:5, nombre:'Bote con cambio mano',  tipo:'tecnico',   duracion:'10 min', jugadores:'Individual', desc:'Bote cruzado, por la espalda y entre piernas en velocidad.' },
+  { id:6, nombre:'Salto vertical',        tipo:'fisico',    duracion:'15 min', jugadores:'Grupo',      desc:'Trabajo de potencia de piernas. Drop-jumps y depth-jumps con progresión.' },
+];
+
+let filtroActivo = 'todos';
+
+function init() {
+  const rol = window.HoopRol?.getRol() || 'staff';
+
+  if (rol !== 'staff') {
+    // Acceso denegado para jugadores
+    document.getElementById('page-content').innerHTML = `
+      <div class="access-denied">
+        <div class="access-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="access-title">Acceso restringido</div>
+        <div class="access-sub">La creación y gestión de ejercicios está reservada para el staff técnico.</div>
+      </div>`;
+    return;
+  }
+
+  // Staff: mostrar subnav y botón
+  document.getElementById('page-subnav').style.display = 'flex';
+  document.getElementById('topbar-actions').innerHTML = `
+    <button class="btn-primary" onclick="nuevoEjercicio()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nuevo ejercicio
+    </button>`;
+
+  renderEj();
+}
+
+function filterEj(tipo, btn) {
+  filtroActivo = tipo;
+  document.querySelectorAll('.subnav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderEj();
+}
+
+function renderEj() {
+  const lista = filtroActivo === 'todos'
+    ? EJ_EJEMPLO
+    : EJ_EJEMPLO.filter(e => e.tipo === filtroActivo);
+
+  const content = document.getElementById('page-content');
+
+  if (!lista.length) {
+    content.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </div>
+        <div class="empty-title">Sin ejercicios</div>
+        <div class="empty-sub">No hay ejercicios en esta categoría todavía.<br>Pulsa "Nuevo ejercicio" para crear uno.</div>
+      </div>`;
+    return;
+  }
+
+  content.innerHTML = `<div class="ej-grid">
+    ${lista.map(e => `
+      <div class="ej-card" onclick="verEjercicio(${e.id})">
+        <div class="ej-card-head">
+          <div class="ej-name">${e.nombre}</div>
+          <span class="ej-tag ${e.tipo}">${e.tipo.toUpperCase()}</span>
+        </div>
+        <div class="ej-desc">${e.desc}</div>
+        <div class="ej-meta">
+          <div class="ej-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            ${e.duracion}
+          </div>
+          <div class="ej-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/></svg>
+            ${e.jugadores}
+          </div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function verEjercicio(id) {
+  const e = EJ_EJEMPLO.find(x => x.id === id);
+  if (!e) return;
+  alert(`${e.nombre} (${e.tipo.toUpperCase()})\n\n${e.desc}\n\nDuración: ${e.duracion} · ${e.jugadores}\n\n(Próximamente: editor completo de ejercicios)`);
+}
+
+function nuevoEjercicio() {
+  alert('Editor de ejercicios — próximamente');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

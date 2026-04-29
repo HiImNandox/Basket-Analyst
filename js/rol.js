@@ -20,44 +20,57 @@
     user:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
     clipboard:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>`,
     liga:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`,
+    jugadas: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>`,
+    ejercicios:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
   };
 
   // ─── SIDEBAR NAV (escritorio) ───────────────────────────────────
   const NAV_STAFF = [
-    { href: 'index.html',      icon: 'home',      label: 'Inicio' },
-    { href: 'liga.html',       icon: 'liga',      label: 'Liga' },
-    { href: 'partidos.html',   icon: 'clock',     label: 'Partidos' },
-    { href: 'jugadores.html',  icon: 'people',    label: 'Jugadores' },
-    { href: 'calendario.html', icon: 'calendar',  label: 'Calendario' },
-    { href: 'asistencia.html', icon: 'check',     label: 'Asistencia' },
-    { href: 'equipo.html',     icon: 'team',      label: 'Equipo' },
+    { href: 'index.html',      icon: 'home',       label: 'Inicio' },
+    { href: 'liga.html',       icon: 'liga',       label: 'Liga' },
+    { href: 'partidos.html',   icon: 'clock',      label: 'Partidos' },
+    { href: 'jugadores.html',  icon: 'people',     label: 'Jugadores' },
+    { href: 'jugadas.html',    icon: 'jugadas',    label: 'Jugadas' },
+    { href: 'calendario.html', icon: 'calendar',   label: 'Calendario' },
+    { href: 'asistencia.html', icon: 'check',      label: 'Asistencia' },
+    { href: 'ejercicios.html', icon: 'ejercicios', label: 'Ejercicios' },
+    { href: 'equipo.html',     icon: 'team',       label: 'Equipo' },
   ];
 
-  // ─── BOTTOM NAV (móvil) — los 5 más usados ─────────────────────
+  // ─── BOTTOM NAV (móvil) — staff: 5 fijos + botón "Más" ────────────
   const NAV_STAFF_BOTTOM = [
-    { href: 'index.html',      icon: 'home',      label: 'Inicio' },
-    { href: 'liga.html',       icon: 'liga',      label: 'Liga' },
-    { href: 'partidos.html',   icon: 'clock',     label: 'Partidos' },
-    { href: 'calendario.html', icon: 'calendar',  label: 'Cal.' },
-    { href: 'asistencia.html', icon: 'check',     label: 'Asist.' },
+    { href: 'index.html',     icon: 'home',    label: 'Inicio' },
+    { href: 'liga.html',      icon: 'liga',    label: 'Liga' },
+    { href: 'partidos.html',  icon: 'clock',   label: 'Partidos' },
+    { href: 'jugadores.html', icon: 'people',  label: 'Jugadores' },
+    { href: 'jugadas.html',   icon: 'jugadas', label: 'Jugadas' },
+  ];
+
+  // Items que van dentro del drawer "Más" (staff)
+  const NAV_STAFF_MORE = [
+    { href: 'calendario.html', icon: 'calendar',   label: 'Calendario' },
+    { href: 'asistencia.html', icon: 'check',      label: 'Asistencia' },
+    { href: 'ejercicios.html', icon: 'ejercicios', label: 'Ejercicios' },
+    { href: 'equipo.html',     icon: 'team',       label: 'Equipo' },
   ];
 
   const NAV_JUGADOR = [
-    { href: 'index.html',      icon: 'home',      label: 'Inicio' },
-    { href: 'liga.html',       icon: 'liga',      label: 'Liga' },
-    { href: 'partidos.html',   icon: 'clock',     label: 'Partidos' },
-    { href: 'calendario.html', icon: 'calendar',  label: 'Cal.' },
-    { href: 'perfil.html',     icon: 'user',      label: 'Perfil' },
+    { href: 'index.html',     icon: 'home',    label: 'Inicio' },
+    { href: 'liga.html',      icon: 'liga',    label: 'Liga' },
+    { href: 'partidos.html',  icon: 'clock',   label: 'Partidos' },
+    { href: 'jugadas.html',   icon: 'jugadas', label: 'Jugadas' },
+    { href: 'perfil.html',    icon: 'user',    label: 'Perfil' },
   ];
 
   // Sidebar jugador (más items)
   const NAV_JUGADOR_SIDEBAR = [
-    { href: 'index.html',      icon: 'home',      label: 'Inicio' },
-    { href: 'liga.html',       icon: 'liga',      label: 'Liga' },
-    { href: 'partidos.html',   icon: 'clock',     label: 'Partidos' },
-    { href: 'jugadores.html',  icon: 'people',    label: 'Jugadores' },
-    { href: 'calendario.html', icon: 'calendar',  label: 'Calendario' },
-    { href: 'perfil.html',     icon: 'user',      label: 'Mi Perfil' },
+    { href: 'index.html',      icon: 'home',     label: 'Inicio' },
+    { href: 'liga.html',       icon: 'liga',     label: 'Liga' },
+    { href: 'partidos.html',   icon: 'clock',    label: 'Partidos' },
+    { href: 'jugadores.html',  icon: 'people',   label: 'Jugadores' },
+    { href: 'jugadas.html',    icon: 'jugadas',  label: 'Jugadas' },
+    { href: 'calendario.html', icon: 'calendar', label: 'Calendario' },
+    { href: 'perfil.html',     icon: 'user',     label: 'Mi Perfil' },
   ];
 
   // ─── STORAGE ────────────────────────────────────────────────────
@@ -405,9 +418,114 @@
     const bnavInner = document.querySelector('.bnav-inner');
     if (!bnavInner) return;
 
-    const rol   = getRol();
-    const items = rol === 'jugador' ? NAV_JUGADOR : NAV_STAFF_BOTTOM;
-    bnavInner.innerHTML = items.map(buildNavItem).join('');
+    const rol = getRol();
+
+    if (rol === 'jugador') {
+      // Jugador: 5 items, caben perfectamente
+      bnavInner.innerHTML = NAV_JUGADOR.map(buildNavItem).join('');
+    } else {
+      // Staff: 5 items fijos + botón "Más"
+      const moreIsActive = NAV_STAFF_MORE.some(item => isActive(item.href));
+      const moreActive   = moreIsActive ? ' active' : '';
+      bnavInner.innerHTML =
+        NAV_STAFF_BOTTOM.map(buildNavItem).join('') +
+        `<button class="bnav-item${moreActive}" onclick="window.HoopRol._openMore()">
+          <div class="bnav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="5"  r="1.2"/><circle cx="12" cy="12" r="1.2"/>
+              <circle cx="12" cy="19" r="1.2"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Más</div>
+          ${moreIsActive ? '<div class="bnav-dot"></div>' : ''}
+        </button>`;
+    }
+  }
+
+  // ─── MORE DRAWER ─────────────────────────────────────────────────
+  function _buildMoreDrawer() {
+    const itemsHTML = NAV_STAFF_MORE.map(item => {
+      const active = isActive(item.href);
+      return `<a href="${item.href}" class="bmore-item${active ? ' active' : ''}">
+        <div class="bmore-icon">${ICONS[item.icon]}</div>
+        <span class="bmore-label">${item.label}</span>
+        ${active ? `<svg class="bmore-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+      </a>`;
+    }).join('');
+
+    return `
+    <div id="bmore-overlay">
+      <div id="bmore-sheet">
+        <div class="bmore-handle"></div>
+        <div class="bmore-title">Más opciones</div>
+        <div class="bmore-list">${itemsHTML}</div>
+      </div>
+    </div>`;
+  }
+
+  function _injectMoreCSS() {
+    if (document.getElementById('_bmore_css')) return;
+    const s = document.createElement('style');
+    s.id = '_bmore_css';
+    s.textContent = `
+      #bmore-overlay {
+        display:none; position:fixed; inset:0; z-index:8000;
+        background:rgba(0,0,0,.55); backdrop-filter:blur(3px);
+      }
+      #bmore-sheet {
+        position:absolute; bottom:0; left:0; right:0;
+        background:var(--panel); border-top:1px solid var(--border2);
+        border-radius:16px 16px 0 0;
+        padding-bottom:calc(12px + env(safe-area-inset-bottom));
+        transform:translateY(100%);
+        transition:transform .28s cubic-bezier(.32,.72,0,1);
+      }
+      #bmore-sheet.open { transform:translateY(0); }
+      .bmore-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:14px auto 12px; }
+      .bmore-title  { font-size:9px; letter-spacing:2px; text-transform:uppercase;
+                      color:var(--muted); font-weight:700; font-family:var(--barlow);
+                      padding:0 20px 10px; border-bottom:1px solid var(--border); margin-bottom:6px; }
+      .bmore-list   { display:flex; flex-direction:column; }
+      .bmore-item   { display:flex; align-items:center; gap:14px; padding:13px 20px;
+                      text-decoration:none; color:var(--text2);
+                      -webkit-tap-highlight-color:transparent; transition:background .1s; }
+      .bmore-item:active { background:var(--panel2); }
+      .bmore-item.active  { color:var(--red); background:var(--red-glow); }
+      .bmore-icon   { width:38px; height:38px; border-radius:10px; background:var(--panel2);
+                      border:1px solid var(--border2); display:flex; align-items:center;
+                      justify-content:center; flex-shrink:0; }
+      .bmore-icon svg { width:18px; height:18px; stroke:var(--muted); }
+      .bmore-item.active .bmore-icon { background:var(--red-glow); border-color:var(--red-border); }
+      .bmore-item.active .bmore-icon svg { stroke:var(--red); }
+      .bmore-label  { flex:1; font-size:15px; font-weight:700; letter-spacing:.3px; font-family:var(--barlow); }
+      .bmore-check  { width:16px; height:16px; stroke:var(--red); flex-shrink:0; }
+    `;
+    document.head.appendChild(s);
+  }
+
+  function _openMore() {
+    if (!document.getElementById('bmore-overlay')) {
+      document.body.insertAdjacentHTML('beforeend', _buildMoreDrawer());
+      document.getElementById('bmore-overlay').addEventListener('click', function(e) {
+        if (e.target === this) _closeMore();
+      });
+    }
+    const overlay = document.getElementById('bmore-overlay');
+    const sheet   = document.getElementById('bmore-sheet');
+    overlay.style.display = 'block';
+    requestAnimationFrame(() => sheet.classList.add('open'));
+  }
+
+  function _closeMore() {
+    const sheet = document.getElementById('bmore-sheet');
+    if (sheet) {
+      sheet.classList.remove('open');
+      setTimeout(() => {
+        const overlay = document.getElementById('bmore-overlay');
+        if (overlay) overlay.style.display = 'none';
+      }, 280);
+    }
   }
 
   // ─── INIT ────────────────────────────────────────────────────────
@@ -416,12 +534,13 @@
     const existing = document.getElementById('hoop-rol-overlay');
     if (!existing) {
       document.body.insertAdjacentHTML('beforeend', buildModalHTML());
-
-      // Close on overlay click
       document.getElementById('hoop-rol-overlay').addEventListener('click', function(e) {
         if (e.target === this) _closeModal();
       });
     }
+
+    // Inject "Más" drawer CSS
+    _injectMoreCSS();
 
     // Bind avatar clicks
     document.querySelectorAll('.user-avatar, .user-card').forEach(el => {
@@ -452,6 +571,8 @@
     _selectJugador,
     _filterPlayers,
     _pickPlayer,
+    _openMore,
+    _closeMore,
   };
 
 })(window);

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HoopStats · Jugadas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root {
+    --red:#cc1414; --red-dim:#991010; --red-glow:rgba(204,20,20,0.12);
+    --bg:#111111; --panel:#1a1a1a; --panel2:#222222; --panel3:#2a2a2a;
+    --border:#2e2e2e; --border2:#3a3a3a;
+    --text:#f0f0f0; --text2:#aaaaaa; --muted:#666666;
+    --green:#27ae60; --green-dim:rgba(39,174,96,0.15); --green-border:rgba(39,174,96,0.3);
+    --red-border:rgba(204,20,20,0.3);
+    --bebas:'Bebas Neue',sans-serif; --barlow:'Barlow Condensed',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+    --sidebar-w:230px; --radius:10px;
+  }
+
+  html, body { height:100%; background:var(--bg); color:var(--text); font-family:var(--barlow); overflow:hidden; }
+  button { font-family:var(--barlow); cursor:pointer; }
+
+  .app { display:flex; height:100vh; height:100dvh; overflow:hidden; }
+
+  /* SIDEBAR */
+  .sidebar { width:var(--sidebar-w); min-width:var(--sidebar-w); background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; height:100dvh; z-index:10; }
+  .sidebar-logo { padding:28px 22px 22px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .logo-eyebrow { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+  .logo-name { font-family:var(--bebas); font-size:28px; letter-spacing:3px; line-height:1; }
+  .logo-club { font-size:11px; color:var(--text2); font-weight:600; margin-top:4px; }
+  .logo-accent { width:40px; height:3px; background:var(--red); margin-top:12px; border-radius:2px; }
+  .sidebar-nav { flex:1; padding:16px 0; overflow-y:auto; }
+  .nav-section-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:14px 22px 6px; }
+  .nav-item { display:flex; align-items:center; gap:12px; padding:11px 22px; font-size:14px; font-weight:600; letter-spacing:0.5px; color:var(--text2); border-left:3px solid transparent; transition:background .15s,color .15s; text-decoration:none; }
+  .nav-item:hover { background:var(--panel2); color:var(--text); }
+  .nav-item.active { color:var(--red); border-left-color:var(--red); background:var(--red-glow); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; opacity:.7; }
+  .nav-item.active svg { opacity:1; }
+  .sidebar-bottom { padding:16px; border-top:1px solid var(--border); flex-shrink:0; }
+  .user-card { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:background .15s; }
+  .user-card:hover { background:var(--panel3); }
+  .user-avatar { width:34px; height:34px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:13px; color:white; flex-shrink:0; }
+  .user-info { flex:1; min-width:0; }
+  .user-name { font-size:13px; font-weight:700; }
+  .user-role { font-size:11px; color:var(--muted); }
+
+  /* MAIN */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+  .topbar { padding:20px 28px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:var(--bg); }
+  .topbar-left { display:flex; flex-direction:column; gap:2px; }
+  .topbar-breadcrumb { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+  .topbar-title { font-family:var(--bebas); font-size:30px; letter-spacing:2px; line-height:1; }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  .topbar-pill { background:var(--red-glow); border:1px solid var(--red-border); color:var(--red); font-size:11px; font-weight:700; padding:5px 14px; border-radius:4px; }
+  .btn-primary { display:flex; align-items:center; gap:7px; padding:9px 18px; background:var(--red); border:none; border-radius:7px; color:white; font-size:13px; font-weight:700; letter-spacing:0.5px; cursor:pointer; transition:background .15s; }
+  .btn-primary:hover { background:var(--red-dim); }
+  .btn-primary svg { width:15px; height:15px; }
+
+  /* CONTENT */
+  .content { flex:1; overflow-y:auto; padding:24px 28px 32px; }
+  .content::-webkit-scrollbar { width:4px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+  /* EMPTY STATE */
+  .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; min-height:300px; gap:16px; text-align:center; padding:40px; }
+  .empty-icon { width:72px; height:72px; border-radius:50%; background:var(--panel); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; }
+  .empty-icon svg { width:32px; height:32px; stroke:var(--muted); }
+  .empty-title { font-family:var(--bebas); font-size:26px; letter-spacing:2px; color:var(--text2); }
+  .empty-sub { font-size:14px; color:var(--muted); max-width:340px; line-height:1.5; }
+
+  /* JUGADAS GRID */
+  .jugadas-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px; }
+  .jugada-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:border-color .15s, background .15s; }
+  .jugada-card:hover { border-color:var(--border2); background:var(--panel2); }
+  .jugada-canvas { width:100%; aspect-ratio:4/3; background:var(--panel2); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+  .jugada-canvas svg.court { width:100%; height:100%; opacity:0.15; }
+  .jugada-canvas .court-placeholder { font-family:var(--bebas); font-size:13px; letter-spacing:2px; color:var(--muted); position:absolute; }
+  .jugada-info { padding:12px 14px; }
+  .jugada-name { font-size:15px; font-weight:700; color:var(--text); }
+  .jugada-meta { display:flex; align-items:center; gap:10px; margin-top:4px; }
+  .jugada-tag { font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; padding:2px 8px; border-radius:3px; }
+  .jugada-tag.ataque  { background:rgba(52,152,219,0.15); color:#3498db; border:1px solid rgba(52,152,219,0.3); }
+  .jugada-tag.defensa { background:rgba(231,76,60,0.15); color:#e74c3c; border:1px solid rgba(231,76,60,0.3); }
+  .jugada-tag.especial{ background:rgba(243,156,18,0.15); color:#f39c12; border:1px solid rgba(243,156,18,0.3); }
+
+  /* SUBNAV */
+  .subnav { display:flex; padding:0 28px; border-bottom:1px solid var(--border); background:var(--bg); flex-shrink:0; overflow-x:auto; scrollbar-width:none; }
+  .subnav::-webkit-scrollbar { display:none; }
+  .subnav-btn { padding:11px 14px; background:none; border:none; border-bottom:2px solid transparent; font-size:12px; font-weight:700; letter-spacing:0.8px; color:var(--muted); cursor:pointer; transition:all .15s; white-space:nowrap; text-transform:uppercase; margin-bottom:-1px; }
+  .subnav-btn.active { color:var(--red); border-bottom-color:var(--red); }
+  .subnav-btn:hover { color:var(--text); }
+
+  /* BOTTOM NAV */
+  .bottom-nav { display:none; height:calc(56px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
+  .bnav-inner { display:flex; height:100%; width:100%; }
+  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; transition:background .1s; }
+  .bnav-item:active { background:var(--panel2); }
+  .bnav-icon { width:20px; height:20px; display:flex; align-items:center; justify-content:center; }
+  .bnav-icon svg { width:18px; height:18px; }
+  .bnav-item.active .bnav-icon svg { stroke:var(--red); }
+  .bnav-item:not(.active) .bnav-icon svg { stroke:var(--muted); }
+  .bnav-label { display:none; font-size:9px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); line-height:1; letter-spacing:0; }
+  .bnav-item.active .bnav-label { color:var(--red); }
+  .bnav-dot { width:3px; height:3px; border-radius:50%; background:var(--red); }
+  @media (min-width:360px) { .bnav-label { display:block; } .bottom-nav { height:calc(60px + env(safe-area-inset-bottom)); } }
+
+  /* MOBILE TOPBAR */
+  .mobile-topbar { display:none; padding:14px 18px 10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg); }
+  .mob-logo { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
+  .mob-logo span { color:var(--red); }
+  .mob-right { display:flex; align-items:center; gap:10px; }
+  .mob-avatar { width:32px; height:32px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:12px; color:white; }
+
+  @media (max-width:768px) {
+    .app { flex-direction:column; }
+    .sidebar { display:none; }
+    .mobile-topbar { display:flex; width:100%; }
+    .bottom-nav { display:flex; width:100%; }
+    .topbar { display:none; }
+    .content { padding:14px 14px 16px; }
+    .subnav { padding:0 14px; }
+    .jugadas-grid { grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:10px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-eyebrow">Club Bàsquet</div>
+      <div class="logo-name">Hoop<span style="color:var(--red)">Stats</span></div>
+      <div class="logo-club">Sa Cabaneta A · 25/26</div>
+      <div class="logo-accent"></div>
+    </div>
+    <nav class="sidebar-nav">
+      <!-- populated by rol.js -->
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">JP</div>
+        <div class="user-info">
+          <div class="user-name">Jordi P.</div>
+          <div class="user-role">Entrenador</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- Mobile topbar -->
+    <div class="mobile-topbar">
+      <div class="mob-logo">Hoop<span>Stats</span></div>
+      <div class="mob-right">
+        <div class="mob-avatar">JP</div>
+      </div>
+    </div>
+
+    <!-- Desktop topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-breadcrumb">Sa Cabaneta A · Temporada 2025–26</div>
+        <div class="topbar-title">Jugadas</div>
+      </div>
+      <div class="topbar-right" id="topbar-actions"></div>
+    </div>
+
+    <!-- Subnav -->
+    <div class="subnav">
+      <button class="subnav-btn active" onclick="filterJugadas('todas', this)">Todas</button>
+      <button class="subnav-btn" onclick="filterJugadas('ataque', this)">Ataque</button>
+      <button class="subnav-btn" onclick="filterJugadas('defensa', this)">Defensa</button>
+      <button class="subnav-btn" onclick="filterJugadas('especial', this)">Especial</button>
+    </div>
+
+    <!-- Content -->
+    <div class="content" id="page-content">
+      <div style="text-align:center;padding:60px;color:var(--muted);">Cargando...</div>
+    </div>
+
+    <!-- Bottom nav -->
+    <nav class="bottom-nav">
+      <div class="bnav-inner">
+        <!-- populated by rol.js -->
+      </div>
+    </nav>
+
+  </div>
+</div>
+
+<script src="js/rol.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => HoopRol.init());
+
+// ── Datos de ejemplo ────────────────────────────────────────────────────────
+const JUGADAS_EJEMPLO = [
+  { id:1, nombre:'Bloqueo directo #1', tipo:'ataque',  descripcion:'Bloqueo-continuación con base y 5.' },
+  { id:2, nombre:'Press 2-2-1',        tipo:'defensa', descripcion:'Presión toda la pista tras canasta.' },
+  { id:3, nombre:'ATO – Esquina',      tipo:'especial',descripcion:'After time-out con cut al aro.' },
+  { id:4, nombre:'Pick & Roll lado',   tipo:'ataque',  descripcion:'Bloqueo lateral con salida exterior.' },
+  { id:5, nombre:'Zona 2-3',           tipo:'defensa', descripcion:'Defensa en zona con coberturas.' },
+  { id:6, nombre:'BLOB – Mano fuerte', tipo:'especial',descripcion:'Jugada de banda bajo aro.' },
+];
+
+let filtroActivo = 'todas';
+let esStaff = false;
+
+function init() {
+  esStaff = (window.HoopRol?.getRol() || 'staff') === 'staff';
+
+  // Botón añadir solo para staff
+  if (esStaff) {
+    document.getElementById('topbar-actions').innerHTML = `
+      <button class="btn-primary" onclick="nuevaJugada()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nueva jugada
+      </button>`;
+  }
+
+  renderJugadas();
+}
+
+function filterJugadas(tipo, btn) {
+  filtroActivo = tipo;
+  document.querySelectorAll('.subnav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderJugadas();
+}
+
+function renderJugadas() {
+  const lista = filtroActivo === 'todas'
+    ? JUGADAS_EJEMPLO
+    : JUGADAS_EJEMPLO.filter(j => j.tipo === filtroActivo);
+
+  const content = document.getElementById('page-content');
+
+  if (!lista.length) {
+    content.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+        </div>
+        <div class="empty-title">Sin jugadas</div>
+        <div class="empty-sub">No hay jugadas en esta categoría todavía.</div>
+      </div>`;
+    return;
+  }
+
+  content.innerHTML = `<div class="jugadas-grid">
+    ${lista.map(j => `
+      <div class="jugada-card" onclick="verJugada(${j.id})">
+        <div class="jugada-canvas">
+          <svg class="court" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="152" height="112" rx="2" stroke="white" stroke-width="1.5"/>
+            <circle cx="80" cy="60" r="18" stroke="white" stroke-width="1.5"/>
+            <line x1="4" y1="60" x2="156" y2="60" stroke="white" stroke-width="1"/>
+            <rect x="4" y="36" width="30" height="48" stroke="white" stroke-width="1.5"/>
+            <rect x="126" y="36" width="30" height="48" stroke="white" stroke-width="1.5"/>
+            <circle cx="80" cy="60" r="1.5" fill="white"/>
+          </svg>
+          <span class="court-placeholder">PISTA</span>
+        </div>
+        <div class="jugada-info">
+          <div class="jugada-name">${j.nombre}</div>
+          <div class="jugada-meta">
+            <span class="jugada-tag ${j.tipo}">${j.tipo.toUpperCase()}</span>
+          </div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function verJugada(id) {
+  const j = JUGADAS_EJEMPLO.find(x => x.id === id);
+  if (!j) return;
+  alert(`${j.nombre}\n\n${j.descripcion}\n\n(Próximamente: editor de diagrama interactivo)`);
+}
+
+function nuevaJugada() {
+  alert('Editor de jugadas — próximamente');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
