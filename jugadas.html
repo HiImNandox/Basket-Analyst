@@ -77,6 +77,7 @@
   .jugada-card:hover { border-color:var(--border2); background:var(--panel2); }
   .jugada-canvas { width:100%; aspect-ratio:4/3; background:var(--panel2); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
   .jugada-canvas svg.court { width:100%; height:100%; opacity:0.25; }
+  .pista-badge { position:absolute; top:8px; right:8px; font-size:8px; font-weight:700; letter-spacing:1px; font-family:var(--barlow); color:var(--muted); background:rgba(0,0,0,0.55); padding:2px 7px; border-radius:3px; border:1px solid var(--border2); }
   .jugada-info { padding:12px 14px; }
   .jugada-name { font-size:15px; font-weight:700; color:var(--text); }
   .jugada-meta { display:flex; align-items:center; gap:10px; margin-top:4px; }
@@ -200,13 +201,68 @@ document.addEventListener('DOMContentLoaded', () => HoopRol.init());
 
 // ── Datos de ejemplo ────────────────────────────────────────────────────────
 const JUGADAS_EJEMPLO = [
-  { id:1, nombre:'Bloqueo directo #1', tipo:'ataque',  descripcion:'Bloqueo-continuación con base y 5.' },
-  { id:2, nombre:'Press 2-2-1',        tipo:'defensa', descripcion:'Presión toda la pista tras canasta.' },
-  { id:3, nombre:'ATO – Esquina',      tipo:'especial',descripcion:'After time-out con cut al aro.' },
-  { id:4, nombre:'Pick & Roll lado',   tipo:'ataque',  descripcion:'Bloqueo lateral con salida exterior.' },
-  { id:5, nombre:'Zona 2-3',           tipo:'defensa', descripcion:'Defensa en zona con coberturas.' },
-  { id:6, nombre:'BLOB – Mano fuerte', tipo:'especial',descripcion:'Jugada de banda bajo aro.' },
+  { id:1, nombre:'Bloqueo directo #1',   tipo:'ataque',  pista:'completa', descripcion:'Bloqueo-continuación con base y 5.' },
+  { id:2, nombre:'Press 2-2-1',          tipo:'defensa', pista:'completa', descripcion:'Presión toda la pista tras canasta.' },
+  { id:3, nombre:'ATO – Esquina',        tipo:'especial',pista:'media',    descripcion:'After time-out con cut al aro desde esquina.' },
+  { id:4, nombre:'Pick & Roll lado',     tipo:'ataque',  pista:'media',    descripcion:'Bloqueo lateral con salida exterior y continuación al aro.' },
+  { id:5, nombre:'Zona 2-3',             tipo:'defensa', pista:'media',    descripcion:'Defensa en zona 2-3 con coberturas y rotaciones.' },
+  { id:6, nombre:'BLOB – Mano fuerte',   tipo:'especial',pista:'media',    descripcion:'Jugada de banda bajo aro con pantalla y corte.' },
+  { id:7, nombre:'Transición rápida',    tipo:'ataque',  pista:'completa', descripcion:'Contraataque organizado 3 vs 2 tras rebote defensivo.' },
+  { id:8, nombre:'Defensa individual 1-4',tipo:'defensa',pista:'media',    descripcion:'Un defensor presiona al base mientras los otros cierran el lado débil.' },
 ];
+
+// ── SVG de pistas ────────────────────────────────────────────────────────────
+function courtSVG(pista) {
+  if (pista === 'media') {
+    // Media pista — viewBox izquierda de la pista completa
+    return `<svg class="court" viewBox="0 0 84 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- 3 lados del campo (derecha = línea de medio) -->
+      <path d="M80,4 L4,4 L4,116 L80,116" stroke="white" stroke-width="1.5" fill="none"/>
+      <!-- Línea de medio campo (punteada) -->
+      <line x1="80" y1="4" x2="80" y2="116" stroke="white" stroke-width="1" stroke-dasharray="4 3"/>
+      <!-- Arco del círculo central (solo la mitad visible) -->
+      <path d="M80,46 A14,14 0 0,0 80,74" stroke="white" stroke-width="1" fill="none"/>
+      <!-- Tablero -->
+      <line x1="8" y1="53" x2="8" y2="67" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <!-- Aro -->
+      <circle cx="13" cy="60" r="3" stroke="white" stroke-width="1"/>
+      <!-- Zona pintada -->
+      <rect x="4" y="37" width="32" height="46" stroke="white" stroke-width="1"/>
+      <!-- Círculo de tiro libre — mitad sólida (mirando al centro) -->
+      <path d="M36,43 A17,17 0 0,1 36,77" stroke="white" stroke-width="1" fill="none"/>
+      <!-- Círculo de tiro libre — mitad punteada (mirando al aro) -->
+      <path d="M36,43 A17,17 0 0,0 36,77" stroke="white" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
+      <!-- Líneas de esquina (triples) -->
+      <line x1="4" y1="21" x2="27" y2="21" stroke="white" stroke-width="1"/>
+      <line x1="4" y1="99" x2="27" y2="99" stroke="white" stroke-width="1"/>
+      <!-- Arco de 3 puntos -->
+      <path d="M27,21 A41,41 0 0,1 27,99" stroke="white" stroke-width="1" fill="none"/>
+    </svg>`;
+  }
+  // Pista completa
+  return `<svg class="court" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="4" width="152" height="112" stroke="white" stroke-width="1.5"/>
+    <line x1="80" y1="4" x2="80" y2="116" stroke="white" stroke-width="1"/>
+    <circle cx="80" cy="60" r="14" stroke="white" stroke-width="1"/>
+    <circle cx="80" cy="60" r="1.5" fill="white"/>
+    <line x1="8" y1="53" x2="8" y2="67" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="13" cy="60" r="3" stroke="white" stroke-width="1"/>
+    <rect x="4" y="37" width="32" height="46" stroke="white" stroke-width="1"/>
+    <path d="M36,43 A17,17 0 0,1 36,77" stroke="white" stroke-width="1" fill="none"/>
+    <path d="M36,43 A17,17 0 0,0 36,77" stroke="white" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
+    <line x1="4" y1="21" x2="27" y2="21" stroke="white" stroke-width="1"/>
+    <line x1="4" y1="99" x2="27" y2="99" stroke="white" stroke-width="1"/>
+    <path d="M27,21 A41,41 0 0,1 27,99" stroke="white" stroke-width="1" fill="none"/>
+    <line x1="152" y1="53" x2="152" y2="67" stroke="white" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="147" cy="60" r="3" stroke="white" stroke-width="1"/>
+    <rect x="124" y="37" width="32" height="46" stroke="white" stroke-width="1"/>
+    <path d="M124,43 A17,17 0 0,0 124,77" stroke="white" stroke-width="1" fill="none"/>
+    <path d="M124,43 A17,17 0 0,1 124,77" stroke="white" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
+    <line x1="156" y1="21" x2="133" y2="21" stroke="white" stroke-width="1"/>
+    <line x1="156" y1="99" x2="133" y2="99" stroke="white" stroke-width="1"/>
+    <path d="M133,21 A41,41 0 0,0 133,99" stroke="white" stroke-width="1" fill="none"/>
+  </svg>`;
+}
 
 let filtroActivo = 'todas';
 let esStaff = false;
@@ -256,33 +312,8 @@ function renderJugadas() {
     ${lista.map(j => `
       <div class="jugada-card" onclick="verJugada(${j.id})">
         <div class="jugada-canvas">
-          <svg class="court" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Boundary -->
-            <rect x="4" y="4" width="152" height="112" stroke="white" stroke-width="1.5"/>
-            <!-- Half-court line -->
-            <line x1="80" y1="4" x2="80" y2="116" stroke="white" stroke-width="1"/>
-            <!-- Center circle + dot -->
-            <circle cx="80" cy="60" r="14" stroke="white" stroke-width="1"/>
-            <circle cx="80" cy="60" r="1.5" fill="white"/>
-            <!-- ── LEFT BASKET ── -->
-            <line x1="8" y1="53" x2="8" y2="67" stroke="white" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="13" cy="60" r="3" stroke="white" stroke-width="1"/>
-            <rect x="4" y="37" width="32" height="46" stroke="white" stroke-width="1"/>
-            <path d="M36,43 A17,17 0 0,1 36,77" stroke="white" stroke-width="1" fill="none"/>
-            <path d="M36,43 A17,17 0 0,0 36,77" stroke="white" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
-            <line x1="4" y1="21" x2="27" y2="21" stroke="white" stroke-width="1"/>
-            <line x1="4" y1="99" x2="27" y2="99" stroke="white" stroke-width="1"/>
-            <path d="M27,21 A41,41 0 0,1 27,99" stroke="white" stroke-width="1" fill="none"/>
-            <!-- ── RIGHT BASKET ── -->
-            <line x1="152" y1="53" x2="152" y2="67" stroke="white" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="147" cy="60" r="3" stroke="white" stroke-width="1"/>
-            <rect x="124" y="37" width="32" height="46" stroke="white" stroke-width="1"/>
-            <path d="M124,43 A17,17 0 0,0 124,77" stroke="white" stroke-width="1" fill="none"/>
-            <path d="M124,43 A17,17 0 0,1 124,77" stroke="white" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
-            <line x1="156" y1="21" x2="133" y2="21" stroke="white" stroke-width="1"/>
-            <line x1="156" y1="99" x2="133" y2="99" stroke="white" stroke-width="1"/>
-            <path d="M133,21 A41,41 0 0,0 133,99" stroke="white" stroke-width="1" fill="none"/>
-          </svg>
+          ${courtSVG(j.pista)}
+          <span class="pista-badge">${j.pista === 'media' ? '½ PISTA' : 'PISTA COMPLETA'}</span>
         </div>
         <div class="jugada-info">
           <div class="jugada-name">${j.nombre}</div>
