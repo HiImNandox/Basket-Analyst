@@ -444,6 +444,7 @@ function sign(n)   { return n > 0 ? '+' + n : String(n); }
 // ─── VISTA EQUIPOS ───────────────────────────────────────
 function showTeams() {
   _currentTeam = null;
+  _viewLevel   = 0;
   document.getElementById('back-btn').classList.remove('visible');
   document.getElementById('topbar-breadcrumb').textContent = 'Liga · Temporada 2025–26';
   document.getElementById('topbar-title').textContent = 'Jugadores';
@@ -489,6 +490,7 @@ function renderTeams(equipos) {
 // ─── VISTA JUGADORES ─────────────────────────────────────
 async function showPlayers(equipoId, shortName, nombre) {
   _currentTeam = { id: equipoId, shortName, nombre };
+  _viewLevel   = 1;
   const color  = teamColor(shortName);
 
   document.getElementById('back-btn').classList.add('visible');
@@ -537,6 +539,7 @@ async function showPlayers(equipoId, shortName, nombre) {
 
 // ─── VISTA PERFIL JUGADOR ────────────────────────────────
 async function showPlayer(jugador, shortName, teamNombre) {
+  _viewLevel   = 2;
   const color  = teamColor(shortName);
   const ini    = initials(jugador.nombre, jugador.apellidos);
   const fullName = (jugador.nombre + ' ' + (jugador.apellidos || '')).trim().toLowerCase();
@@ -660,13 +663,15 @@ async function showPlayer(jugador, shortName, teamNombre) {
 }
 
 // ─── BACK ────────────────────────────────────────────────
-let _viewStack = []; // 'teams' | { type:'players', ... } | { type:'player', ... }
+// 0 = equipos  |  1 = jugadores del equipo  |  2 = perfil jugador
+let _viewLevel = 0;
 
 function handleBack() {
-  // Si hay equipo actual, volvemos a él; si no, a la lista de equipos
-  if (_currentTeam) {
+  if (_viewLevel === 2) {
+    // Perfil → lista del equipo
     showPlayers(_currentTeam.id, _currentTeam.shortName, _currentTeam.nombre);
   } else {
+    // Lista del equipo → equipos
     showTeams();
   }
 }
