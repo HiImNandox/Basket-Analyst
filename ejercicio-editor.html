@@ -321,6 +321,47 @@ html, body {
 }
 .court-hint span { font-size: 12px; color: rgba(255,255,255,.2); font-family: var(--barlow); font-weight: 600; letter-spacing: .5px; text-align: center; line-height: 1.7; }
 
+/* ── PALETTE USED ── */
+.pal-item.pal-used { opacity: 0.28; cursor: not-allowed; pointer-events: none; }
+.pal-item.pal-used:hover { background: none; }
+
+/* ── TEXT ITEM ── */
+.sh-text {
+  color: #fff; font-family: var(--barlow); font-size: 14px; font-weight: 700;
+  white-space: nowrap; text-shadow: 0 1px 5px rgba(0,0,0,.95);
+  padding: 2px 6px; background: rgba(0,0,0,.35);
+  border-radius: 3px; border: 1px solid rgba(255,255,255,.12);
+  pointer-events: none; line-height: 1.4; min-width: 20px; text-align: center;
+}
+
+/* Text edit input in sel-bar */
+.text-edit-input {
+  flex: 1; min-width: 0; background: var(--panel2);
+  border: 1px solid var(--border2); border-radius: 5px;
+  color: var(--text); font-family: var(--barlow); font-size: 13px;
+  padding: 5px 10px; outline: none; font-weight: 600;
+}
+.text-edit-input:focus { border-color: #555; }
+.text-edit-input::placeholder { color: var(--muted); font-weight: 400; }
+
+/* ── SLIDE DESCRIPTION ── */
+.slide-desc-row {
+  padding: 4px 12px 5px; border-top: 1px solid var(--border);
+  background: var(--bg); flex-shrink: 0;
+}
+.slide-desc-input {
+  width: 100%; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text2); font-family: var(--barlow); font-size: 11px;
+  padding: 5px 10px; outline: none; font-weight: 600; letter-spacing: .2px;
+  transition: border-color .15s, color .15s;
+}
+.slide-desc-input:focus { border-color: var(--border2); color: var(--text); }
+.slide-desc-input::placeholder { color: var(--muted); font-weight: 400; }
+
+/* ── FULL COURT ── */
+.court-wrap.full-court { max-width: 700px; }
+
 /* ── TOAST ── */
 .toast {
   position: fixed; bottom: 90px; left: 50%;
@@ -374,6 +415,18 @@ html, body {
       Bloqueo
     </button>
 
+    <button class="tl" id="tl-text" onclick="setMode('place-text')" title="Añadir texto a la pista">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+      Texto
+    </button>
+
+    <div class="tl-sep"></div>
+
+    <button class="tl" id="tl-court" onclick="toggleCourt()" title="Cambiar entre media pista y pista completa">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="1"/><line x1="12" y1="5" x2="12" y2="19"/></svg>
+      Pista completa
+    </button>
+
     <div class="tl-sep"></div>
 
     <!-- Animation -->
@@ -395,8 +448,8 @@ html, body {
   <div class="court-area">
     <div class="court-wrap" id="court-wrap">
 
-      <!-- Background SVG -->
-      <svg class="court-bg" viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg" style="background:#0b1622;">
+      <!-- Background SVG: media pista -->
+      <svg id="court-half" class="court-bg" viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg" style="background:#0b1622;">
         <rect x="0" y="0" width="120" height="84" fill="#0b1622"/>
         <path d="M4,4 L4,80 L116,80 L116,4" stroke="rgba(255,255,255,.6)" stroke-width="1.5" fill="none"/>
         <line x1="4" y1="4" x2="116" y2="4" stroke="rgba(255,255,255,.28)" stroke-width="1" stroke-dasharray="4 3"/>
@@ -409,6 +462,44 @@ html, body {
         <line x1="98" y1="80" x2="98" y2="68" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
         <path d="M22,68 A38,38 0 0,1 98,68" stroke="rgba(255,255,255,.4)" stroke-width="1" fill="none"/>
         <path d="M54,80 A6,6 0 0,1 66,80" stroke="rgba(255,255,255,.25)" stroke-width=".8" fill="none"/>
+      </svg>
+
+      <!-- Background SVG: pista completa (oculta por defecto) -->
+      <svg id="court-full" class="court-bg" viewBox="0 0 168 84" xmlns="http://www.w3.org/2000/svg" style="background:#0b1622;display:none">
+        <rect width="168" height="84" fill="#0b1622"/>
+        <!-- Contorno -->
+        <rect x="4" y="4" width="160" height="76" stroke="rgba(255,255,255,.6)" stroke-width="1.5" fill="none"/>
+        <!-- Línea central -->
+        <line x1="84" y1="4" x2="84" y2="80" stroke="rgba(255,255,255,.45)" stroke-width="1"/>
+        <!-- Círculo central -->
+        <circle cx="84" cy="42" r="8" stroke="rgba(255,255,255,.35)" stroke-width="1" fill="none"/>
+        <circle cx="84" cy="42" r="1.5" fill="rgba(255,255,255,.45)"/>
+        <!-- IZQUIERDA: pintura -->
+        <rect x="4" y="24" width="30" height="36" stroke="rgba(255,255,255,.4)" stroke-width="1" fill="rgba(255,255,255,.025)"/>
+        <!-- IZQUIERDA: círculo TL (superior sólido, inferior discontinuo) -->
+        <path d="M25,42 A9,9 0 0,1 43,42" stroke="rgba(255,255,255,.4)" stroke-width="1" fill="none"/>
+        <path d="M43,42 A9,9 0 0,1 25,42" stroke="rgba(255,255,255,.25)" stroke-width="1" fill="none" stroke-dasharray="2.5 2"/>
+        <!-- IZQUIERDA: tablero y canasta -->
+        <line x1="8" y1="38.5" x2="8" y2="45.5" stroke="rgba(255,255,255,.7)" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="13" cy="42" r="2.5" stroke="rgba(255,255,255,.6)" stroke-width="1.2" fill="none"/>
+        <!-- IZQUIERDA: líneas esquina 3pt -->
+        <line x1="4" y1="11" x2="17" y2="11" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+        <line x1="4" y1="73" x2="17" y2="73" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+        <!-- IZQUIERDA: arco 3pt (centro en canasta (13,42), r≈31) -->
+        <path d="M17,11 A31,31 0 0,1 17,73" stroke="rgba(255,255,255,.4)" stroke-width="1" fill="none"/>
+        <!-- DERECHA: pintura -->
+        <rect x="134" y="24" width="30" height="36" stroke="rgba(255,255,255,.4)" stroke-width="1" fill="rgba(255,255,255,.025)"/>
+        <!-- DERECHA: círculo TL -->
+        <path d="M143,42 A9,9 0 0,0 125,42" stroke="rgba(255,255,255,.4)" stroke-width="1" fill="none"/>
+        <path d="M125,42 A9,9 0 0,0 143,42" stroke="rgba(255,255,255,.25)" stroke-width="1" fill="none" stroke-dasharray="2.5 2"/>
+        <!-- DERECHA: tablero y canasta -->
+        <line x1="160" y1="38.5" x2="160" y2="45.5" stroke="rgba(255,255,255,.7)" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="155" cy="42" r="2.5" stroke="rgba(255,255,255,.6)" stroke-width="1.2" fill="none"/>
+        <!-- DERECHA: líneas esquina 3pt -->
+        <line x1="164" y1="11" x2="151" y2="11" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+        <line x1="164" y1="73" x2="151" y2="73" stroke="rgba(255,255,255,.4)" stroke-width="1"/>
+        <!-- DERECHA: arco 3pt -->
+        <path d="M151,11 A31,31 0 0,0 151,73" stroke="rgba(255,255,255,.4)" stroke-width="1" fill="none"/>
       </svg>
 
       <!-- Arrow layer (SVG, CSS pointer-events:none; hit areas use SVG attr pointer-events) -->
@@ -429,6 +520,7 @@ html, body {
   <!-- SELECTED BAR -->
   <div class="sel-bar" id="sel-bar">
     <span class="sel-name" id="sel-name">—</span>
+    <input id="text-edit-input" class="text-edit-input" style="display:none" placeholder="Editar texto…" maxlength="40">
     <button class="btn-ball" id="btn-ball" style="display:none" onclick="toggleBall()">🏀 Dar balón</button>
     <button class="btn-del" onclick="deleteSelected()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
@@ -440,6 +532,11 @@ html, body {
   <div class="slide-strip-wrap">
     <span class="slide-strip-label">Pasos</span>
     <div class="slide-strip" id="slide-strip"></div>
+  </div>
+
+  <!-- DESCRIPCIÓN DEL PASO -->
+  <div class="slide-desc-row">
+    <input id="slide-desc-input" class="slide-desc-input" placeholder="Descripción del paso… ej: Bloqueo directo, jugador 1 inicia con balón" maxlength="200">
   </div>
 
   <!-- PALETTE -->
@@ -464,6 +561,9 @@ html, body {
       <div class="pal-item" data-type="chair"><div class="sh-chair">🪑</div><span class="pal-label">Silla</span></div>
       <div class="pal-item" data-type="bench"><div class="sh-bench"></div><span class="pal-label">Banco</span></div>
       <div class="pal-item" data-type="ball"><div class="sh-ball"></div><span class="pal-label">Pelota</span></div>
+      <div class="pal-sep"></div>
+      <span class="pal-lbl">TEXTO</span>
+      <div class="pal-item" data-type="text" data-num=""><div class="sh-text" style="font-size:11px;padding:1px 5px;">Abc</div><span class="pal-label">Texto</span></div>
     </div>
   </div>
 
@@ -508,21 +608,28 @@ const ANIM_MS  = 1500;
 let playAllActive = false;
 let playAllReject = null; // abort handle
 
+// Court type
+let courtType = 'half'; // 'half' | 'full'
+
 // Court pixel size (updated by ResizeObserver)
 let CW = 1, CH = 1;
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
-const overlay    = document.getElementById('overlay');
-const courtWrap  = document.getElementById('court-wrap');
-const arrowSVG   = document.getElementById('arrow-svg');
-const selBar     = document.getElementById('sel-bar');
-const selNameEl  = document.getElementById('sel-name');
-const hint       = document.getElementById('hint');
-const ghost      = document.getElementById('ghost');
-const startDot   = document.getElementById('start-dot');
-const btnPlay    = document.getElementById('btn-play');
-const btnPlayAll = document.getElementById('btn-play-all');
-const btnReset   = document.getElementById('btn-reset');
+const overlay       = document.getElementById('overlay');
+const courtWrap     = document.getElementById('court-wrap');
+const arrowSVG      = document.getElementById('arrow-svg');
+const selBar        = document.getElementById('sel-bar');
+const selNameEl     = document.getElementById('sel-name');
+const hint          = document.getElementById('hint');
+const ghost         = document.getElementById('ghost');
+const startDot      = document.getElementById('start-dot');
+const btnPlay       = document.getElementById('btn-play');
+const btnPlayAll    = document.getElementById('btn-play-all');
+const btnReset      = document.getElementById('btn-reset');
+const textEditInput = document.getElementById('text-edit-input');
+const slideDescInput= document.getElementById('slide-desc-input');
+const courtHalfSVG  = document.getElementById('court-half');
+const courtFullSVG  = document.getElementById('court-full');
 
 // ── ResizeObserver ────────────────────────────────────────────────────────────
 new ResizeObserver(e => {
@@ -582,7 +689,9 @@ function nearestPlayer(px,py,threshold) {
 // ══════════════════════════════════════════════════════════════════════════════
 // ITEM HTML
 // ══════════════════════════════════════════════════════════════════════════════
-function shapeHTML(type, num, hasBall) {
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function shapeHTML(type, num, hasBall, text) {
   const bd = hasBall ? '<div class="ball-dot"></div>' : '';
   if(type==='off')   return `<div class="sh-player" style="background:#2980b9;color:#fff;">${num}${bd}</div>`;
   if(type==='def')   return `<div class="sh-player" style="background:#c0392b;color:#fff;">D${num}${bd}</div>`;
@@ -590,6 +699,7 @@ function shapeHTML(type, num, hasBall) {
   if(type==='chair') return `<div class="sh-chair">🪑</div>`;
   if(type==='bench') return `<div class="sh-bench"></div>`;
   if(type==='ball')  return `<div class="sh-ball"></div>`;
+  if(type==='text')  return `<div class="sh-text">${escHtml(text||'Texto')}</div>`;
   return '';
 }
 function itemLabel(type,num) {
@@ -599,6 +709,7 @@ function itemLabel(type,num) {
   if(type==='chair') return 'Silla';
   if(type==='bench') return 'Banco';
   if(type==='ball')  return 'Pelota';
+  if(type==='text')  return 'Texto';
   return 'Elemento';
 }
 
@@ -627,11 +738,17 @@ function renderItems() {
       overlay.appendChild(el);
     }
     // Always update innerHTML (ball-dot may have changed)
-    el.innerHTML = shapeHTML(item.type, item.num, hasBall);
+    el.innerHTML = shapeHTML(item.type, item.num, hasBall, item.text);
     el.style.left = item.x + '%';
     el.style.top  = item.y + '%';
     el.classList.toggle('selected', item.id===selId);
     el.classList.toggle('animating', animating);
+  });
+
+  // Marcar jugadores ya colocados en la paleta
+  document.querySelectorAll('.pal-item[data-type="off"],.pal-item[data-type="def"]').forEach(pi => {
+    const used = items.some(i=>i.type===pi.dataset.type && String(i.num)===String(pi.dataset.num));
+    pi.classList.toggle('pal-used', used);
   });
 
   // sel bar
@@ -642,18 +759,28 @@ function renderItems() {
       selBar.classList.add('show');
       selNameEl.textContent = itemLabel(it.type, it.num);
       const isPlayer = it.type==='off' || it.type==='def';
+      const isText   = it.type==='text';
       if(isPlayer) {
         btnBall.style.display = '';
+        textEditInput.style.display = 'none';
         const hasBall = it.id === ballPossessorId;
         btnBall.textContent = hasBall ? '🏀 Tiene balón' : '🏀 Dar balón';
         btnBall.classList.toggle('has-ball', hasBall);
+      } else if(isText) {
+        btnBall.style.display = 'none';
+        textEditInput.style.display = '';
+        // solo actualizar si no está focused (no interrumpir al escribir)
+        if(document.activeElement !== textEditInput)
+          textEditInput.value = it.text || 'Texto';
       } else {
         btnBall.style.display = 'none';
+        textEditInput.style.display = 'none';
       }
     }
   } else if(selAid===null) {
     selBar.classList.remove('show');
     btnBall.style.display = 'none';
+    textEditInput.style.display = 'none';
   }
 }
 
@@ -769,11 +896,11 @@ window.setMode = function(m) {
   });
 
   // Tool button visuals
-  ['sel','move','pass','scr'].forEach(id => {
+  ['sel','move','pass','scr','text'].forEach(id => {
     const el = document.getElementById('tl-'+id);
     if(el) el.classList.remove('active');
   });
-  const activeId = {select:'sel','arrow-move':'move','arrow-pass':'pass','arrow-screen':'scr'}[m];
+  const activeId = {select:'sel','arrow-move':'move','arrow-pass':'pass','arrow-screen':'scr','place-text':'text'}[m];
   if(activeId) document.getElementById('tl-'+activeId)?.classList.add('active');
 
   // In arrow mode, attach pointerdown to arrow SVG for drawing
@@ -794,9 +921,16 @@ window.setMode = function(m) {
 document.querySelectorAll('.pal-item').forEach(pi => {
   pi.addEventListener('pointerdown', e => {
     e.preventDefault();
-    pi.setPointerCapture(e.pointerId);
     const type = pi.dataset.type, num = pi.dataset.num||null;
-    ghost.innerHTML = shapeHTML(type,num);
+
+    // Jugadores únicos: bloquear si ya está en el campo
+    if((type==='off'||type==='def') && items.some(i=>i.type===type && String(i.num)===String(num))) {
+      showToast(`${type==='def'?'Defensor D':'Jugador '}${num} ya está en la pista`);
+      return;
+    }
+
+    pi.setPointerCapture(e.pointerId);
+    ghost.innerHTML = shapeHTML(type, num, false, 'Texto');
     ghost.style.display = 'block';
     ghost.style.left = e.clientX+'px';
     ghost.style.top  = e.clientY+'px';
@@ -882,7 +1016,10 @@ document.addEventListener('pointerup', e => {
       snapHistory();
       const p = pctOf(e.clientX,e.clientY);
       const item = {id:nextId(), type:drag.type, num:drag.num, x:p.x, y:p.y};
+      if(drag.type==='text') item.text = 'Texto';
       items.push(item); selId=item.id; selAid=null;
+      // Si es texto, enfocar el input automáticamente tras render
+      if(drag.type==='text') setTimeout(()=>{ textEditInput.focus(); textEditInput.select(); }, 60);
     }
     drag=null; renderAll(); return;
   }
@@ -928,6 +1065,33 @@ courtWrap.addEventListener('pointerdown', e => {
 
 function deselect() { selId=null; selAid=null; renderAll(); }
 
+// Edición en vivo del texto seleccionado
+textEditInput.addEventListener('input', () => {
+  if(selId===null) return;
+  const it = items.find(i=>i.id===selId);
+  if(!it || it.type!=='text') return;
+  it.text = textEditInput.value || 'Texto';
+  // Actualizar solo el innerHTML del elemento sin re-renderizar todo
+  const el = overlay.querySelector('[data-id="'+selId+'"]');
+  if(el) el.innerHTML = shapeHTML('text', null, false, it.text);
+});
+textEditInput.addEventListener('keydown', e => {
+  if(e.key==='Enter' || e.key==='Escape') { e.preventDefault(); deselect(); setMode('select'); }
+});
+
+// Toggle pista completa / media pista
+window.toggleCourt = function() {
+  courtType = courtType==='half' ? 'full' : 'half';
+  const isFull = courtType==='full';
+  courtHalfSVG.style.display = isFull ? 'none' : '';
+  courtFullSVG.style.display = isFull ? '' : 'none';
+  courtWrap.classList.toggle('full-court', isFull);
+  document.getElementById('tl-court').innerHTML =
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="1"/><line x1="12" y1="5" x2="12" y2="19"/></svg>
+    ${isFull ? '½ Pista' : 'Pista completa'}`;
+  renderSlideStrip(); // refrescar miniaturas con nuevo tipo de pista
+};
+
 // ══════════════════════════════════════════════════════════════════════════════
 // SLIDES
 // ══════════════════════════════════════════════════════════════════════════════
@@ -937,7 +1101,8 @@ function saveCurrentSlide() {
     id: slides[currentSlideIdx].id,
     items: JSON.parse(JSON.stringify(items)),
     arrows: JSON.parse(JSON.stringify(arrows)),
-    ballPossessorId
+    ballPossessorId,
+    description: slideDescInput.value || ''
   };
 }
 
@@ -949,6 +1114,7 @@ function loadSlide(idx, skipSave) {
   items           = JSON.parse(JSON.stringify(s.items));
   arrows          = JSON.parse(JSON.stringify(s.arrows));
   ballPossessorId = s.ballPossessorId;
+  slideDescInput.value = s.description || '';
   selId = null; selAid = null;
   renderAll();
   renderSlideStrip();
@@ -958,13 +1124,15 @@ window.addSlide = function() {
   saveCurrentSlide();
   const newSlide = {
     id: ++slideUid,
-    items: JSON.parse(JSON.stringify(items)),  // copia posiciones actuales
+    items: JSON.parse(JSON.stringify(items)),
     arrows: [],
-    ballPossessorId
+    ballPossessorId,
+    description: ''
   };
   slides.push(newSlide);
   currentSlideIdx = slides.length - 1;
   arrows = []; selId = null; selAid = null;
+  slideDescInput.value = '';
   renderAll();
   renderSlideStrip();
   showToast('Paso ' + slides.length + ' añadido');
@@ -978,28 +1146,50 @@ window.deleteSlide = function(idx) {
   items = JSON.parse(JSON.stringify(s.items));
   arrows = JSON.parse(JSON.stringify(s.arrows));
   ballPossessorId = s.ballPossessorId;
+  slideDescInput.value = s.description || '';
   selId = null; selAid = null;
   renderAll();
   renderSlideStrip();
 };
 
-function buildThumbSVG(s) {
+function buildThumbSVG(s, ct) {
+  const isFull = ct === 'full';
+  const vbW    = isFull ? 168 : 120;
+  const sx     = vbW / 100;   // scale x: % → SVG coords
+  const sy     = 0.84;        // scale y: % → SVG coords (84/100)
+
+  // Líneas de pista
+  const courtLines = isFull
+    ? `<rect x="4" y="4" width="160" height="76" stroke="rgba(255,255,255,.25)" stroke-width=".8" fill="none"/>
+       <line x1="84" y1="4" x2="84" y2="80" stroke="rgba(255,255,255,.2)" stroke-width=".5"/>
+       <circle cx="84" cy="42" r="8" stroke="rgba(255,255,255,.18)" stroke-width=".5" fill="none"/>
+       <rect x="4" y="24" width="30" height="36" stroke="rgba(255,255,255,.2)" stroke-width=".5" fill="none"/>
+       <rect x="134" y="24" width="30" height="36" stroke="rgba(255,255,255,.2)" stroke-width=".5" fill="none"/>
+       <path d="M17,11 A31,31 0 0,1 17,73" stroke="rgba(255,255,255,.2)" stroke-width=".5" fill="none"/>
+       <path d="M151,11 A31,31 0 0,0 151,73" stroke="rgba(255,255,255,.2)" stroke-width=".5" fill="none"/>`
+    : `<path d="M4,4 L4,80 L116,80 L116,4" stroke="rgba(255,255,255,.3)" stroke-width="1" fill="none"/>
+       <line x1="50" y1="77" x2="70" y2="77" stroke="rgba(255,255,255,.45)" stroke-width="1.2" stroke-linecap="round"/>
+       <circle cx="60" cy="73" r="3.5" stroke="rgba(255,255,255,.35)" stroke-width=".8" fill="none"/>
+       <rect x="42" y="48" width="36" height="32" stroke="rgba(255,255,255,.25)" stroke-width=".8" fill="none"/>
+       <path d="M22,68 A38,38 0 0,1 98,68" stroke="rgba(255,255,255,.25)" stroke-width=".8" fill="none"/>`;
+
   // Flechas
   let arrowLines = '';
   (s.arrows||[]).forEach(a => {
     const stroke = a.type==='pass' ? '#5dccf5' : a.type==='screen' ? '#ffd54f' : 'rgba(255,255,255,.7)';
     const dash   = a.type==='pass' ? ' stroke-dasharray="2 1.5"' : '';
-    arrowLines += `<path d="M${a.x1*1.2},${a.y1*.84} Q${a.cx*1.2},${a.cy*.84} ${a.x2*1.2},${a.y2*.84}" stroke="${stroke}" stroke-width=".8" fill="none"${dash}/>`;
+    arrowLines += `<path d="M${a.x1*sx},${a.y1*sy} Q${a.cx*sx},${a.cy*sy} ${a.x2*sx},${a.y2*sy}" stroke="${stroke}" stroke-width=".8" fill="none"${dash}/>`;
     if(a.type==='screen') {
       const dx=a.x2-a.x1, dy=a.y2-a.y1, len=Math.hypot(dx,dy)||1;
       const nx=-dy/len*4, ny=dx/len*4;
-      arrowLines += `<line x1="${(a.x2+nx)*1.2}" y1="${(a.y2+ny)*.84}" x2="${(a.x2-nx)*1.2}" y2="${(a.y2-ny)*.84}" stroke="#ffd54f" stroke-width="1.5" stroke-linecap="round"/>`;
+      arrowLines += `<line x1="${(a.x2+nx)*sx}" y1="${(a.y2+ny)*sy}" x2="${(a.x2-nx)*sx}" y2="${(a.y2-ny)*sy}" stroke="#ffd54f" stroke-width="1.5" stroke-linecap="round"/>`;
     }
   });
-  // Jugadores / objetos
+
+  // Jugadores / objetos / texto
   let dots = '';
   (s.items||[]).forEach(item => {
-    const cx = item.x*1.2, cy = item.y*.84;
+    const cx = item.x*sx, cy = item.y*sy;
     if(item.type==='off') {
       dots += `<circle cx="${cx}" cy="${cy}" r="4" fill="#2980b9" stroke="rgba(255,255,255,.3)" stroke-width=".5"/>
                <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="3.8" fill="white" font-family="sans-serif" font-weight="bold">${item.num}</text>`;
@@ -1010,19 +1200,18 @@ function buildThumbSVG(s) {
       dots += `<polygon points="${cx},${cy-3.5} ${cx-3},${cy+2.5} ${cx+3},${cy+2.5}" fill="#e67e22"/>`;
     } else if(item.type==='ball') {
       dots += `<circle cx="${cx}" cy="${cy}" r="3" fill="#e67e22"/>`;
+    } else if(item.type==='text') {
+      const t = escHtml((item.text||'').substring(0,8));
+      dots += `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="3.5" fill="rgba(255,255,255,.75)" font-family="sans-serif" font-weight="bold">${t}</text>`;
     }
     if(item.id === s.ballPossessorId) {
       dots += `<circle cx="${cx+3.5}" cy="${cy+3.5}" r="2.2" fill="#e67e22" stroke="rgba(0,0,0,.4)" stroke-width=".5"/>`;
     }
   });
 
-  return `<svg viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-    <rect width="120" height="84" fill="#0b1622"/>
-    <path d="M4,4 L4,80 L116,80 L116,4" stroke="rgba(255,255,255,.3)" stroke-width="1" fill="none"/>
-    <line x1="50" y1="77" x2="70" y2="77" stroke="rgba(255,255,255,.45)" stroke-width="1.2" stroke-linecap="round"/>
-    <circle cx="60" cy="73" r="3.5" stroke="rgba(255,255,255,.35)" stroke-width=".8" fill="none"/>
-    <rect x="42" y="48" width="36" height="32" stroke="rgba(255,255,255,.25)" stroke-width=".8" fill="none"/>
-    <path d="M22,68 A38,38 0 0,1 98,68" stroke="rgba(255,255,255,.25)" stroke-width=".8" fill="none"/>
+  return `<svg viewBox="0 0 ${vbW} 84" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <rect width="${vbW}" height="84" fill="#0b1622"/>
+    ${courtLines}
     ${arrowLines}${dots}
   </svg>`;
 }
@@ -1034,8 +1223,9 @@ function renderSlideStrip() {
   slides.forEach((s, i) => {
     const thumb = document.createElement('div');
     thumb.className = 'slide-thumb' + (i===currentSlideIdx ? ' active' : '');
+    if(s.description) thumb.title = s.description;
     thumb.innerHTML =
-      buildThumbSVG(s) +
+      buildThumbSVG(s, courtType) +
       `<div class="slide-num">${i+1}</div>` +
       (slides.length > 1 ? `<button class="slide-del" onclick="event.stopPropagation();deleteSlide(${i})">×</button>` : '');
     thumb.addEventListener('click', () => loadSlide(i));
@@ -1272,7 +1462,8 @@ function showToast(msg) {
 
 // ── Keyboard ──────────────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if((e.key==='Delete'||e.key==='Backspace') && document.activeElement===document.body) deleteSelected();
+  const inInput = ['INPUT','TEXTAREA'].includes(document.activeElement?.tagName);
+  if((e.key==='Delete'||e.key==='Backspace') && !inInput) deleteSelected();
   if((e.ctrlKey||e.metaKey)&&e.key==='z') { e.preventDefault(); undoLast(); }
   if(e.key==='Escape') { deselect(); setMode('select'); }
   if(e.key==='1') setMode('select');
@@ -1281,9 +1472,13 @@ document.addEventListener('keydown', e => {
   if(e.key==='4') setMode('arrow-screen');
 });
 
+// Guardar descripción en tiempo real
+slideDescInput.addEventListener('input', () => {
+  if(slides[currentSlideIdx]) slides[currentSlideIdx].description = slideDescInput.value;
+});
+
 // ── Init ──────────────────────────────────────────────────────────────────────
-// Crear el primer paso vacío
-slides = [{ id: ++slideUid, items: [], arrows: [], ballPossessorId: null }];
+slides = [{ id: ++slideUid, items: [], arrows: [], ballPossessorId: null, description: '' }];
 setMode('select');
 renderAll();
 renderSlideStrip();
