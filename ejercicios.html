@@ -325,7 +325,7 @@ function renderEj() {
   content.innerHTML = `<div class="ej-grid">
     ${lista.map(e => `
       <div class="ej-card" onclick="verEjercicio(${e.id})">
-        <div class="ej-canvas">
+        <div class="ej-canvas" ${(e.pista||'media')==='completa' ? 'style="aspect-ratio:2/1"' : ''}>
           ${courtSVG(e.pista || 'media')}
           <span class="ej-canvas-badge">${(e.pista||'media')==='completa' ? 'PISTA COMPLETA' : '½ PISTA'}</span>
         </div>
