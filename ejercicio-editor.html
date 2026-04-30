@@ -873,9 +873,9 @@ window.toggleBall = function() {
 window.playAnim = function() {
   if(animating) return;
 
-  // ── Cortes: el jugador (y el balón si lo tiene) se mueven ──
+  // ── Cortes y bloqueos: el jugador se mueve hasta la posición ──
   const moveAssignments = [];
-  arrows.filter(a=>a.type==='move').forEach(a => {
+  arrows.filter(a=>a.type==='move' || a.type==='screen').forEach(a => {
     const p = nearestPlayer(a.x1, a.y1, 9);
     if(!p) return;
     moveAssignments.push({ id:p.id, x1:a.x1, y1:a.y1, x2:a.x2, y2:a.y2, cx:a.cx, cy:a.cy });
