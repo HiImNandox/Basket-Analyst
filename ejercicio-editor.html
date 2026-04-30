@@ -1122,16 +1122,46 @@ function loadSlide(idx, skipSave) {
 
 window.addSlide = function() {
   saveCurrentSlide();
+
+  // ── Calcular estado FINAL del paso actual ──────────────────────────────────
+  // 1. Aplicar flechas de corte / bloqueo → posiciones finales de jugadores
+  const endItems = JSON.parse(JSON.stringify(items));
+  arrows.filter(a => a.type==='move' || a.type==='screen').forEach(a => {
+    const p = endItems.find(i =>
+      (i.type==='off'||i.type==='def') && Math.hypot(i.x-a.x1, i.y-a.y1) < 9
+    );
+    if(p) { p.x = a.x2; p.y = a.y2; }
+  });
+
+  // 2. Aplicar flechas de pase → quién recibe el balón
+  let endBall = ballPossessorId;
+  arrows.filter(a => a.type==='pass').forEach(a => {
+    if(endBall === null) return;
+    const poss = items.find(i => i.id === endBall); // posición original
+    if(!poss || Math.hypot(poss.x-a.x1, poss.y-a.y1) > 12) return;
+    // Jugador más cercano al destino del pase (usando posiciones finales)
+    const recv = endItems
+      .filter(i => i.type==='off'||i.type==='def')
+      .sort((a2,b2) => Math.hypot(a2.x-a.x2,a2.y-a.y2) - Math.hypot(b2.x-a.x2,b2.y-a.y2))[0];
+    if(recv && Math.hypot(recv.x-a.x2, recv.y-a.y2) < 12) endBall = recv.id;
+  });
+  // ──────────────────────────────────────────────────────────────────────────
+
   const newSlide = {
     id: ++slideUid,
-    items: JSON.parse(JSON.stringify(items)),
+    items: endItems,          // jugadores en posición final del paso anterior
     arrows: [],
-    ballPossessorId,
+    ballPossessorId: endBall, // posesión tras el pase
     description: ''
   };
   slides.push(newSlide);
   currentSlideIdx = slides.length - 1;
-  arrows = []; selId = null; selAid = null;
+
+  // Actualizar estado vivo al estado final
+  items           = JSON.parse(JSON.stringify(endItems));
+  arrows          = [];
+  ballPossessorId = endBall;
+  selId = null; selAid = null;
   slideDescInput.value = '';
   renderAll();
   renderSlideStrip();
