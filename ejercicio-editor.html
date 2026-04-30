@@ -138,6 +138,16 @@ html, body {
   font-family: var(--bebas); font-size: 13px; letter-spacing: .5px;
   border: 2px solid rgba(255,255,255,.22);
   box-shadow: 0 2px 6px rgba(0,0,0,.6);
+  position: relative;
+}
+/* Balón pegado al jugador */
+.ball-dot {
+  position: absolute; bottom: -5px; right: -5px;
+  width: 13px; height: 13px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f0a040, #b84800);
+  border: 2px solid var(--bg);
+  box-shadow: 0 1px 4px rgba(0,0,0,.7);
+  pointer-events: none;
 }
 .sh-cone {
   width: 0; height: 0;
@@ -192,11 +202,24 @@ html, body {
 
 /* ── SEL BAR ── */
 .sel-bar {
-  display: none; align-items: center; gap: 10px;
+  display: none; align-items: center; gap: 8px;
   padding: 7px 14px; background: var(--panel2);
   border-top: 1px solid var(--border); flex-shrink: 0;
 }
 .sel-bar.show { display: flex; }
+/* Botón "Dar balón" */
+.btn-ball {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 11px;
+  background: rgba(230,126,34,.12); border: 1px solid rgba(230,126,34,.35);
+  border-radius: 5px; color: #e67e22; font-size: 11px; font-weight: 700;
+  font-family: var(--barlow); cursor: pointer; letter-spacing: .5px;
+  transition: background .12s; white-space: nowrap;
+}
+.btn-ball:hover { background: rgba(230,126,34,.22); }
+.btn-ball.has-ball {
+  background: rgba(230,126,34,.22); border-color: rgba(230,126,34,.6); color: #f39c12;
+}
 .sel-name { font-size: 12px; font-weight: 600; color: var(--text2); flex: 1; }
 .btn-del {
   display: flex; align-items: center; gap: 5px;
@@ -350,6 +373,7 @@ html, body {
   <!-- SELECTED BAR -->
   <div class="sel-bar" id="sel-bar">
     <span class="sel-name" id="sel-name">—</span>
+    <button class="btn-ball" id="btn-ball" style="display:none" onclick="toggleBall()">🏀 Dar balón</button>
     <button class="btn-del" onclick="deleteSelected()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
       Eliminar
@@ -396,17 +420,22 @@ let mode     = 'select';
 let selId    = null; // selected item id
 let selAid   = null; // selected arrow id
 let uid      = 0;
-let history  = [];   // undo stack  { items, arrows }
+let history  = [];   // undo stack  { items, arrows, ballPossessorId }
+
+// Posesión del balón
+let ballPossessorId     = null; // id del jugador que tiene el balón
+let animBallPossessorId = null; // guarda posesión para reset
 
 // Drag state
 let drag      = null; // palette or item drag
 let arrowDraw = null; // arrow drawing state { x1,y1, snapId }
 
 // Animation
-let animating = false;
-let animBase  = null; // snapshot of item positions before anim
-let animRAF   = null;
-const ANIM_MS = 1500;
+let animating  = false;
+let animBase   = null; // snapshot of item positions before anim
+let animRAF    = null;
+let animPassBalls = []; // temp ball elements during pass animation
+const ANIM_MS  = 1500;
 
 // Court pixel size (updated by ResizeObserver)
 let CW = 1, CH = 1;
@@ -448,7 +477,7 @@ function toSVGX(pct) { return pct/100*CW; }
 function toSVGY(pct) { return pct/100*CH; }
 
 function snapHistory() {
-  history.push({ items: JSON.parse(JSON.stringify(items)), arrows: JSON.parse(JSON.stringify(arrows)) });
+  history.push({ items: JSON.parse(JSON.stringify(items)), arrows: JSON.parse(JSON.stringify(arrows)), ballPossessorId });
   if (history.length > 50) history.shift();
 }
 
@@ -481,9 +510,10 @@ function nearestPlayer(px,py,threshold) {
 // ══════════════════════════════════════════════════════════════════════════════
 // ITEM HTML
 // ══════════════════════════════════════════════════════════════════════════════
-function shapeHTML(type,num) {
-  if(type==='off')   return `<div class="sh-player" style="background:#2980b9;color:#fff;">${num}</div>`;
-  if(type==='def')   return `<div class="sh-player" style="background:#c0392b;color:#fff;">D${num}</div>`;
+function shapeHTML(type, num, hasBall) {
+  const bd = hasBall ? '<div class="ball-dot"></div>' : '';
+  if(type==='off')   return `<div class="sh-player" style="background:#2980b9;color:#fff;">${num}${bd}</div>`;
+  if(type==='def')   return `<div class="sh-player" style="background:#c0392b;color:#fff;">D${num}${bd}</div>`;
   if(type==='cone')  return `<div class="sh-cone"></div>`;
   if(type==='chair') return `<div class="sh-chair">🪑</div>`;
   if(type==='bench') return `<div class="sh-bench"></div>`;
@@ -514,15 +544,17 @@ function renderItems() {
 
   // Add / update
   items.forEach(item => {
+    const hasBall = item.id === ballPossessorId;
     let el = existing.get(item.id);
     if(!el) {
       el = document.createElement('div');
       el.className = 'ci';
       el.dataset.id = item.id;
-      el.innerHTML = shapeHTML(item.type, item.num);
       if(mode==='select') el.addEventListener('pointerdown', onCIDown, {passive:false});
       overlay.appendChild(el);
     }
+    // Always update innerHTML (ball-dot may have changed)
+    el.innerHTML = shapeHTML(item.type, item.num, hasBall);
     el.style.left = item.x + '%';
     el.style.top  = item.y + '%';
     el.classList.toggle('selected', item.id===selId);
@@ -530,11 +562,25 @@ function renderItems() {
   });
 
   // sel bar
+  const btnBall = document.getElementById('btn-ball');
   if(selId!==null) {
     const it = items.find(i=>i.id===selId);
-    if(it) { selBar.classList.add('show'); selNameEl.textContent=itemLabel(it.type,it.num); }
+    if(it) {
+      selBar.classList.add('show');
+      selNameEl.textContent = itemLabel(it.type, it.num);
+      const isPlayer = it.type==='off' || it.type==='def';
+      if(isPlayer) {
+        btnBall.style.display = '';
+        const hasBall = it.id === ballPossessorId;
+        btnBall.textContent = hasBall ? '🏀 Tiene balón' : '🏀 Dar balón';
+        btnBall.classList.toggle('has-ball', hasBall);
+      } else {
+        btnBall.style.display = 'none';
+      }
+    }
   } else if(selAid===null) {
     selBar.classList.remove('show');
+    btnBall.style.display = 'none';
   }
 }
 
@@ -810,61 +856,121 @@ courtWrap.addEventListener('pointerdown', e => {
 function deselect() { selId=null; selAid=null; renderAll(); }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// BALL POSSESSION
+// ══════════════════════════════════════════════════════════════════════════════
+window.toggleBall = function() {
+  if(selId===null) return;
+  const item = items.find(i=>i.id===selId);
+  if(!item || (item.type!=='off' && item.type!=='def')) return;
+  ballPossessorId = (ballPossessorId===selId) ? null : selId;
+  renderAll();
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
 // ANIMATION
 // ══════════════════════════════════════════════════════════════════════════════
 window.playAnim = function() {
   if(animating) return;
 
-  // Build assignments: arrow → nearest player within 9%
-  const assignments = arrows
-    .filter(a=>a.type!=='screen')
-    .map(a => {
-      const p = nearestPlayer(a.x1, a.y1, 9);
-      return p ? { id:p.id, x2:a.x2, y2:a.y2, x1:a.x1, y1:a.y1, cx:a.cx, cy:a.cy } : null;
-    })
-    .filter(Boolean);
+  // ── Cortes: el jugador (y el balón si lo tiene) se mueven ──
+  const moveAssignments = [];
+  arrows.filter(a=>a.type==='move').forEach(a => {
+    const p = nearestPlayer(a.x1, a.y1, 9);
+    if(!p) return;
+    moveAssignments.push({ id:p.id, x1:a.x1, y1:a.y1, x2:a.x2, y2:a.y2, cx:a.cx, cy:a.cy });
+  });
 
-  if(!assignments.length) { showToast('Coloca jugadores cerca del inicio de las flechas'); return; }
+  // ── Pases: el balón viaja, el jugador se queda quieto ──
+  const passAnimData = [];
+  arrows.filter(a=>a.type==='pass').forEach(a => {
+    if(ballPossessorId===null) return;
+    const possessor = items.find(i=>i.id===ballPossessorId);
+    if(!possessor) return;
+    if(Math.hypot(possessor.x-a.x1, possessor.y-a.y1) > 12) return;
 
-  animBase = items.map(i=>({id:i.id,x:i.x,y:i.y}));
-  animating = true;
-  btnPlay.disabled = true;
+    // Crear elemento de balón temporal
+    const ballEl = document.createElement('div');
+    ballEl.className = 'ci animating';
+    ballEl.style.cssText = `left:${possessor.x}%;top:${possessor.y}%;z-index:25;pointer-events:none;`;
+    ballEl.innerHTML = '<div class="sh-ball"></div>';
+    overlay.appendChild(ballEl);
+    passAnimData.push({ el:ballEl, x1:possessor.x, y1:possessor.y, x2:a.x2, y2:a.y2, cx:a.cx, cy:a.cy });
+  });
+
+  if(!moveAssignments.length && !passAnimData.length) {
+    showToast('Coloca jugadores cerca del inicio de las flechas');
+    return;
+  }
+
+  // Guardar estado para reset
+  animBase             = items.map(i=>({id:i.id, x:i.x, y:i.y}));
+  animBallPossessorId  = ballPossessorId;
+  animPassBalls        = passAnimData;
+  animating            = true;
+  btnPlay.disabled     = true;
   btnReset.style.display = '';
+
+  // Quitar balón del poseedor durante el pase (visualmente)
+  if(passAnimData.length) { ballPossessorId = null; renderItems(); }
+
   deselect();
 
   const t0 = performance.now();
   function tick(now) {
-    const raw = (now - t0) / ANIM_MS;
-    const t   = Math.min(raw, 1);
-    // Ease in-out cubic
-    const ease = t<0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+    const raw  = (now - t0) / ANIM_MS;
+    const t    = Math.min(raw, 1);
+    const ease = t<0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
 
-    assignments.forEach(({ id, x1,y1,cx,cy,x2,y2 }) => {
+    // Animar jugadores en cortes
+    moveAssignments.forEach(({ id, x1,y1,cx,cy,x2,y2 }) => {
       const base = animBase.find(b=>b.id===id);
       const item = items.find(i=>i.id===id);
       if(!base||!item) return;
-      // Animate along bezier path (players follow the curve)
       const pos = bezier(x1,y1,cx,cy,x2,y2,ease);
       item.x = pos.x; item.y = pos.y;
     });
 
+    // Animar balón en pases
+    animPassBalls.forEach(pa => {
+      const pos = bezier(pa.x1, pa.y1, pa.cx, pa.cy, pa.x2, pa.y2, ease);
+      pa.el.style.left = pos.x + '%';
+      pa.el.style.top  = pos.y + '%';
+    });
+
     renderItems();
-    if(t<1) { animRAF=requestAnimationFrame(tick); }
-    else    { animating=false; btnPlay.disabled=false; }
+
+    if(t<1) {
+      animRAF = requestAnimationFrame(tick);
+    } else {
+      // Finalizar: eliminar balones temporales y transferir posesión
+      animPassBalls.forEach(pa => {
+        pa.el.remove();
+        // Buscar jugador más cercano al destino del pase
+        const recv = items
+          .filter(i=>i.type==='off'||i.type==='def')
+          .sort((a,b)=>Math.hypot(a.x-pa.x2,a.y-pa.y2)-Math.hypot(b.x-pa.x2,b.y-pa.y2))[0];
+        ballPossessorId = (recv && Math.hypot(recv.x-pa.x2,recv.y-pa.y2)<12) ? recv.id : null;
+      });
+      animPassBalls = [];
+      animating     = false;
+      btnPlay.disabled = false;
+      renderItems();
+    }
   }
   animRAF = requestAnimationFrame(tick);
 };
 
 window.resetAnim = function() {
   if(animRAF) { cancelAnimationFrame(animRAF); animRAF=null; }
-  animating=false; btnPlay.disabled=false; btnReset.style.display='none';
+  // Limpiar balones temporales de pase
+  animPassBalls.forEach(pa => pa.el.remove());
+  animPassBalls = [];
+  animating = false; btnPlay.disabled = false; btnReset.style.display = 'none';
   if(animBase) {
-    animBase.forEach(b=>{
-      const item=items.find(i=>i.id===b.id);
-      if(item){item.x=b.x;item.y=b.y;}
-    });
-    animBase=null;
+    animBase.forEach(b=>{ const item=items.find(i=>i.id===b.id); if(item){item.x=b.x;item.y=b.y;} });
+    animBase = null;
   }
+  ballPossessorId = animBallPossessorId;
   renderAll();
 };
 
@@ -879,7 +985,7 @@ window.deleteSelected = function() {
 
 window.undoLast = function() {
   if(!history.length) return;
-  const s=history.pop(); items=s.items; arrows=s.arrows;
+  const s=history.pop(); items=s.items; arrows=s.arrows; ballPossessorId=s.ballPossessorId;
   selId=null; selAid=null; renderAll(); showToast('Deshecho');
 };
 
@@ -892,7 +998,7 @@ window.clearAll = function() {
 window.saveExercise = function() {
   try {
     const stored=JSON.parse(localStorage.getItem('hoopstats_ejercicios')||'[]');
-    stored.push({ id:Date.now(), nombre:'Ejercicio', tipo:'tactico', duracion:'—', jugadores:'—', desc:'', courtItems:items, courtArrows:arrows });
+    stored.push({ id:Date.now(), nombre:'Ejercicio', tipo:'tactico', duracion:'—', jugadores:'—', desc:'', courtItems:items, courtArrows:arrows, ballPossessorId });
     localStorage.setItem('hoopstats_ejercicios', JSON.stringify(stored));
     showToast('Guardado ✓');
     setTimeout(()=>{ window.location.href='ejercicios.html'; }, 900);
