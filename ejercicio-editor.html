@@ -537,7 +537,8 @@ function renderItems() {
   hint.style.display = (items.length===0&&arrows.length===0) ? 'flex' : 'none';
 
   const existing = new Map();
-  overlay.querySelectorAll('.ci').forEach(el => existing.set(Number(el.dataset.id), el));
+  // Solo elementos con data-id — excluye el balón temporal de pase
+  overlay.querySelectorAll('.ci[data-id]').forEach(el => existing.set(Number(el.dataset.id), el));
 
   // Remove stale
   existing.forEach((el,id) => { if(!items.find(i=>i.id===id)) el.remove(); });
