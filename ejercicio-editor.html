@@ -232,6 +232,58 @@ html, body {
 .btn-del:hover { background: rgba(231,76,60,.22); }
 .btn-del svg { width: 12px; height: 12px; }
 
+/* ── SLIDE STRIP ── */
+.slide-strip-wrap {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border-top: 1px solid var(--border);
+  background: var(--bg); flex-shrink: 0;
+}
+.slide-strip-label {
+  font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap; flex-shrink: 0;
+  writing-mode: horizontal-tb;
+}
+.slide-strip {
+  display: flex; gap: 6px; align-items: center;
+  overflow-x: auto; scrollbar-width: none; flex: 1;
+}
+.slide-strip::-webkit-scrollbar { display: none; }
+
+.slide-thumb {
+  width: 72px; height: 50px; border-radius: 6px;
+  border: 2px solid var(--border); cursor: pointer;
+  position: relative; flex-shrink: 0; overflow: hidden;
+  transition: border-color .15s;
+}
+.slide-thumb:hover { border-color: var(--border2); }
+.slide-thumb.active { border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
+.slide-thumb svg { display: block; width: 100%; height: 100%; }
+.slide-num {
+  position: absolute; bottom: 2px; left: 4px;
+  font-size: 9px; font-weight: 700; color: rgba(255,255,255,.55);
+  font-family: var(--bebas); letter-spacing: 1px; pointer-events: none; line-height: 1;
+}
+.slide-del {
+  position: absolute; top: 2px; right: 2px;
+  width: 15px; height: 15px; border-radius: 50%;
+  background: rgba(0,0,0,.55); border: none; color: rgba(255,255,255,.55);
+  font-size: 11px; line-height: 1; text-align: center;
+  cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;
+  transition: background .1s; z-index: 5;
+}
+.slide-del:hover { background: rgba(231,76,60,.8); color: white; }
+
+.slide-add {
+  width: 50px; height: 50px; border-radius: 6px;
+  border: 2px dashed var(--border); background: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; color: var(--muted); flex-shrink: 0;
+  transition: border-color .15s, color .15s; font-family: var(--barlow);
+}
+.slide-add:hover { border-color: rgba(204,20,20,.5); color: var(--red); }
+.slide-add .sa-plus { font-size: 20px; line-height: 1; font-weight: 300; }
+.slide-add .sa-label { font-size: 7px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; line-height: 1; }
+
 /* ── PALETTE ── */
 .palette {
   background: var(--panel); border-top: 1px solid var(--border);
@@ -327,7 +379,11 @@ html, body {
     <!-- Animation -->
     <button class="tl anim" id="btn-play" onclick="playAnim()">
       <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-      Animar
+      Paso
+    </button>
+    <button class="tl anim" id="btn-play-all" onclick="playAll()" style="gap:3px;">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11"><polygon points="5 3 19 12 5 21 5 3"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Todo
     </button>
     <button class="tl reset-btn" id="btn-reset" style="display:none" onclick="resetAnim()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"/><path d="M3 8C5 4 9 2 14 2a10 10 0 0 1 0 20c-4 0-8-2-10-5"/></svg>
@@ -380,6 +436,12 @@ html, body {
     </button>
   </div>
 
+  <!-- SLIDE STRIP -->
+  <div class="slide-strip-wrap">
+    <span class="slide-strip-label">Pasos</span>
+    <div class="slide-strip" id="slide-strip"></div>
+  </div>
+
   <!-- PALETTE -->
   <div class="palette">
     <div class="pal-scroll">
@@ -426,6 +488,11 @@ let history  = [];   // undo stack  { items, arrows, ballPossessorId }
 let ballPossessorId     = null; // id del jugador que tiene el balón
 let animBallPossessorId = null; // guarda posesión para reset
 
+// Diapositivas / pasos
+let slides           = [];  // [{ id, items, arrows, ballPossessorId }]
+let currentSlideIdx  = 0;
+let slideUid         = 0;
+
 // Drag state
 let drag      = null; // palette or item drag
 let arrowDraw = null; // arrow drawing state { x1,y1, snapId }
@@ -436,6 +503,10 @@ let animBase   = null; // snapshot of item positions before anim
 let animRAF    = null;
 let animPassBalls = []; // temp ball elements during pass animation
 const ANIM_MS  = 1500;
+
+// Play-all state
+let playAllActive = false;
+let playAllReject = null; // abort handle
 
 // Court pixel size (updated by ResizeObserver)
 let CW = 1, CH = 1;
@@ -450,6 +521,7 @@ const hint       = document.getElementById('hint');
 const ghost      = document.getElementById('ghost');
 const startDot   = document.getElementById('start-dot');
 const btnPlay    = document.getElementById('btn-play');
+const btnPlayAll = document.getElementById('btn-play-all');
 const btnReset   = document.getElementById('btn-reset');
 
 // ── ResizeObserver ────────────────────────────────────────────────────────────
@@ -857,6 +929,127 @@ courtWrap.addEventListener('pointerdown', e => {
 function deselect() { selId=null; selAid=null; renderAll(); }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// SLIDES
+// ══════════════════════════════════════════════════════════════════════════════
+function saveCurrentSlide() {
+  if(!slides[currentSlideIdx]) return;
+  slides[currentSlideIdx] = {
+    id: slides[currentSlideIdx].id,
+    items: JSON.parse(JSON.stringify(items)),
+    arrows: JSON.parse(JSON.stringify(arrows)),
+    ballPossessorId
+  };
+}
+
+function loadSlide(idx, skipSave) {
+  if(idx < 0 || idx >= slides.length) return;
+  if(!skipSave) saveCurrentSlide();
+  currentSlideIdx = idx;
+  const s = slides[idx];
+  items           = JSON.parse(JSON.stringify(s.items));
+  arrows          = JSON.parse(JSON.stringify(s.arrows));
+  ballPossessorId = s.ballPossessorId;
+  selId = null; selAid = null;
+  renderAll();
+  renderSlideStrip();
+}
+
+window.addSlide = function() {
+  saveCurrentSlide();
+  const newSlide = {
+    id: ++slideUid,
+    items: JSON.parse(JSON.stringify(items)),  // copia posiciones actuales
+    arrows: [],
+    ballPossessorId
+  };
+  slides.push(newSlide);
+  currentSlideIdx = slides.length - 1;
+  arrows = []; selId = null; selAid = null;
+  renderAll();
+  renderSlideStrip();
+  showToast('Paso ' + slides.length + ' añadido');
+};
+
+window.deleteSlide = function(idx) {
+  if(slides.length <= 1) { showToast('Debe haber al menos un paso'); return; }
+  slides.splice(idx, 1);
+  currentSlideIdx = Math.min(currentSlideIdx, slides.length - 1);
+  const s = slides[currentSlideIdx];
+  items = JSON.parse(JSON.stringify(s.items));
+  arrows = JSON.parse(JSON.stringify(s.arrows));
+  ballPossessorId = s.ballPossessorId;
+  selId = null; selAid = null;
+  renderAll();
+  renderSlideStrip();
+};
+
+function buildThumbSVG(s) {
+  // Flechas
+  let arrowLines = '';
+  (s.arrows||[]).forEach(a => {
+    const stroke = a.type==='pass' ? '#5dccf5' : a.type==='screen' ? '#ffd54f' : 'rgba(255,255,255,.7)';
+    const dash   = a.type==='pass' ? ' stroke-dasharray="2 1.5"' : '';
+    arrowLines += `<path d="M${a.x1*1.2},${a.y1*.84} Q${a.cx*1.2},${a.cy*.84} ${a.x2*1.2},${a.y2*.84}" stroke="${stroke}" stroke-width=".8" fill="none"${dash}/>`;
+    if(a.type==='screen') {
+      const dx=a.x2-a.x1, dy=a.y2-a.y1, len=Math.hypot(dx,dy)||1;
+      const nx=-dy/len*4, ny=dx/len*4;
+      arrowLines += `<line x1="${(a.x2+nx)*1.2}" y1="${(a.y2+ny)*.84}" x2="${(a.x2-nx)*1.2}" y2="${(a.y2-ny)*.84}" stroke="#ffd54f" stroke-width="1.5" stroke-linecap="round"/>`;
+    }
+  });
+  // Jugadores / objetos
+  let dots = '';
+  (s.items||[]).forEach(item => {
+    const cx = item.x*1.2, cy = item.y*.84;
+    if(item.type==='off') {
+      dots += `<circle cx="${cx}" cy="${cy}" r="4" fill="#2980b9" stroke="rgba(255,255,255,.3)" stroke-width=".5"/>
+               <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="3.8" fill="white" font-family="sans-serif" font-weight="bold">${item.num}</text>`;
+    } else if(item.type==='def') {
+      dots += `<circle cx="${cx}" cy="${cy}" r="4" fill="#c0392b" stroke="rgba(255,255,255,.3)" stroke-width=".5"/>
+               <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="3" fill="white" font-family="sans-serif" font-weight="bold">D${item.num}</text>`;
+    } else if(item.type==='cone') {
+      dots += `<polygon points="${cx},${cy-3.5} ${cx-3},${cy+2.5} ${cx+3},${cy+2.5}" fill="#e67e22"/>`;
+    } else if(item.type==='ball') {
+      dots += `<circle cx="${cx}" cy="${cy}" r="3" fill="#e67e22"/>`;
+    }
+    if(item.id === s.ballPossessorId) {
+      dots += `<circle cx="${cx+3.5}" cy="${cy+3.5}" r="2.2" fill="#e67e22" stroke="rgba(0,0,0,.4)" stroke-width=".5"/>`;
+    }
+  });
+
+  return `<svg viewBox="0 0 120 84" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <rect width="120" height="84" fill="#0b1622"/>
+    <path d="M4,4 L4,80 L116,80 L116,4" stroke="rgba(255,255,255,.3)" stroke-width="1" fill="none"/>
+    <line x1="50" y1="77" x2="70" y2="77" stroke="rgba(255,255,255,.45)" stroke-width="1.2" stroke-linecap="round"/>
+    <circle cx="60" cy="73" r="3.5" stroke="rgba(255,255,255,.35)" stroke-width=".8" fill="none"/>
+    <rect x="42" y="48" width="36" height="32" stroke="rgba(255,255,255,.25)" stroke-width=".8" fill="none"/>
+    <path d="M22,68 A38,38 0 0,1 98,68" stroke="rgba(255,255,255,.25)" stroke-width=".8" fill="none"/>
+    ${arrowLines}${dots}
+  </svg>`;
+}
+
+function renderSlideStrip() {
+  const strip = document.getElementById('slide-strip');
+  strip.innerHTML = '';
+
+  slides.forEach((s, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'slide-thumb' + (i===currentSlideIdx ? ' active' : '');
+    thumb.innerHTML =
+      buildThumbSVG(s) +
+      `<div class="slide-num">${i+1}</div>` +
+      (slides.length > 1 ? `<button class="slide-del" onclick="event.stopPropagation();deleteSlide(${i})">×</button>` : '');
+    thumb.addEventListener('click', () => loadSlide(i));
+    strip.appendChild(thumb);
+  });
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'slide-add';
+  addBtn.innerHTML = '<span class="sa-plus">+</span><span class="sa-label">Paso</span>';
+  addBtn.onclick = addSlide;
+  strip.appendChild(addBtn);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // BALL POSSESSION
 // ══════════════════════════════════════════════════════════════════════════════
 window.toggleBall = function() {
@@ -870,7 +1063,7 @@ window.toggleBall = function() {
 // ══════════════════════════════════════════════════════════════════════════════
 // ANIMATION
 // ══════════════════════════════════════════════════════════════════════════════
-window.playAnim = function() {
+window.playAnim = function(onComplete) {
   if(animating) return;
 
   // ── Cortes y bloqueos: el jugador se mueve hasta la posición ──
@@ -956,23 +1149,89 @@ window.playAnim = function() {
       animating     = false;
       btnPlay.disabled = false;
       renderItems();
+      if(onComplete) onComplete();
     }
   }
   animRAF = requestAnimationFrame(tick);
 };
 
 window.resetAnim = function() {
+  const wasPlayingAll = playAllActive;
+
+  // Abortar playAll si está activo
+  if(playAllReject) { try { playAllReject('abort'); } catch(e){} }
+  playAllActive = false; playAllReject = null;
+
   if(animRAF) { cancelAnimationFrame(animRAF); animRAF=null; }
-  // Limpiar balones temporales de pase
   animPassBalls.forEach(pa => pa.el.remove());
   animPassBalls = [];
-  animating = false; btnPlay.disabled = false; btnReset.style.display = 'none';
+  animating = false;
+  btnPlay.disabled = false;
+  btnPlayAll.disabled = false;
+  btnReset.style.display = 'none';
+
   if(animBase) {
     animBase.forEach(b=>{ const item=items.find(i=>i.id===b.id); if(item){item.x=b.x;item.y=b.y;} });
     animBase = null;
   }
   ballPossessorId = animBallPossessorId;
-  renderAll();
+
+  if(wasPlayingAll) {
+    // Si venimos de "Animar todo", volver al paso 1
+    loadSlide(0, true);
+  } else {
+    renderAll();
+    renderSlideStrip();
+  }
+};
+
+// Reproduce todas las diapositivas secuencialmente (como un GIF)
+window.playAll = async function() {
+  if(animating || playAllActive) return;
+  saveCurrentSlide();
+  playAllActive = true;
+  btnPlayAll.disabled = true;
+  btnPlay.disabled    = true;
+  btnReset.style.display = '';
+
+  try {
+    for(let i = 0; i < slides.length; i++) {
+      if(!playAllActive) break;
+
+      // Cargar el paso i (sin guardar, ya guardamos arriba)
+      loadSlide(i, true);
+
+      // Esperar a que termine la animación de este paso
+      await new Promise((resolve, reject) => {
+        playAllReject = reject;
+        if(arrows.length > 0) {
+          playAnim(resolve);
+        } else {
+          // Si no hay flechas, mostrar el paso brevemente
+          setTimeout(resolve, 600);
+        }
+      });
+
+      if(!playAllActive) break;
+
+      // Pausa breve entre pasos (excepto el último)
+      if(i < slides.length - 1) {
+        await new Promise((resolve, reject) => {
+          playAllReject = reject;
+          setTimeout(resolve, 400);
+        });
+      }
+    }
+  } catch(e) {
+    // Abortado por resetAnim — no hacer nada más
+    return;
+  }
+
+  playAllActive = false;
+  playAllReject = null;
+  btnPlayAll.disabled = false;
+  btnPlay.disabled    = false;
+  renderSlideStrip();
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1023,8 +1282,11 @@ document.addEventListener('keydown', e => {
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+// Crear el primer paso vacío
+slides = [{ id: ++slideUid, items: [], arrows: [], ballPossessorId: null }];
 setMode('select');
 renderAll();
+renderSlideStrip();
 </script>
 </body>
 </html>
