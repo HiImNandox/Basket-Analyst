@@ -302,7 +302,7 @@ function renderJugadas() {
   content.innerHTML = `<div class="jugadas-grid">
     ${lista.map(j => `
       <div class="jugada-card" onclick="verJugada(${j.id})">
-        <div class="jugada-canvas" ${j.pista === 'completa' ? 'style="aspect-ratio:2/1"' : ''}>
+        <div class="jugada-canvas">
           ${courtSVG(j.pista)}
           <span class="pista-badge">${j.pista === 'media' ? '½ PISTA' : 'PISTA COMPLETA'}</span>
         </div>
