@@ -233,16 +233,17 @@ function courtSVG(pista) {
       <line x1="4" y1="4" x2="116" y2="4" stroke="rgba(255,255,255,.28)" stroke-width="1" stroke-dasharray="4 3"/>
     </svg>`;
   }
-  // Pista completa: espejo vertical de la media pista
-  // translate(0,80): y=4 del original → y=84 (centro), y=80 → y=160 (línea de fondo)
-  // translate(0,88) scale(1,-1): y=4 → y=84 (centro), y=80 → y=8 (línea de fondo arriba)
-  return `<svg class="court" viewBox="0 0 120 168" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-    <rect width="120" height="168" fill="#0b1622"/>
-    <g transform="translate(0,80)">${HALF_COURT_ELEMENTS}</g>
-    <g transform="translate(0,88) scale(1,-1)">${HALF_COURT_ELEMENTS}</g>
-    <line x1="4" y1="84" x2="116" y2="84" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/>
-    <circle cx="60" cy="84" r="8" stroke="rgba(255,255,255,.35)" stroke-width="1" fill="none"/>
-    <circle cx="60" cy="84" r="1.5" fill="rgba(255,255,255,.45)"/>
+  // Pista completa: dos medias pistas rotadas 90° → pista horizontal, llena la tarjeta
+  // Mitad izq: rotate(-90) → canasta a la izquierda (x≈15)
+  // Mitad der: rotate(90)  → canasta a la derecha  (x≈153)
+  // viewBox 168×120, slice: rellena la tarjeta con crop mínimo (~2%)
+  return `<svg class="court" viewBox="0 0 168 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <rect width="168" height="120" fill="#0b1622"/>
+    <g transform="translate(88,0) rotate(-90)">${HALF_COURT_ELEMENTS}</g>
+    <g transform="translate(80,120) rotate(90)">${HALF_COURT_ELEMENTS}</g>
+    <line x1="84" y1="4" x2="84" y2="116" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/>
+    <circle cx="84" cy="60" r="8" stroke="rgba(255,255,255,.35)" stroke-width="1" fill="none"/>
+    <circle cx="84" cy="60" r="1.5" fill="rgba(255,255,255,.45)"/>
   </svg>`;
 }
 
