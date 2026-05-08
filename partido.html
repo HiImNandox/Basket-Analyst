@@ -1068,7 +1068,7 @@ async function loadAndRenderPBP(jornada, fileId, rawData, quarters) {
 
   let pbpEvents = [];
   try {
-    const res = await fetch('./data/' + jornada + '/' + fileId + '_pbp.json');
+    const res = await fetch('/api/pbp?matchId=' + fileId);
     if (res.ok) pbpEvents = await res.json();
   } catch(e) { /* PBP no disponible */ }
 
@@ -1077,26 +1077,26 @@ async function loadAndRenderPBP(jornada, fileId, rawData, quarters) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// ENTRADA PRINCIPAL — carga el JSON desde ./data/{matchId}_stats.json
+// ENTRADA PRINCIPAL — carga los datos desde /api/stats?matchId=xxx
 // ══════════════════════════════════════════════════════════════════════════
 
 window.addEventListener('load', async () => {
   const params = new URLSearchParams(window.location.search);
-  // Parámetros: ?jornada=J9&file=69e1442703837a00011202c1
-  const DEFAULT_JORNADA = 'J8';
-  const DEFAULT_FILE    = '69c6fb6ee6ffd90001e21de6';
-  const jornada = params.get('jornada') || DEFAULT_JORNADA;
-  const fileId  = params.get('file')    || DEFAULT_FILE;
-  const fetchUrl = './data/' + jornada + '/' + fileId + '_stats.json';
+  // Parámetro: ?file=69e1442703837a00011202c1  (matchId)
+  // Se mantiene compatibilidad con ?jornada= para no romper enlaces existentes
+  const DEFAULT_FILE = '69c6fb6ee6ffd90001e21de6';
+  const fileId  = params.get('file') || DEFAULT_FILE;
+  const jornada = params.get('jornada') || '';   // ya no se usa para fetch, solo por compatibilidad
 
   // Fade mientras carga
   document.querySelector('.wrap').style.opacity = '0.3';
 
   let rawData;
   try {
-    const res = await fetch(fetchUrl);
-    if (!res.ok) throw new Error('HTTP ' + res.status + ' — ¿está el archivo ' + fetchUrl + ' en el repositorio?');
+    const res = await fetch('/api/stats?matchId=' + fileId);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     rawData = await res.json();
+    if (rawData.error) throw new Error(rawData.error);
   } catch (err) {
     showError('No se encontró el partido <code style="color:#4fc3f7;">' + fileId + '</code><br><br><code style="color:#aaa;font-size:11px;">' + err.message + '</code>');
     return;
@@ -1109,11 +1109,11 @@ window.addEventListener('load', async () => {
     parsed = parseMatchData(rawData);
     renderAll(parsed);
   } catch(err) {
-    showError('Error al procesar el JSON del partido.<br><br><code style="color:#aaa;font-size:11px;">' + err.message + '</code>');
+    showError('Error al procesar los datos del partido.<br><br><code style="color:#aaa;font-size:11px;">' + err.message + '</code>');
     return;
   }
 
-  // Cargar PBP de forma no bloqueante
+  // Cargar PBP de forma no bloqueante (jornada ya no es necesario)
   loadAndRenderPBP(jornada, fileId, rawData, parsed.quarters);
 });
 </script>
