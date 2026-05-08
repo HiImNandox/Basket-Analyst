@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   // ── GET ─────────────────────────────────────────────────────────────────────
   if (req.method === 'GET') {
     try {
-      const rows = await sql(`
+      const rows = await sql`
         SELECT
           p.id,
           p.match_id_intern,
@@ -41,10 +41,10 @@ export default async function handler(req, res) {
         JOIN equipos  el ON el.id = p.equipo_local_id
         JOIN equipos  ev ON ev.id = p.equipo_visit_id
         LEFT JOIN partidos_stats_mobile psm ON psm.partido_id = p.id
-        WHERE p.equipo_local_id = $1
-           OR p.equipo_visit_id = $1
+        WHERE p.equipo_local_id = ${SAC_EQUIPO_ID}
+           OR p.equipo_visit_id = ${SAC_EQUIPO_ID}
         ORDER BY j.numero ASC, p.fecha ASC
-      `, [SAC_EQUIPO_ID]);
+      `;
 
       // Agrupar por jornada
       const jornadasMap = {};
@@ -87,12 +87,12 @@ export default async function handler(req, res) {
     }
 
     try {
-      const rows = await sql(`
+      const rows = await sql`
         UPDATE partidos_stats_mobile
-        SET partido_id = $1, updated_at = NOW()
-        WHERE mobile_uuid = $2
+        SET partido_id = ${partido_id}, updated_at = NOW()
+        WHERE mobile_uuid = ${mobile_uuid}
         RETURNING id, mobile_uuid, partido_id, updated_at
-      `, [partido_id, mobile_uuid]);
+      `;
 
       if (rows.length === 0) {
         return res.status(404).json({ error: 'No se encontró el registro con ese mobile_uuid' });
