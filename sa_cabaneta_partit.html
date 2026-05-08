@@ -517,7 +517,7 @@ function renderAll(data) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// ENTRADA PRINCIPAL — carga el JSON desde ./data/{matchId}_stats.json
+// ENTRADA PRINCIPAL — carga los datos desde /api/stats?matchId=xxx
 // ══════════════════════════════════════════════════════════════════════════
 
 window.addEventListener('load', async () => {
@@ -529,8 +529,7 @@ window.addEventListener('load', async () => {
       'No se ha indicado ningún partido.<br><br>' +
       'Usa la URL con el parámetro <code style="color:#4fc3f7;">?matchId=ID</code><br><br>' +
       'Ejemplo:<br>' +
-      '<code style="color:#4fc3f7;">partit.html?matchId=69c6fb6ee6ffd90001e21de6</code><br><br>' +
-      '<span style="color:#555;font-size:11px;">El archivo <code>data/{matchId}_stats.json</code> debe existir en el repositorio.</span>'
+      '<code style="color:#4fc3f7;">partit.html?matchId=69c6fb6ee6ffd90001e21de6</code>'
     );
     return;
   }
@@ -540,9 +539,10 @@ window.addEventListener('load', async () => {
 
   let data;
   try {
-    const res = await fetch('./data/' + matchId + '_stats.json');
-    if (!res.ok) throw new Error('HTTP ' + res.status + ' — ¿está el archivo data/' + matchId + '_stats.json en el repositorio?');
+    const res = await fetch('/api/stats?matchId=' + matchId);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     data = await res.json();
+    if (data.error) throw new Error(data.error);
   } catch (err) {
     showError('No se encontró el partido <code style="color:#4fc3f7;">' + matchId + '</code><br><br><code style="color:#aaa;font-size:11px;">' + err.message + '</code>');
     return;

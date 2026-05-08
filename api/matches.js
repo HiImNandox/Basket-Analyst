@@ -1,6 +1,5 @@
-import { readdirSync, readFileSync } from 'fs';
-import { join } from 'path';
 import { setCors, handleOptions } from './lib/cors.js';
+import { getMongo } from './lib/mongo.js';
 import { sql } from './lib/db.js';
 
 const SAC_SHORT = 'SAC';
@@ -182,10 +181,7 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Método no permitido' });
 
   try {
-    const dataDir = join(process.cwd(), 'data');
-
     // Carga nombres oficiales de la BD (short_name → nombre)
-    // Si la columna aún no existe o la BD falla, se usa cleanName() como fallback
     let dbNameMap = {};
     try {
       const rows = await sql`
@@ -198,26 +194,23 @@ export default async function handler(req, res) {
       // fallback silencioso: se usará cleanName()
     }
 
-    const jornadaDirs = readdirSync(dataDir, { withFileTypes: true })
-      .filter(d => d.isDirectory() && /^J\d+$/i.test(d.name))
-      .sort((a, b) => parseInt(a.name.slice(1)) - parseInt(b.name.slice(1)));
+    // Lee todos los stats desde MongoDB en lugar de los archivos locales
+    const db       = await getMongo();
+    const statsDocs = await db.collection('stats')
+      .find({}, { projection: { _id: 0 } })
+      .sort({ jornada: 1 })
+      .toArray();
 
     const partidos = [];
+    const jornadasVistas = new Set();
 
-    for (const dir of jornadaDirs) {
-      const jNum    = parseInt(dir.name.slice(1));
-      const dirPath = join(dataDir, dir.name);
-      const files   = readdirSync(dirPath).filter(f => f.endsWith('_stats.json'));
-
-      for (const file of files) {
-        const raw    = readFileSync(join(dirPath, file), 'utf8');
-        const json   = JSON.parse(raw);
-        const fileId = file.replace('_stats.json', '');
-        const p      = parseMatch(json, jNum, dbNameMap);
-        p.fileId     = fileId;          // e.g. "69e1442703837a00011202c1"
-        p.jornadaDir = dir.name;        // e.g. "J9"
-        partidos.push(p);
-      }
+    for (const doc of statsDocs) {
+      const jNum = doc.jornada;
+      jornadasVistas.add(jNum);
+      const p      = parseMatch(doc, jNum, dbNameMap);
+      p.fileId     = doc.matchId;          // e.g. "69e1442703837a00011202c1"
+      p.jornadaDir = 'J' + jNum;           // e.g. "J9"
+      partidos.push(p);
     }
 
     // Ordena por fecha
@@ -255,7 +248,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       partidos,
       clasificacion,
-      totalJornadas: jornadaDirs.length,
+      totalJornadas: jornadasVistas.size,
       sac: {
         posicion,
         victorias,
