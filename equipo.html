@@ -571,7 +571,7 @@ async function init() {
 
     const [jugadores, matches] = await Promise.all([
       fetch(`/api/jugadores?equipo_id=${sac.id}`).then(r=>r.json()),
-      fetch('/api/matches?v=5').then(r=>r.json())
+      fetch('/api/matches?v=6').then(r=>r.json())
     ]);
 
     const playerStats = buildPlayerStats(matches.partidos||[]);

@@ -407,7 +407,7 @@
 
     // Load match data
     try {
-      const data     = await fetch('/api/matches?v=5').then(r => r.json());
+      const data     = await fetch('/api/matches?v=6').then(r => r.json());
       const partidos = data.partidos || [];
       renderProfile(jugador, partidos);
     } catch (e) {
