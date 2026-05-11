@@ -66,17 +66,17 @@ function renderTopbar(sac, totalJornadas) {
 }
 
 // ─── PRÓXIMO PARTIDO ────────────────────────────────────────
-function renderProximoPartido(sac, partidos) {
-  // Buscamos el primer partido de SAC en la próxima jornada (la que sigue a la última)
-  const nextJornada = sac.ultimaJornada + 1;
-  const nextPartido = partidos.find(p => p.esCabaneta && p.jornada === nextJornada);
+function renderProximoPartido(sac) {
+  // Usamos el primer partido pendiente de SAC que devuelve la API
+  const nextPartido = sac.proximoPartido;
 
   const headEl = el('next-match-head');
   const bodyEl = el('next-match-body');
   if (!bodyEl) return;
 
   if (!nextPartido) {
-    if (headEl) headEl.textContent = `Próximo partido · Jornada ${nextJornada}`;
+    const nextJ = sac.ultimaJornada + 1;
+    if (headEl) headEl.textContent = `Próximo partido · Jornada ${nextJ}`;
     bodyEl.innerHTML = `
       <div style="padding:20px 0;text-align:center;color:var(--muted);font-family:var(--barlow);font-size:13px;">
         Sin datos de la próxima jornada todavía
@@ -84,9 +84,9 @@ function renderProximoPartido(sac, partidos) {
     return;
   }
 
-  const rival   = nextPartido.esCasa ? nextPartido.visit : nextPartido.local;
+  const rival    = nextPartido.esCasa ? nextPartido.visit : nextPartido.local;
   const condicion = nextPartido.esCasa ? 'Casa' : 'Fuera';
-  if (headEl) headEl.textContent = `Próximo partido · Jornada ${nextJornada}`;
+  if (headEl) headEl.textContent = `Próximo partido · Jornada ${nextPartido.jornada}`;
 
   bodyEl.innerHTML = `
     <div class="match-teams">
@@ -108,6 +108,7 @@ function renderProximoPartido(sac, partidos) {
       ${nextPartido.fecha ? `<span class="meta-tag">${formatFechaCorta(nextPartido.fecha)}</span>` : ''}
       ${nextPartido.fecha ? `<span class="meta-tag">${formatHora(nextPartido.fecha)}</span>`       : ''}
       <span class="meta-tag">${condicion}</span>
+      ${nextPartido.cancha ? `<span class="meta-tag">${nextPartido.cancha}</span>` : ''}
     </div>
   `;
 }
@@ -182,7 +183,7 @@ async function init() {
 
     renderChips(data.sac);
     renderTopbar(data.sac, data.totalJornadas);
-    renderProximoPartido(data.sac, data.partidos);
+    renderProximoPartido(data.sac);
     renderUltimoResultado(data.sac);
     renderClasificacion(data.clasificacion);
 

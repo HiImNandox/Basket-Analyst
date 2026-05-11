@@ -317,19 +317,22 @@ function renderJornadas(partidos, ultimaJornada) {
 
   for (const jNum of jNums) {
     const matches = map[jNum];
-    const isLast  = jNum === ultimaJornada;
-    const fechas  = matches.map(m => m.fecha).filter(Boolean);
-    const fechaStr = fechas.length ? fmt(fechas[0]) : '';
+    const isPending = matches.every(m => m.isPendiente);
+    const isLast    = !isPending && jNum === ultimaJornada;
+    const isNext    = isPending && matches.some(m => m.esCabaneta);
+    const fechas    = matches.map(m => m.fecha).filter(Boolean);
+    const fechaStr  = fechas.length ? fmt(fechas[0]) : '';
 
     const block = document.createElement('div');
     block.className = 'jornada-block';
 
     const header = document.createElement('div');
-    header.className = `jornada-header${isLast ? ' open' : ''}`;
+    header.className = `jornada-header${isLast || isNext ? ' open' : ''}`;
     header.innerHTML = `
       <div>
         <span class="jornada-title">Jornada ${jNum}</span>
         ${isLast ? '<span style="margin-left:8px;font-size:10px;color:var(--red);font-family:var(--mono);background:var(--red-glow);border:1px solid var(--red-border);padding:1px 7px;border-radius:3px;">ÚLTIMA</span>' : ''}
+        ${isNext ? '<span style="margin-left:8px;font-size:10px;color:#4fc3f7;font-family:var(--mono);background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.3);padding:1px 7px;border-radius:3px;">PRÓXIMA</span>' : ''}
       </div>
       <div style="display:flex;align-items:center;gap:12px;">
         <span class="jornada-meta">${fechaStr}</span>
@@ -338,7 +341,7 @@ function renderJornadas(partidos, ultimaJornada) {
     `;
 
     const matchesDiv = document.createElement('div');
-    matchesDiv.className = `jornada-matches${isLast ? ' open' : ''}`;
+    matchesDiv.className = `jornada-matches${isLast || isNext ? ' open' : ''}`;
 
     for (const p of matches.sort((a, b) => (b.esCabaneta ? 1 : 0) - (a.esCabaneta ? 1 : 0))) {
       const row = document.createElement('div');
@@ -348,30 +351,32 @@ function renderJornadas(partidos, ultimaJornada) {
       const localCls = `team-name home${p.local.shortName === 'SAC' ? ' sac' : ''}`;
       const visitCls = `team-name away${p.visit.shortName === 'SAC' ? ' sac' : ''}`;
 
-      const resultHtml = isSac
-        ? `<div class="result-dot ${p.resultado === 'V' ? 'v' : 'd'}">${p.resultado}</div>`
-        : '<div style="width:22px"></div>';
+      const resultHtml = p.isPendiente
+        ? '<div style="width:22px"></div>'
+        : isSac
+          ? `<div class="result-dot ${p.resultado === 'V' ? 'v' : 'd'}">${p.resultado}</div>`
+          : '<div style="width:22px"></div>';
+
+      const scoreHtml = p.isPendiente
+        ? `<div class="score-box" style="color:var(--muted);letter-spacing:1px;font-size:11px;">VS</div>`
+        : `<div class="score-box"><span>${p.local.puntos}</span><span class="sep">–</span><span>${p.visit.puntos}</span></div>`;
 
       row.innerHTML = `
         <div class="${localCls}">${p.local.nombre}</div>
-        <div class="score-box">
-          <span>${p.local.puntos}</span>
-          <span class="sep">–</span>
-          <span>${p.visit.puntos}</span>
-        </div>
+        ${scoreHtml}
         ${resultHtml}
         <div class="${visitCls}">${p.visit.nombre}</div>
         <div class="match-fecha">${fmt(p.fecha)}</div>
       `;
 
-      // Navegar a partido.html al pulsar la fila
-      row.addEventListener('click', () => {
-        if (p.fileId && p.jornadaDir) {
-          window.location.href = `partido.html?jornada=${p.jornadaDir}&file=${p.fileId}`;
-        } else {
-          console.warn('Partido sin fileId/jornadaDir:', p);
-        }
-      });
+      if (!p.isPendiente) {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', () => {
+          if (p.fileId && p.jornadaDir) {
+            window.location.href = `partido.html?jornada=${p.jornadaDir}&file=${p.fileId}`;
+          }
+        });
+      }
 
       matchesDiv.appendChild(row);
     }

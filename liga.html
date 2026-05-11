@@ -365,6 +365,11 @@
 // Datos cargados dinámicamente desde /api/matches
 let TEAMS=[], EVOLUCION=[], STANDINGS=[], JORNADAS=[], PLAYER_STATS={}, H2H_HISTORY=[];
 
+// ── Helpers de fecha ──────────────────────────────────────────────────────────
+const MESES_L=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+function formatFechaCorta(iso){if(!iso)return'';const d=new Date(iso);return`${d.getDate()} ${MESES_L[d.getMonth()]}`;}
+function formatHora(iso){if(!iso)return'';const d=new Date(iso);return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}h`;}
+
 function calcPIR(p){
   // Usa la valoración pre-calculada de la API (incluye robos, tapones, pérdidas, etc.)
   if(p.pir!==undefined) return p.pir;
@@ -479,11 +484,38 @@ function renderJornada(){
     return;
   }
   const tabsHTML=JORNADAS.map(j=>`
-    <button class="jtab ${j.id===curJornada?'active':''}" onclick="selectJornada(${j.id})">${j.label}</button>
+    <button class="jtab ${j.id===curJornada?'active':''}" onclick="selectJornada(${j.id})"
+      style="${j.pending&&j.id!==curJornada?'color:#555555':''}">
+      ${j.label}${j.pending?'<span style="margin-left:3px;font-size:8px;vertical-align:middle;opacity:.6">●</span>':''}
+    </button>
   `).join('');
   const jornada=JORNADAS.find(j=>j.id===curJornada)||JORNADAS[0];
   const gamesHTML=jornada.games.map(game=>{
+    // ── Partido pendiente ──────────────────────────────────────────────────
+    if(game.isPendiente){
+      const homeBadge=game.homeId?badgeHTML(game.homeId,32):`<div class="badge" style="width:32px;height:32px;background:#2a2a2a;font-size:10px">${game.homeShort}</div>`;
+      const awayBadge=game.awayId?badgeHTML(game.awayId,32):`<div class="badge" style="width:32px;height:32px;background:#2a2a2a;font-size:10px">${game.awayShort}</div>`;
+      const metaStr=game.fecha?`${formatFechaCorta(game.fecha)} ${formatHora(game.fecha)}`:'';
+      return`<div class="game-card" style="opacity:.75">
+        <div class="game-hdr" style="cursor:default">
+          <div class="team-side right">
+            <span style="font-size:13px;font-weight:500;color:#aaaaaa">${game.homeName}</span>
+            ${homeBadge}
+          </div>
+          <div class="score-block" style="min-width:56px;text-align:center">
+            ${metaStr?`<div style="font-size:10px;color:#666666;font-family:var(--mono);line-height:1.2">${metaStr}</div>`:''}
+            <div style="font-size:12px;font-weight:700;letter-spacing:.1em;color:#666666;font-family:var(--mono)">VS</div>
+          </div>
+          <div class="team-side">
+            ${awayBadge}
+            <span style="font-size:13px;font-weight:500;color:#aaaaaa">${game.awayName}</span>
+          </div>
+        </div>
+      </div>`;
+    }
+    // ── Partido jugado ─────────────────────────────────────────────────────
     const home=getTeam(game.homeId),away=getTeam(game.awayId);
+    if(!home||!away) return '';   // equipo no mapeado, omitir
     const homeWin=game.homeScore>game.awayScore,isExp=expandedGame===game.id;
     const playersHTML=isExp?`
       <div class="game-players">
@@ -538,9 +570,10 @@ function renderJornada(){
       ${playersHTML}
     </div>`;
   }).join('');
+  const pendingBadge=jornada.pending?`<span style="margin-left:8px;font-size:10px;font-family:var(--mono);background:#2a2a2a;color:#666666;padding:2px 8px;border-radius:4px;letter-spacing:.08em">PRÓXIMA</span>`:'';
   document.getElementById('sec-jornada').innerHTML=`
-    <div class="sec-title">Resultados por Jornada</div>
-    <div class="sec-sub">Haz clic en un partido para ver las estadísticas individuales</div>
+    <div class="sec-title">Resultados por Jornada${pendingBadge}</div>
+    <div class="sec-sub">${jornada.pending?'Partido pendiente de disputar':'Haz clic en un partido para ver las estadísticas individuales'}</div>
     <div class="jtabs">${tabsHTML}</div>
     <div>${gamesHTML}</div>`;
 }
@@ -808,10 +841,10 @@ async function initLiga() {
     const s2id = {};
     TEAMS.forEach(t => s2id[t.short] = t.id);
 
-    // 2. STANDINGS ─ desde clasificación + racha por equipo
+    // 2. STANDINGS ─ desde clasificación + racha por equipo (solo jugados)
     STANDINGS = clasificacion.map((e, i) => {
       const teamParts = partidos
-        .filter(p => p.local.shortName === e.shortName || p.visit.shortName === e.shortName)
+        .filter(p => !p.isPendiente && (p.local.shortName === e.shortName || p.visit.shortName === e.shortName))
         .sort((a, b) => a.jornada - b.jornada);
       const racha = teamParts.slice(-5).map(p => {
         const isLocal = p.local.shortName === e.shortName;
@@ -830,7 +863,10 @@ async function initLiga() {
       };
     });
 
-    // 3. JORNADAS ─ agrupa partidos por número de jornada, más reciente primero
+    // Partidos jugados (sin pendientes) — para cálculos estadísticos
+    const jugados = partidos.filter(p => !p.isPendiente);
+
+    // 3. JORNADAS ─ agrupa TODOS los partidos por número de jornada, más reciente primero
     const jornadaMap = {};
     for (const p of partidos) {
       if (!jornadaMap[p.jornada]) jornadaMap[p.jornada] = [];
@@ -838,36 +874,50 @@ async function initLiga() {
     }
     JORNADAS = Object.entries(jornadaMap)
       .sort((a, b) => parseInt(b[0]) - parseInt(a[0]))
-      .map(([jNum, games]) => ({
-        id:    parseInt(jNum),
-        label: `J${jNum}`,
-        games: games.map((p, gi) => ({
-          id:        `g${jNum}_${gi}`,
-          homeId:    s2id[p.local.shortName],
-          homeScore: p.local.puntos,
-          awayId:    s2id[p.visit.shortName],
-          awayScore: p.visit.puntos,
-          // Mapea shortName → id entero para que badgeHTML() y getTeam() funcionen
-          players: {
-            [s2id[p.local.shortName]]:  (p.players || {})[p.local.shortName]  || [],
-            [s2id[p.visit.shortName]]:  (p.players || {})[p.visit.shortName]  || []
-          }
-        }))
-      }));
+      .map(([jNum, games]) => {
+        const allPending = games.every(g => g.isPendiente);
+        return {
+          id:      parseInt(jNum),
+          label:   `J${jNum}`,
+          pending: allPending,
+          games:   games.map((p, gi) => {
+            const hId = s2id[p.local.shortName] ?? null;
+            const aId = s2id[p.visit.shortName] ?? null;
+            return {
+              id:          `g${jNum}_${gi}`,
+              homeId:      hId,
+              homeShort:   p.local.shortName,
+              homeName:    p.local.nombre,
+              homeScore:   p.local.puntos,
+              awayId:      aId,
+              awayShort:   p.visit.shortName,
+              awayName:    p.visit.nombre,
+              awayScore:   p.visit.puntos,
+              isPendiente: p.isPendiente || false,
+              fecha:       p.fecha || null,
+              cancha:      p.cancha || null,
+              players: hId && aId ? {
+                [hId]: (p.players || {})[p.local.shortName]  || [],
+                [aId]: (p.players || {})[p.visit.shortName]  || []
+              } : {}
+            };
+          })
+        };
+      });
 
-    // 4. EVOLUCION ─ posición de cada equipo al cierre de cada jornada
-    const jornadas = [...new Set(partidos.map(p => p.jornada))].sort((a,b)=>a-b);
+    // 4. EVOLUCION ─ posición de cada equipo al cierre de cada jornada (solo jugados)
+    const jornadas = [...new Set(jugados.map(p => p.jornada))].sort((a,b)=>a-b);
     EVOLUCION = TEAMS.map(t => ({ teamId: t.id, positions: [] }));
     for (const j of jornadas) {
-      const partial = calcularClasificacionLocal(partidos.filter(p => p.jornada <= j));
+      const partial = calcularClasificacionLocal(jugados.filter(p => p.jornada <= j));
       TEAMS.forEach(t => {
         const pos = partial.findIndex(e => e.short === t.short) + 1;
         EVOLUCION.find(e => e.teamId === t.id).positions.push(pos || TEAMS.length);
       });
     }
 
-    // 5. H2H_HISTORY ─ todos los partidos como enfrentamientos directos
-    H2H_HISTORY = partidos.map(p => ({
+    // 5. H2H_HISTORY ─ solo partidos jugados
+    H2H_HISTORY = jugados.map(p => ({
       j:         p.jornada,
       homeId:    s2id[p.local.shortName],
       awayId:    s2id[p.visit.shortName],
@@ -875,9 +925,9 @@ async function initLiga() {
       awayScore: p.visit.puntos
     }));
 
-    // 6. PLAYER_STATS ─ medias por partido acumulando todos los partidos de la temporada
+    // 6. PLAYER_STATS ─ medias por partido acumulando todos los partidos jugados
     const accum = {};
-    for (const p of partidos) {
+    for (const p of jugados) {
       if (!p.players) continue;
       for (const [short, players] of Object.entries(p.players)) {
         const tid = s2id[short];
@@ -915,8 +965,9 @@ async function initLiga() {
       };
     }
 
-    // Inicializa controles con valores reales
-    curJornada  = JORNADAS[0]?.id ?? null;
+    // Inicializa controles: empieza en la última jornada jugada (no pendiente)
+    const primeraJugada = JORNADAS.find(j => !j.pending);
+    curJornada  = primeraJugada?.id ?? JORNADAS[0]?.id ?? null;
     h2hTeam1    = TEAMS[0]?.id   ?? null;
     h2hTeam2    = TEAMS[1]?.id   ?? null;
 

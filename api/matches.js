@@ -2,6 +2,8 @@ import { setCors, handleOptions } from './lib/cors.js';
 import { getMongo } from './lib/mongo.js';
 import { sql } from './lib/db.js';
 
+const SAC_EQUIPO_ID = 5;
+
 const SAC_SHORT = 'SAC';
 
 // Extrae el marcador por cuarto a partir del array acumulativo de score
@@ -213,13 +215,56 @@ export default async function handler(req, res) {
       partidos.push(p);
     }
 
+    // ── Partidos pendientes desde Neon ──────────────────────────────────────
+    try {
+      const matchIdsEnMongo = new Set(statsDocs.map(d => d.matchId));
+      const pendientes = await sql`
+        SELECT
+          p.id, p.fbib_match_id, p.fecha, p.cancha_nombre,
+          j.numero          AS jornada,
+          el.nombre         AS local_nombre, el.short_name AS local_short,
+          ev.nombre         AS visit_nombre, ev.short_name AS visit_short
+        FROM partidos p
+        JOIN jornadas j  ON j.id  = p.jornada_id
+        JOIN equipos  el ON el.id = p.equipo_local_id
+        JOIN equipos  ev ON ev.id = p.equipo_visit_id
+        WHERE p.estado = 'pendiente'
+          AND (p.fbib_match_id IS NULL OR p.fbib_match_id != ALL(${[...matchIdsEnMongo]}))
+        ORDER BY j.numero ASC, p.fecha ASC
+      `;
+
+      for (const p of pendientes) {
+        const esCasa   = p.local_short === SAC_SHORT;
+        const esVisita = p.visit_short === SAC_SHORT;
+        partidos.push({
+          jornada:       p.jornada,
+          fecha:         p.fecha ? new Date(p.fecha).toISOString() : null,
+          local:         { nombre: dbNameMap[p.local_short] || p.local_nombre, shortName: p.local_short || '???', puntos: null },
+          visit:         { nombre: dbNameMap[p.visit_short] || p.visit_nombre, shortName: p.visit_short || '???', puntos: null },
+          cuartos:       { local: [], visit: [] },
+          esCabaneta:    esCasa || esVisita,
+          esCasa,
+          esVisita,
+          sacPuntos:     null,
+          rivalPuntos:   null,
+          resultado:     null,
+          sacValoracion: null,
+          cancha:        p.cancha_nombre || null,
+          isPendiente:   true,
+          fileId:        null,
+          jornadaDir:    'J' + p.jornada,
+        });
+      }
+    } catch (_) { /* fallback silencioso */ }
+
     // Ordena por fecha
     partidos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-    const clasificacion = calcularClasificacion(partidos);
+    const clasificacion = calcularClasificacion(partidos.filter(p => !p.isPendiente));
 
     // Datos específicos de Sa Cabaneta
-    const sacPartidos   = partidos.filter(p => p.esCabaneta).sort((a, b) => a.jornada - b.jornada);
+    const sacPartidos     = partidos.filter(p => p.esCabaneta).sort((a, b) => a.jornada - b.jornada);
+    const proximoPartido  = sacPartidos.find(p => p.isPendiente) || null;
     const victorias     = sacPartidos.filter(p => p.resultado === 'V').length;
     const derrotas      = sacPartidos.filter(p => p.resultado === 'D').length;
     const posicion      = clasificacion.findIndex(e => e.esSac) + 1;
@@ -258,7 +303,8 @@ export default async function handler(req, res) {
         avgPir,
         racha,
         ultimaJornada,
-        ultimoPartido
+        ultimoPartido,
+        proximoPartido
       }
     });
 
