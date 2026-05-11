@@ -263,26 +263,27 @@ export default async function handler(req, res) {
     const clasificacion = calcularClasificacion(partidos.filter(p => !p.isPendiente));
 
     // Datos específicos de Sa Cabaneta
-    const sacPartidos     = partidos.filter(p => p.esCabaneta).sort((a, b) => a.jornada - b.jornada);
-    const proximoPartido  = sacPartidos.find(p => p.isPendiente) || null;
-    const victorias     = sacPartidos.filter(p => p.resultado === 'V').length;
-    const derrotas      = sacPartidos.filter(p => p.resultado === 'D').length;
-    const posicion      = clasificacion.findIndex(e => e.esSac) + 1;
-    const ultimoPartido = sacPartidos[sacPartidos.length - 1] || null;
-    const racha         = sacPartidos.slice(-5).map(p => p.resultado);
-    const ultimaJornada = ultimoPartido?.jornada || 0;
+    const sacPartidos    = partidos.filter(p => p.esCabaneta).sort((a, b) => a.jornada - b.jornada);
+    const sacJugados     = sacPartidos.filter(p => !p.isPendiente);
+    const proximoPartido = sacPartidos.find(p => p.isPendiente) || null;
+    const victorias      = sacJugados.filter(p => p.resultado === 'V').length;
+    const derrotas       = sacJugados.filter(p => p.resultado === 'D').length;
+    const posicion       = clasificacion.findIndex(e => e.esSac) + 1;
+    const ultimoPartido  = sacJugados[sacJugados.length - 1] || null;
+    const racha          = sacJugados.slice(-5).map(p => p.resultado);
+    const ultimaJornada  = ultimoPartido?.jornada || 0;
 
-    const avgFavor  = sacPartidos.length > 0
-      ? Math.round((sacPartidos.reduce((s, p) => s + (p.sacPuntos   || 0), 0) / sacPartidos.length) * 10) / 10
+    const avgFavor  = sacJugados.length > 0
+      ? Math.round((sacJugados.reduce((s, p) => s + (p.sacPuntos   || 0), 0) / sacJugados.length) * 10) / 10
       : 0;
-    const avgContra = sacPartidos.length > 0
-      ? Math.round((sacPartidos.reduce((s, p) => s + (p.rivalPuntos || 0), 0) / sacPartidos.length) * 10) / 10
+    const avgContra = sacJugados.length > 0
+      ? Math.round((sacJugados.reduce((s, p) => s + (p.rivalPuntos || 0), 0) / sacJugados.length) * 10) / 10
       : 0;
-    const avgPir    = sacPartidos.filter(p => p.sacValoracion !== null).length > 0
+    const avgPir    = sacJugados.filter(p => p.sacValoracion !== null).length > 0
       ? Math.round(
-          sacPartidos.filter(p => p.sacValoracion !== null)
+          sacJugados.filter(p => p.sacValoracion !== null)
             .reduce((s, p) => s + p.sacValoracion, 0)
-          / sacPartidos.filter(p => p.sacValoracion !== null).length
+          / sacJugados.filter(p => p.sacValoracion !== null).length
           * 10
         ) / 10
       : null;
