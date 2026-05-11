@@ -517,7 +517,7 @@ function renderAll(data) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// ENTRADA PRINCIPAL — carga los datos desde /api/stats?matchId=xxx
+// ENTRADA PRINCIPAL — carga los datos desde /api/match-data?matchId=xxx
 // ══════════════════════════════════════════════════════════════════════════
 
 window.addEventListener('load', async () => {
@@ -539,7 +539,7 @@ window.addEventListener('load', async () => {
 
   let data;
   try {
-    const res = await fetch('/api/stats?matchId=' + matchId);
+    const res = await fetch('/api/match-data?matchId=' + matchId);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     data = await res.json();
     if (data.error) throw new Error(data.error);

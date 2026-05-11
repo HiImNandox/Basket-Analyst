@@ -3,14 +3,13 @@ import { setCors, handleOptions } from '../lib/cors.js';
 
 // GET /api/mobile/partidos
 //   Devuelve los partidos de Sa Cabaneta agrupados por jornada.
-//   Cada partido indica si ya tiene stats manuales asociadas (tiene_stats).
-//   La app usa este listado para que el usuario elija el partido antes
-//   de empezar a registrar estadísticas.
+//   ?formato=calendario → lista plana ordenada por fecha (fusionado de mobile/calendario.js)
+//   ?equipo_id=5        → (solo en formato calendario) filtra por equipo
+//   Cada partido indica si ya tiene stats manuales (tiene_stats).
 //
 // PATCH /api/mobile/partidos
 //   Body: { mobile_uuid, partido_id }
-//   Vincula un registro de partidos_stats_mobile (ya guardado) con el
-//   partido oficial correcto. Útil para registros guardados sin partido_id.
+//   Vincula un registro de partidos_stats_mobile con el partido oficial.
 
 const SAC_EQUIPO_ID = 5;
 
@@ -20,11 +19,16 @@ export default async function handler(req, res) {
 
   // ── GET ─────────────────────────────────────────────────────────────────────
   if (req.method === 'GET') {
+    const formato   = req.query.formato ?? 'jornadas';
+    const equipo_id = parseInt(req.query.equipo_id ?? SAC_EQUIPO_ID);
+
     try {
       const rows = await sql`
         SELECT
           p.id,
           p.match_id_intern,
+          p.fbib_match_id,
+          p.cancha_nombre,
           p.fecha,
           p.resultado_local,
           p.resultado_visit,
@@ -41,35 +45,42 @@ export default async function handler(req, res) {
         JOIN equipos  el ON el.id = p.equipo_local_id
         JOIN equipos  ev ON ev.id = p.equipo_visit_id
         LEFT JOIN partidos_stats_mobile psm ON psm.partido_id = p.id
-        WHERE p.equipo_local_id = ${SAC_EQUIPO_ID}
-           OR p.equipo_visit_id = ${SAC_EQUIPO_ID}
+        WHERE p.equipo_local_id = ${equipo_id}
+           OR p.equipo_visit_id = ${equipo_id}
         ORDER BY j.numero ASC, p.fecha ASC
       `;
 
-      // Agrupar por jornada
-      const jornadasMap = {};
-      for (const r of rows) {
-        const j = r.jornada;
-        if (!jornadasMap[j]) jornadasMap[j] = { jornada: j, partidos: [] };
-        jornadasMap[j].partidos.push({
-          id:              r.id,
-          match_id_intern: r.match_id_intern,
-          fecha:           r.fecha,
-          resultado_local: r.resultado_local,
-          resultado_visit: r.resultado_visit,
-          estado:          r.estado,
-          equipo_local_id: r.equipo_local_id,
-          equipo_local:    r.equipo_local,
-          equipo_visit_id: r.equipo_visit_id,
-          equipo_visit:    r.equipo_visit,
-          es_local:        r.equipo_local_id === SAC_EQUIPO_ID,
-          tiene_stats:     r.stats_mobile_id !== null,
-          stats_mobile_uuid: r.stats_mobile_uuid ?? null,
-        });
+      const mapped = rows.map(r => ({
+        id:               r.id,
+        match_id_intern:  r.match_id_intern,
+        fbib_match_id:    r.fbib_match_id ?? null,
+        fecha:            r.fecha,
+        cancha_nombre:    r.cancha_nombre ?? null,
+        resultado_local:  r.resultado_local,
+        resultado_visit:  r.resultado_visit,
+        estado:           r.estado,
+        jornada:          r.jornada,
+        equipo_local_id:  r.equipo_local_id,
+        equipo_local:     r.equipo_local,
+        equipo_visit_id:  r.equipo_visit_id,
+        equipo_visit:     r.equipo_visit,
+        es_local:         r.equipo_local_id === equipo_id,
+        tiene_stats:      r.stats_mobile_id !== null,
+        stats_mobile_uuid: r.stats_mobile_uuid ?? null,
+      }));
+
+      // Formato calendario: lista plana ordenada por fecha
+      if (formato === 'calendario') {
+        return res.status(200).json(mapped);
       }
 
-      const jornadas = Object.values(jornadasMap);
-      return res.status(200).json({ jornadas, total: rows.length });
+      // Formato por jornadas (por defecto)
+      const jornadasMap = {};
+      for (const p of mapped) {
+        if (!jornadasMap[p.jornada]) jornadasMap[p.jornada] = { jornada: p.jornada, partidos: [] };
+        jornadasMap[p.jornada].partidos.push(p);
+      }
+      return res.status(200).json({ jornadas: Object.values(jornadasMap), total: mapped.length });
 
     } catch (err) {
       console.error('[mobile/partidos GET]', err);

@@ -1068,7 +1068,7 @@ async function loadAndRenderPBP(jornada, fileId, rawData, quarters) {
 
   let pbpEvents = [];
   try {
-    const res = await fetch('/api/pbp?matchId=' + fileId);
+    const res = await fetch('/api/match-data?matchId=' + fileId + '&type=pbp');
     if (res.ok) pbpEvents = await res.json();
   } catch(e) { /* PBP no disponible */ }
 
@@ -1077,7 +1077,7 @@ async function loadAndRenderPBP(jornada, fileId, rawData, quarters) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// ENTRADA PRINCIPAL — carga los datos desde /api/stats?matchId=xxx
+// ENTRADA PRINCIPAL — carga los datos desde /api/match-data?matchId=xxx
 // ══════════════════════════════════════════════════════════════════════════
 
 window.addEventListener('load', async () => {
@@ -1093,7 +1093,7 @@ window.addEventListener('load', async () => {
 
   let rawData;
   try {
-    const res = await fetch('/api/stats?matchId=' + fileId);
+    const res = await fetch('/api/match-data?matchId=' + fileId);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     rawData = await res.json();
     if (rawData.error) throw new Error(rawData.error);
