@@ -288,8 +288,8 @@ export default async function handler(req, res) {
         ) / 10
       : null;
 
-    // Cache 1 hora (los datos se actualizan al subir nuevos JSON)
-    res.setHeader('Cache-Control', 's-maxage=120, stale-while-revalidate');
+    // Sin caché edge — los datos cambian al ingestar partidos
+    res.setHeader('Cache-Control', 'no-store');
 
     return res.status(200).json({
       partidos,
