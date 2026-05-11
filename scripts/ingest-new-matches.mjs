@@ -29,6 +29,14 @@ for (const line of readFileSync(envPath, 'utf8').split('\n')) {
 }
 
 const DRY_RUN        = process.argv.includes('--dry-run');
+
+// Los horarios de la FBIB están en hora local española (CET=UTC+1 / CEST=UTC+2)
+function parseFBIBDate(s) {
+  if (!s) return null;
+  const month = parseInt((s.match(/^\d{4}-(\d{2})/) || [])[1] || '0', 10);
+  const offset = (month >= 4 && month <= 10) ? '+02:00' : '+01:00'; // CEST / CET
+  return new Date(s.replace(' ', 'T') + offset);
+}
 const FBIB_BASE      = 'https://msstats.optimalwayconsulting.com/v1/fbib';
 const FBIB_ESB       = 'https://esb.optimalwayconsulting.com/fbib/1/jR4rgA5K6Chhh5vyfrxo9wTScdg2NT7K';
 const SAC_TEAM_ID    = 9431;
@@ -198,7 +206,7 @@ for (const m of nuevos) {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'jugado',NOW(),NOW())`,
       [adGameId, m.idMatchCall ? String(m.idMatchCall) : null, matchId,
        jornadaId, localNeonId, visitNeonId,
-       m.matchDay ? new Date(m.matchDay) : null,
+       parseFBIBDate(m.matchDay),
        parseInt(m.localScore, 10), parseInt(m.visitorScore, 10)]
     );
     console.log(`  ✅ Partido → Neon`);
@@ -220,7 +228,7 @@ for (const m of allMatches) {
   // adGameId puede ser null en partidos futuros; usamos idMatch como fallback
   const adGameId    = m.adGameId ? String(m.adGameId) : (m.idMatch ? `fbib_${m.idMatch}` : null);
   const jornada     = parseInt(m.numMatchDay, 10);
-  const fecha       = m.matchDay ? new Date(m.matchDay) : null;
+  const fecha       = parseFBIBDate(m.matchDay);
   const cancha      = m.nameField ?? null;
   const localFbibId = parseInt(m.idLocalTeam, 10);
   const visitFbibId = parseInt(m.idVisitorTeam, 10);
