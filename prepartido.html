@@ -774,7 +774,7 @@ function buildCourtSVG(t2pct, t3pct, ftpct) {
   const l2  = t2pct  !== null ? `${t2pct.toFixed(1)}%` : '—';
   const l3  = t3pct  !== null ? `${t3pct.toFixed(1)}%` : '—';
   const lft = ftpct  !== null ? `${ftpct.toFixed(1)}%` : '—';
-  const lbl3Y  = CRNY - 30;
+  const lbl3Y  = PT + 52;    // zona alta de la cancha, bien separado del label de 2PT
   const lbl2Y  = KY + KEY_H*0.44;
   const lblFTY = KY - 8;
 
