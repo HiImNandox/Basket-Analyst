@@ -1260,118 +1260,7 @@ function renderPage(data, rivalShort, pbpRival) {
         Zonas calculadas desde coordenadas reales de cada tiro (temporada completa). Botella = dentro de la zona pintada · Media = 2PT fuera de botella · Frontal = triple ángulo ≥45° · Corner = triple ángulo &lt;45°.
       </div>
     </div>
-  </div>
-
-  <script>
-  (function() {
-    // ── Datos de tiros por jugador (inyectados desde el servidor) ────────────
-    const PLAYER_DATA = ${JSON.stringify(playerShots)};
-
-    // Paleta de colores distinguibles sobre fondo oscuro
-    const PALETTE = ['#f4c23b','#4fc3f7','#a5d6a7','#ef9a9a','#ce93d8','#ffcc80','#80cbc4','#ff8f00'];
-
-    // Estado: Map actorId → colorIndex
-    const selected = new Map();
-
-    // Conversión coordenadas normalizadas → píxeles SVG
-    // xnorm=0=línea de fondo, ynorm=0=banda izquierda
-    // SVG: W=420, BL=436, S=28
-    function normToSVG(xn, yn) {
-      return {
-        x: (yn / 100) * 420,
-        y: 436 - (xn / 100) * 28 * 28,
-      };
-    }
-
-    // Dibuja los puntos de todos los jugadores seleccionados
-    function renderDots() {
-      const layer = document.getElementById('shot-dots-layer');
-      if (!layer) return;
-      const parts = [];
-      for (const [actorId, colorIdx] of selected) {
-        const p = PLAYER_DATA.find(p => p.actorId === actorId);
-        if (!p) continue;
-        const col = PALETTE[colorIdx % PALETTE.length];
-
-        // Made 2PT: círculo relleno
-        for (const [xn, yn] of (p.shots.t2m || [])) {
-          const {x, y} = normToSVG(xn, yn);
-          parts.push(\`<circle cx="\${x.toFixed(1)}" cy="\${y.toFixed(1)}" r="4.5" fill="\${col}" stroke="rgba(0,0,0,0.5)" stroke-width="0.8" opacity="0.88"/>\`);
-        }
-        // Missed 2PT: círculo vacío con cruz
-        for (const [xn, yn] of (p.shots.t2x || [])) {
-          const {x, y} = normToSVG(xn, yn);
-          parts.push(\`<circle cx="\${x.toFixed(1)}" cy="\${y.toFixed(1)}" r="4" fill="none" stroke="\${col}" stroke-width="1.4" opacity="0.55"/>\`);
-          parts.push(\`<line x1="\${(x-3).toFixed(1)}" y1="\${(y-3).toFixed(1)}" x2="\${(x+3).toFixed(1)}" y2="\${(y+3).toFixed(1)}" stroke="\${col}" stroke-width="1.2" opacity="0.55"/>\`);
-          parts.push(\`<line x1="\${(x+3).toFixed(1)}" y1="\${(y-3).toFixed(1)}" x2="\${(x-3).toFixed(1)}" y2="\${(y+3).toFixed(1)}" stroke="\${col}" stroke-width="1.2" opacity="0.55"/>\`);
-        }
-        // Made 3PT: diamante relleno
-        for (const [xn, yn] of (p.shots.t3m || [])) {
-          const {x, y} = normToSVG(xn, yn);
-          parts.push(\`<polygon points="\${x.toFixed(1)},\${(y-5.5).toFixed(1)} \${(x+5).toFixed(1)},\${y.toFixed(1)} \${x.toFixed(1)},\${(y+5.5).toFixed(1)} \${(x-5).toFixed(1)},\${y.toFixed(1)}" fill="\${col}" stroke="rgba(0,0,0,0.5)" stroke-width="0.8" opacity="0.90"/>\`);
-        }
-        // Missed 3PT: diamante vacío
-        for (const [xn, yn] of (p.shots.t3x || [])) {
-          const {x, y} = normToSVG(xn, yn);
-          parts.push(\`<polygon points="\${x.toFixed(1)},\${(y-5).toFixed(1)} \${(x+4.5).toFixed(1)},\${y.toFixed(1)} \${x.toFixed(1)},\${(y+5).toFixed(1)} \${(x-4.5).toFixed(1)},\${y.toFixed(1)}" fill="none" stroke="\${col}" stroke-width="1.4" opacity="0.55"/>\`);
-        }
-      }
-      layer.innerHTML = parts.join('');
-    }
-
-    // Actualiza la leyenda de jugadores activos
-    function renderLegend() {
-      const leg = document.getElementById('player-legend');
-      if (!leg) return;
-      if (selected.size === 0) { leg.style.display = 'none'; return; }
-      leg.style.display = 'flex';
-      leg.innerHTML = [...selected].map(([id, ci]) => {
-        const p = PLAYER_DATA.find(p => p.actorId === id);
-        if (!p) return '';
-        const col = PALETTE[ci % PALETTE.length];
-        return \`<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);font-family:var(--barlow);">
-          <svg width="16" height="10"><circle cx="4" cy="5" r="3.5" fill="\${col}"/><polygon points="12,1 15,5 12,9 9,5" fill="\${col}"/></svg>
-          <span>#\${p.dorsal} \${p.name}</span>
-          <span style="color:var(--muted);">\${p.t2mk+p.t3mk}/\${p.t2a+p.t3a}</span>
-        </div>\`;
-      }).join('');
-    }
-
-    // Toggle jugador
-    window._togglePlayer = function(actorId) {
-      const row = document.querySelector(\`.pshot-row[data-id="\${actorId}"]\`);
-      const dot = document.getElementById(\`pshot-dot-\${actorId}\`);
-      if (selected.has(actorId)) {
-        selected.delete(actorId);
-        if (row) row.style.background = 'rgba(255,255,255,0.03)';
-        if (dot) { dot.style.background = 'transparent'; dot.style.borderColor = '#555'; }
-      } else {
-        // Asigna el siguiente índice de color libre
-        const usedIdxs = new Set([...selected.values()]);
-        let idx = 0;
-        while (usedIdxs.has(idx)) idx++;
-        selected.set(actorId, idx);
-        const col = PALETTE[idx % PALETTE.length];
-        if (row) row.style.background = col + '18';
-        if (dot) { dot.style.background = col; dot.style.borderColor = col; }
-      }
-      renderDots();
-      renderLegend();
-    };
-
-    window._clearPlayers = function() {
-      for (const id of [...selected.keys()]) {
-        const row = document.querySelector(\`.pshot-row[data-id="\${id}"]\`);
-        const dot = document.getElementById(\`pshot-dot-\${id}\`);
-        if (row) row.style.background = 'rgba(255,255,255,0.03)';
-        if (dot) { dot.style.background = 'transparent'; dot.style.borderColor = '#555'; }
-      }
-      selected.clear();
-      renderDots();
-      renderLegend();
-    };
-  })();
-  </script>`;
+  </div>`;
 
   // --- 4. Top 5 anotadores ---
   const top5 = playerStats.slice(0, 5);
@@ -1502,6 +1391,11 @@ function renderPage(data, rivalShort, pbpRival) {
     ${quartersHTML}
     ${resultsHTML}
   </div>`;
+
+  // ── Inicializar panel de tiros por jugador ──
+  // (los datos se pasan via global para evitar <script> dentro de innerHTML)
+  window.__playerShots = playerShots;
+  if (typeof initPlayerPanel === 'function') initPlayerPanel();
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -1539,6 +1433,113 @@ async function init() {
 
 document.addEventListener('DOMContentLoaded', init);
 </script>
+
+<script>
+// ─── PANEL DE TIROS POR JUGADOR ───────────────────────────────────────────────
+// Separado del template literal para evitar que </scr + ipt> rompa el parser HTML.
+// Se llama desde renderPage() tras inyectar el HTML en el DOM.
+
+const SHOT_PALETTE = ['#f4c23b','#4fc3f7','#a5d6a7','#ef9a9a','#ce93d8','#ffcc80','#80cbc4','#ff8f00'];
+const _shotSelected = new Map(); // actorId → colorIndex
+
+function _normToSVG(xn, yn) {
+  // xnorm: 0=línea de fondo, ynorm: 0=banda izq. SVG W=420 BL=436 S=28
+  return { x: (yn / 100) * 420, y: 436 - (xn / 100) * 784 };
+}
+
+function _renderShotDots() {
+  const layer = document.getElementById('shot-dots-layer');
+  if (!layer) return;
+  const DATA = window.__playerShots || [];
+  const parts = [];
+  for (const [actorId, ci] of _shotSelected) {
+    const p = DATA.find(p => p.actorId === actorId);
+    if (!p) continue;
+    const col = SHOT_PALETTE[ci % SHOT_PALETTE.length];
+    const f = n => n.toFixed(1);
+    for (const [xn, yn] of (p.shots.t2m || [])) {
+      const {x,y} = _normToSVG(xn, yn);
+      parts.push(`<circle cx="${f(x)}" cy="${f(y)}" r="4.5" fill="${col}" stroke="rgba(0,0,0,0.5)" stroke-width="0.8" opacity="0.88"/>`);
+    }
+    for (const [xn, yn] of (p.shots.t2x || [])) {
+      const {x,y} = _normToSVG(xn, yn);
+      parts.push(`<circle cx="${f(x)}" cy="${f(y)}" r="4" fill="none" stroke="${col}" stroke-width="1.4" opacity="0.55"/>`);
+      parts.push(`<line x1="${f(x-3)}" y1="${f(y-3)}" x2="${f(x+3)}" y2="${f(y+3)}" stroke="${col}" stroke-width="1.2" opacity="0.55"/>`);
+      parts.push(`<line x1="${f(x+3)}" y1="${f(y-3)}" x2="${f(x-3)}" y2="${f(y+3)}" stroke="${col}" stroke-width="1.2" opacity="0.55"/>`);
+    }
+    for (const [xn, yn] of (p.shots.t3m || [])) {
+      const {x,y} = _normToSVG(xn, yn);
+      parts.push(`<polygon points="${f(x)},${f(y-5.5)} ${f(x+5)},${f(y)} ${f(x)},${f(y+5.5)} ${f(x-5)},${f(y)}" fill="${col}" stroke="rgba(0,0,0,0.5)" stroke-width="0.8" opacity="0.90"/>`);
+    }
+    for (const [xn, yn] of (p.shots.t3x || [])) {
+      const {x,y} = _normToSVG(xn, yn);
+      parts.push(`<polygon points="${f(x)},${f(y-5)}" fill="none" stroke="${col}" stroke-width="1.4" opacity="0.55"/>`);
+      // diamante vacío correcto
+      parts.pop();
+      parts.push(`<polygon points="${f(x)},${f(y-5)} ${f(x+4.5)},${f(y)} ${f(x)},${f(y+5)} ${f(x-4.5)},${f(y)}" fill="none" stroke="${col}" stroke-width="1.4" opacity="0.55"/>`);
+    }
+  }
+  layer.innerHTML = parts.join('');
+}
+
+function _renderPlayerLegend() {
+  const leg = document.getElementById('player-legend');
+  if (!leg) return;
+  const DATA = window.__playerShots || [];
+  if (_shotSelected.size === 0) { leg.style.display = 'none'; return; }
+  leg.style.display = 'flex';
+  leg.innerHTML = [..._shotSelected].map(([id, ci]) => {
+    const p = DATA.find(p => p.actorId === id);
+    if (!p) return '';
+    const col = SHOT_PALETTE[ci % SHOT_PALETTE.length];
+    return `<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);font-family:var(--barlow);">
+      <svg width="22" height="10" style="flex-shrink:0">
+        <circle cx="4" cy="5" r="3.5" fill="${col}"/>
+        <polygon points="15,1 19,5 15,9 11,5" fill="${col}"/>
+      </svg>
+      <span>#${p.dorsal} ${p.name}</span>
+      <span style="color:var(--muted)">${p.t2mk+p.t3mk}/${p.t2a+p.t3a}</span>
+    </div>`;
+  }).join('');
+}
+
+window._togglePlayer = function(actorId) {
+  const row = document.querySelector(`.pshot-row[data-id="${actorId}"]`);
+  const dot = document.getElementById(`pshot-dot-${actorId}`);
+  if (_shotSelected.has(actorId)) {
+    _shotSelected.delete(actorId);
+    if (row) row.style.background = 'rgba(255,255,255,0.03)';
+    if (dot) { dot.style.background = 'transparent'; dot.style.borderColor = '#555'; }
+  } else {
+    const used = new Set([..._shotSelected.values()]);
+    let idx = 0; while (used.has(idx)) idx++;
+    _shotSelected.set(actorId, idx);
+    const col = SHOT_PALETTE[idx % SHOT_PALETTE.length];
+    if (row) row.style.background = col + '18';
+    if (dot) { dot.style.background = col; dot.style.borderColor = col; }
+  }
+  _renderShotDots();
+  _renderPlayerLegend();
+};
+
+window._clearPlayers = function() {
+  for (const id of [..._shotSelected.keys()]) {
+    const row = document.querySelector(`.pshot-row[data-id="${id}"]`);
+    const dot = document.getElementById(`pshot-dot-${id}`);
+    if (row) row.style.background = 'rgba(255,255,255,0.03)';
+    if (dot) { dot.style.background = 'transparent'; dot.style.borderColor = '#555'; }
+  }
+  _shotSelected.clear();
+  _renderShotDots();
+  _renderPlayerLegend();
+};
+
+function initPlayerPanel() {
+  // Limpia estado de una carga anterior (por si renderPage se llama varias veces)
+  _shotSelected.clear();
+}
+</script>
+
 <script src="js/rol.js"></script>
 <script>document.addEventListener('DOMContentLoaded', () => { if (typeof HoopRol !== 'undefined') HoopRol.init(); });</script>
 </body>
