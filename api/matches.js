@@ -421,17 +421,18 @@ export default async function handler(req, res) {
           if (!team) continue;
           for (const p of (team.players || [])) {
             if (!p.gamePlayed || !p.data) continue;
-            const id = p.actorId;
-            if (!playerMap[id]) {
-              playerMap[id] = {
-                actorId: id,
+            // Clave de agrupación: nombre normalizado (actorId puede variar entre partidos)
+            const key = cleanPlayerName(p.name).toLowerCase();
+            if (!playerMap[key]) {
+              playerMap[key] = {
+                actorId: p.actorId,
                 name:    cleanPlayerName(p.name),
                 dorsal:  p.dorsal || '?',
                 t2a: 0, t2mk: 0, t3a: 0, t3mk: 0,
                 shots: { t2m: [], t2x: [], t3m: [], t3x: [] },
               };
             }
-            const ps = playerMap[id];
+            const ps = playerMap[key];
             const d  = p.data;
             ps.t2a  += d.shotsOfTwoAttempted    || 0;
             ps.t2mk += d.shotsOfTwoSuccessful   || 0;
@@ -455,6 +456,7 @@ export default async function handler(req, res) {
         }
         playerShots = Object.values(playerMap)
           .filter(p => p.t2a + p.t3a > 0)
+          .map((p, i) => ({ ...p, actorId: i }))   // id estable basado en posición tras agrupar
           .sort((a, b) => (b.t2a + b.t3a) - (a.t2a + a.t3a));
 
       } catch(_) { /* fallback silencioso */ }
