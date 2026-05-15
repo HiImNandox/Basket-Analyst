@@ -784,12 +784,11 @@ function buildCourtSVG(t2pct, t3pct, ftpct) {
   const l3  = t3pct  !== null ? `${t3pct.toFixed(1)}%`  : '—';
   const lft = ftpct  !== null ? `${ftpct.toFixed(1)}%`  : '—';
 
-  // ── Estilo visual: pista de entrenamiento ─────────────────────────────────
-  const FLOOR  = '#c48e30';   // parqué naranja-marrón
-  const FLOOR2 = '#b87e22';   // parqué ligeramente más oscuro (zona pintada)
-  const LINE   = '#ffffff';   // líneas blancas
-  const OUTER  = '#1e2e1e';   // verde exterior (tablero de táctica)
-  const LW     = 2;
+  // ── Estilo visual: pizarra táctica oscura (igual que jugadas/entrenos) ──────
+  const FLOOR  = '#0f1e30';   // azul marino oscuro — fondo cancha
+  const LINE   = '#9bbbd4';   // azul-gris claro — líneas cancha
+  const OUTER  = '#0a1520';   // casi negro — marco exterior
+  const LW     = 1.8;
 
   // ── Posiciones de texto ───────────────────────────────────────────────────
   const lbl3Y  = CRNY - 34;                 // label zona 3
@@ -802,26 +801,21 @@ function buildCourtSVG(t2pct, t3pct, ftpct) {
     <clipPath id="court-clip">
       <rect x="0" y="${PT}" width="${W}" height="${BL - PT}"/>
     </clipPath>
-    <!-- Vetas del parqué -->
-    <pattern id="wood" x="0" y="0" width="1" height="22" patternUnits="userSpaceOnUse">
-      <rect x="0" y="0" width="${W}" height="22" fill="${FLOOR}"/>
-      <line x1="0" y1="11" x2="${W}" y2="11" stroke="${FLOOR2}" stroke-width="0.6" opacity="0.45"/>
-    </pattern>
   </defs>
 
-  <!-- ─── Fondo exterior (pizarra/tablero táctico) ─── -->
+  <!-- ─── Fondo exterior ─── -->
   <rect x="0" y="0" width="${W}" height="${H}" fill="${OUTER}" rx="14"/>
 
-  <!-- ─── Suelo parqué ─── -->
-  <rect x="0" y="${PT}" width="${W}" height="${BL - PT}" fill="url(#wood)" clip-path="url(#court-clip)"/>
+  <!-- ─── Fondo cancha ─── -->
+  <rect x="0" y="${PT}" width="${W}" height="${BL - PT}" fill="${FLOOR}" clip-path="url(#court-clip)"/>
 
   <!-- ═══ ZONAS DE CALOR ═══ -->
-  <!-- Zona de 3 (fondo completo, se verá en los flancos fuera del arco) -->
+  <!-- Zona de 3 (flancos fuera del arco) — toda la cancha como base -->
   <rect x="0" y="${PT}" width="${W}" height="${BL - PT}"
-        fill="${c3}" opacity="0.52" clip-path="url(#court-clip)"/>
+        fill="${c3}" opacity="0.72" clip-path="url(#court-clip)"/>
 
   <!-- Zona interior al arco de 3 (toda la "D" = zona de 2) -->
-  <path d="${ZONE2_PATH}" fill="${c2}" opacity="0.58"/>
+  <path d="${ZONE2_PATH}" fill="${c2}" opacity="0.78"/>
 
   <!-- ═══ LÍNEAS DE LA CANCHA ═══ -->
   <!-- Líneas de fondo -->
