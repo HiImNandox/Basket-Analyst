@@ -246,12 +246,14 @@
   .court-section { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
   .court-wrap { padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
   /* Contenedor cancha + tabla jugadores: altura fija para que ambos queden iguales */
-  .court-player-layout { display:flex; gap:12px; align-items:stretch; flex-wrap:wrap; height:460px; }
+  .court-player-layout { display:flex; gap:12px; align-items:stretch; flex-wrap:wrap; height:460px; overflow:hidden; }
   /* SVG en desktop escala por altura (height:100% + width:auto) */
   #court-svg-container { flex:0 0 auto; height:100%; }
   #court-svg-container svg { height:100%; width:auto; display:block; border-radius:14px; overflow:hidden; }
   /* Panel jugadores: flex col, ocupa el espacio restante a la misma altura */
   .court-player-layout > div:last-child { flex:1; min-width:140px; display:flex; flex-direction:column; overflow:hidden; }
+  /* CRÍTICO: min-height:0 permite que el flex child con overflow-y:auto haga scroll */
+  #player-shot-list { min-height:0; }
   .court-note {
     font-size:11px;
     color:var(--muted);
