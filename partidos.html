@@ -358,7 +358,9 @@ function renderJornadas(partidos, ultimaJornada) {
           : '<div style="width:22px"></div>';
 
       const scoreHtml = p.isPendiente
-        ? `<div class="score-box" style="color:var(--muted);letter-spacing:1px;font-size:11px;">VS</div>`
+        ? (p.esCabaneta
+            ? `<div class="score-box" style="color:#4fc3f7;letter-spacing:1px;font-size:11px;border-color:rgba(79,195,247,.3);">VS ›</div>`
+            : `<div class="score-box" style="color:var(--muted);letter-spacing:1px;font-size:11px;">VS</div>`)
         : `<div class="score-box"><span>${p.local.puntos}</span><span class="sep">–</span><span>${p.visit.puntos}</span></div>`;
 
       row.innerHTML = `
@@ -375,6 +377,14 @@ function renderJornadas(partidos, ultimaJornada) {
           if (p.fileId && p.jornadaDir) {
             window.location.href = `partido.html?jornada=${p.jornadaDir}&file=${p.fileId}`;
           }
+        });
+      } else if (p.esCabaneta) {
+        // Partido pendiente de SAC → prepartido
+        const rival = p.local.shortName === 'SAC' ? p.visit : p.local;
+        row.style.cursor = 'pointer';
+        row.title = 'Ver análisis de prepartido';
+        row.addEventListener('click', () => {
+          window.location.href = `prepartido.html?rival=${encodeURIComponent(rival.shortName)}`;
         });
       }
 

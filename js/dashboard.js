@@ -88,6 +88,8 @@ function renderProximoPartido(sac) {
   const condicion = nextPartido.esCasa ? 'Casa' : 'Fuera';
   if (headEl) headEl.textContent = `Próximo partido · Jornada ${nextPartido.jornada}`;
 
+  const prepartidoUrl = `prepartido.html?rival=${encodeURIComponent(rival.shortName)}&from=index`;
+
   bodyEl.innerHTML = `
     <div class="match-teams">
       <div class="team-block">
@@ -109,6 +111,18 @@ function renderProximoPartido(sac) {
       ${nextPartido.fecha ? `<span class="meta-tag">${formatHora(nextPartido.fecha)}</span>`       : ''}
       <span class="meta-tag">${condicion}</span>
       ${nextPartido.cancha ? `<span class="meta-tag">${nextPartido.cancha}</span>` : ''}
+    </div>
+    <div style="margin-top:14px;">
+      <a href="${prepartidoUrl}" style="
+        display:inline-flex;align-items:center;gap:6px;
+        background:var(--red);color:#fff;
+        font-family:var(--bebas);font-size:15px;letter-spacing:1px;
+        padding:7px 16px;border-radius:6px;text-decoration:none;
+        transition:opacity .15s;
+      " onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Análisis de prepartido
+      </a>
     </div>
   `;
 }

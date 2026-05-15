@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>HoopStats · Pre-Partido</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red:#cc1414; --red-dim:#991010; --red-glow:rgba(204,20,20,0.12);
+    --bg:#111111; --panel:#1a1a1a; --panel2:#222222; --panel3:#2a2a2a;
+    --border:#2e2e2e; --border2:#3a3a3a;
+    --text:#f0f0f0; --text2:#aaaaaa; --muted:#666666;
+    --green:#27ae60; --green-dim:rgba(39,174,96,0.15); --green-border:rgba(39,174,96,0.3);
+    --red-border:rgba(204,20,20,0.3);
+    --bebas:'Bebas Neue',sans-serif; --barlow:'Barlow Condensed',sans-serif; --mono:'JetBrains Mono',monospace;
+    --sidebar-w:230px; --radius:10px;
+  }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:var(--barlow); overflow:hidden; }
+
+  /* ─── LAYOUT ─── */
+  .app { display:flex; height:100vh; height:100dvh; overflow:hidden; }
+  .sidebar { width:var(--sidebar-w); min-width:var(--sidebar-w); background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; height:100vh; height:100dvh; }
+  .sidebar-logo { padding:28px 22px 22px; border-bottom:1px solid var(--border); }
+  .logo-eyebrow { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); font-family:var(--barlow); margin-bottom:4px; }
+  .logo-name { font-family:var(--bebas); font-size:28px; letter-spacing:3px; color:var(--text); line-height:1; }
+  .logo-club { font-size:11px; color:var(--text2); font-family:var(--barlow); font-weight:600; margin-top:4px; }
+  .logo-accent { width:40px; height:3px; background:var(--red); margin-top:12px; border-radius:2px; }
+  .sidebar-nav { flex:1; padding:16px 0; overflow-y:auto; }
+  .nav-section-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding:14px 22px 6px; }
+  .nav-item { display:flex; align-items:center; gap:12px; padding:11px 22px; cursor:pointer; font-size:14px; font-weight:600; letter-spacing:0.5px; color:var(--text2); border-left:3px solid transparent; transition:background .15s,color .15s; text-decoration:none; }
+  .nav-item:hover { background:var(--panel2); color:var(--text); }
+  .nav-item.active { color:var(--red); border-left-color:var(--red); background:var(--red-glow); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; opacity:.7; }
+  .nav-item.active svg { opacity:1; }
+  .nav-badge { margin-left:auto; background:var(--red); color:white; font-size:10px; font-family:var(--mono); padding:1px 7px; border-radius:20px; }
+  .sidebar-bottom { padding:16px; border-top:1px solid var(--border); }
+  .user-card { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; cursor:pointer; }
+  .user-avatar { width:34px; height:34px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:13px; color:white; flex-shrink:0; }
+  .user-info { flex:1; min-width:0; }
+  .user-name { font-size:13px; font-weight:700; color:var(--text); }
+  .user-role { font-size:11px; color:var(--muted); }
+
+  /* ─── MAIN ─── */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+  .topbar { padding:20px 28px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:var(--bg); }
+  .topbar-left { display:flex; flex-direction:column; gap:2px; }
+  .topbar-breadcrumb { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+  .topbar-title { font-family:var(--bebas); font-size:30px; letter-spacing:2px; line-height:1; }
+  .topbar-back { display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--panel); border:1px solid var(--border); border-radius:7px; font-size:13px; font-weight:600; color:var(--text2); text-decoration:none; cursor:pointer; transition:background .15s, color .15s; }
+  .topbar-back:hover { background:var(--panel2); color:var(--text); }
+
+  /* ─── CONTENT ─── */
+  .content { flex:1; overflow-y:auto; padding:24px 28px 40px; }
+  .content::-webkit-scrollbar { width:4px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+  /* ─── LOADING / ERROR ─── */
+  .loading { padding:60px 40px; text-align:center; color:var(--muted); font-family:var(--barlow); font-size:14px; }
+  .error-msg { color:#e74c3c; }
+
+  /* ─── MOBILE TOPBAR ─── */
+  .mobile-topbar { display:none; padding:14px 18px 10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg); }
+  .mob-logo { font-family:var(--bebas); font-size:22px; letter-spacing:2px; }
+  .mob-logo span { color:var(--red); }
+  .mob-right { display:flex; align-items:center; gap:10px; }
+  .mob-avatar { width:32px; height:32px; border-radius:50%; background:var(--red); display:flex; align-items:center; justify-content:center; font-family:var(--bebas); font-size:12px; color:white; }
+
+  /* ─── BOTTOM NAV ─── */
+  .bottom-nav { display:none; height:calc(56px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:var(--panel); border-top:1px solid var(--border); flex-shrink:0; }
+  .bnav-inner { display:flex; height:100%; width:100%; }
+  .bnav-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; text-decoration:none; -webkit-tap-highlight-color:transparent; transition:background 0.1s; }
+  .bnav-item:active { background:var(--panel2); }
+  .bnav-icon { width:20px; height:20px; display:flex; align-items:center; justify-content:center; }
+  .bnav-icon svg { width:18px; height:18px; }
+  .bnav-item.active .bnav-icon svg { stroke:var(--red); }
+  .bnav-item:not(.active) .bnav-icon svg { stroke:var(--muted); }
+  .bnav-label { display:none; font-size:9px; text-transform:uppercase; font-family:var(--barlow); font-weight:700; color:var(--muted); line-height:1; letter-spacing:0; }
+  .bnav-item.active .bnav-label { color:var(--red); }
+  .bnav-dot { width:3px; height:3px; border-radius:50%; background:var(--red); }
+
+  @media (min-width:360px) { .bnav-label { display:block; } .bottom-nav { height:calc(60px + env(safe-area-inset-bottom)); } }
+
+  /* ─── PREPARTIDO STYLES ─── */
+
+  /* --- Sections grid --- */
+  .sections { display:flex; flex-direction:column; gap:24px; }
+
+  /* --- 1. MATCH HEADER --- */
+  .match-header-card {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    overflow:hidden;
+    position:relative;
+  }
+  .match-header-accent {
+    height:3px;
+    background:linear-gradient(90deg, var(--red) 0%, var(--red-dim) 100%);
+  }
+  .match-header-body {
+    padding:28px 32px 24px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+  }
+  .match-vs-row {
+    display:flex;
+    align-items:center;
+    gap:28px;
+    width:100%;
+    justify-content:center;
+  }
+  .team-block {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    flex:1;
+  }
+  .team-abbr-local {
+    font-family:var(--bebas);
+    font-size:52px;
+    letter-spacing:4px;
+    color:var(--red);
+    line-height:1;
+  }
+  .team-abbr-rival {
+    font-family:var(--bebas);
+    font-size:52px;
+    letter-spacing:4px;
+    color:var(--text);
+    line-height:1;
+  }
+  .team-fullname {
+    font-size:12px;
+    font-weight:600;
+    color:var(--text2);
+    text-align:center;
+    letter-spacing:0.5px;
+    font-family:var(--barlow);
+  }
+  .vs-divider {
+    font-family:var(--bebas);
+    font-size:28px;
+    letter-spacing:4px;
+    color:var(--muted);
+    flex-shrink:0;
+  }
+  .match-tags {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+  }
+  .tag {
+    font-size:11px;
+    font-family:var(--mono);
+    padding:4px 10px;
+    border-radius:4px;
+    border:1px solid var(--border2);
+    color:var(--text2);
+    background:var(--panel2);
+    letter-spacing:0.3px;
+  }
+  .tag.tag-casa { color:#4fc3f7; border-color:rgba(79,195,247,.35); background:rgba(79,195,247,.06); }
+  .tag.tag-fuera { color:#ffb74d; border-color:rgba(255,183,77,.35); background:rgba(255,183,77,.06); }
+  .tag.tag-cancha { color:var(--text2); }
+
+  /* --- 2. COMPARATIVA --- */
+  .section-card {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .section-header {
+    padding:14px 20px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-title {
+    font-family:var(--bebas);
+    font-size:18px;
+    letter-spacing:2px;
+    color:var(--text);
+  }
+  .section-subtitle {
+    font-size:11px;
+    color:var(--muted);
+    font-family:var(--barlow);
+  }
+  .section-body { padding:18px 20px; }
+
+  /* Comparativa bars */
+  .compare-grid { display:flex; flex-direction:column; gap:14px; }
+  .compare-row { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; }
+  .compare-label {
+    font-size:11px;
+    font-weight:600;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    font-family:var(--barlow);
+    grid-column:1/-1;
+    margin-bottom:2px;
+    text-align:center;
+  }
+  .compare-side { display:flex; flex-direction:column; gap:4px; }
+  .compare-side.left { align-items:flex-end; }
+  .compare-side.right { align-items:flex-start; }
+  .compare-val {
+    font-family:var(--mono);
+    font-size:14px;
+    font-weight:500;
+    color:var(--text);
+  }
+  .compare-val.sac { color:var(--red); }
+  .compare-bar-wrap { position:relative; height:7px; border-radius:4px; background:var(--panel2); overflow:hidden; width:100%; }
+  .compare-bar-fill { height:100%; border-radius:4px; transition:width .4s ease; }
+  .compare-bar-fill.sac { background:var(--red); margin-left:auto; }
+  .compare-bar-fill.rival { background:var(--text2); }
+  .compare-metric-row { display:grid; grid-template-columns:1fr 80px 1fr; gap:8px; align-items:center; }
+  .cbar-left { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .cbar-right { display:flex; flex-direction:column; align-items:flex-start; gap:3px; }
+  .cbar-center {
+    text-align:center;
+    font-size:10px;
+    font-weight:700;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    font-family:var(--barlow);
+    white-space:nowrap;
+  }
+  .bar-track { height:6px; border-radius:3px; background:var(--panel3); overflow:hidden; width:100%; min-width:80px; }
+  .bar-sac { height:100%; border-radius:3px; background:var(--red); float:right; }
+  .bar-rival { height:100%; border-radius:3px; background:#aaa; }
+
+  /* --- 3. SHOT HEATMAP --- */
+  .court-section { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .court-wrap { padding:18px 20px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .court-svg-container { width:100%; max-width:560px; }
+  .court-note {
+    font-size:11px;
+    color:var(--muted);
+    font-family:var(--barlow);
+    text-align:center;
+    line-height:1.5;
+    max-width:500px;
+    padding:0 8px;
+  }
+  .court-legend {
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text2); font-family:var(--barlow); }
+  .legend-swatch { width:14px; height:8px; border-radius:2px; }
+
+  /* FT box separado */
+  .ft-box {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    padding:12px 20px;
+    background:var(--panel2);
+    border:1px solid var(--border2);
+    border-radius:8px;
+    min-width:120px;
+  }
+  .ft-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); font-family:var(--barlow); }
+  .ft-pct { font-family:var(--mono); font-size:22px; font-weight:500; }
+  .ft-attempts { font-size:11px; color:var(--muted); font-family:var(--barlow); }
+
+  /* --- 4. TOP SCORERS --- */
+  .scorers-table { width:100%; border-collapse:collapse; }
+  .scorers-table th {
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--muted);
+    padding:6px 10px;
+    text-align:right;
+    font-family:var(--barlow);
+    border-bottom:1px solid var(--border);
+  }
+  .scorers-table th:first-child { text-align:left; }
+  .scorers-table td {
+    padding:9px 10px;
+    font-size:13px;
+    font-family:var(--barlow);
+    color:var(--text2);
+    text-align:right;
+    border-bottom:1px solid var(--border);
+    vertical-align:middle;
+  }
+  .scorers-table td:first-child { text-align:left; }
+  .scorers-table tbody tr:last-child td { border-bottom:none; }
+  .scorers-table tbody tr:hover { background:var(--panel2); }
+  .player-danger { color:var(--red) !important; font-weight:700; }
+  .pts-highlight { font-family:var(--mono); font-weight:500; color:var(--text); }
+  .pj-badge {
+    display:inline-block;
+    font-size:10px;
+    font-family:var(--mono);
+    color:var(--muted);
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:3px;
+    padding:1px 5px;
+  }
+
+  /* --- 5. CUARTOS --- */
+  .quarters-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .quarter-card {
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:16px 12px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    transition:border-color .2s;
+  }
+  .quarter-card.best { border-color:var(--red); background:var(--red-glow); }
+  .quarter-label { font-family:var(--bebas); font-size:20px; letter-spacing:2px; color:var(--text2); }
+  .quarter-card.best .quarter-label { color:var(--red); }
+  .quarter-pts { font-family:var(--mono); font-size:28px; font-weight:500; color:var(--text); }
+  .quarter-sub { font-size:11px; color:var(--muted); font-family:var(--barlow); }
+
+  /* --- 6. ÚLTIMOS RESULTADOS --- */
+  .results-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .result-pill {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    padding:10px 14px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    min-width:68px;
+    background:var(--panel2);
+  }
+  .result-pill.win { background:var(--green-dim); border-color:var(--green-border); }
+  .result-pill.loss { background:var(--red-glow); border-color:var(--red-border); }
+  .result-letter {
+    font-family:var(--bebas);
+    font-size:22px;
+    letter-spacing:2px;
+    line-height:1;
+  }
+  .result-pill.win .result-letter { color:var(--green); }
+  .result-pill.loss .result-letter { color:#e74c3c; }
+  .result-score {
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--text2);
+    white-space:nowrap;
+  }
+  .result-rival { font-size:11px; color:var(--muted); font-family:var(--barlow); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width:768px) {
+    .app { flex-direction:column; }
+    .sidebar { display:none; }
+    .mobile-topbar { display:flex; }
+    .bottom-nav { display:flex; width:100%; }
+    .topbar { display:none; }
+    .content { padding:14px 14px 20px; overflow-y:auto; }
+    .match-header-body { padding:20px 16px 18px; }
+    .team-abbr-local, .team-abbr-rival { font-size:38px; }
+    .quarters-grid { grid-template-columns:repeat(4,1fr); gap:8px; }
+    .quarter-pts { font-size:22px; }
+    .compare-metric-row { grid-template-columns:1fr 60px 1fr; }
+    .section-body { padding:14px; }
+    .court-svg-container { max-width:100%; }
+  }
+  @media (max-width:480px) {
+    .quarters-grid { grid-template-columns:repeat(2,1fr); }
+    .match-vs-row { gap:16px; }
+    .team-abbr-local, .team-abbr-rival { font-size:34px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-eyebrow">Temporada 2025–26</div>
+      <div class="logo-name">HoopStats</div>
+      <div class="logo-club">Sa Cabaneta A · Fontaneria Jose Puerta</div>
+      <div class="logo-accent"></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        Inicio
+      </a>
+      <a href="liga.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+        </svg>
+        Liga
+      </a>
+      <a href="partidos.html" class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+        </svg>
+        Partidos
+      </a>
+      <a href="jugadores.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/>
+        </svg>
+        Jugadores
+      </a>
+      <a href="calendario.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Calendario
+      </a>
+      <div class="nav-section-label">Equipo</div>
+      <a href="equipo.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Mi equipo
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar">JP</div>
+        <div class="user-info">
+          <div class="user-name">Jordi P.</div>
+          <div class="user-role">Entrenador</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+
+    <!-- Mobile topbar -->
+    <div class="mobile-topbar">
+      <div class="mob-logo">Hoop<span>Stats</span></div>
+      <div class="mob-right">
+        <div class="mob-avatar">JP</div>
+      </div>
+    </div>
+
+    <!-- Desktop topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-breadcrumb">Sa Cabaneta A · Análisis Pre-Partido</div>
+        <div class="topbar-title" id="topbar-title">Pre-Partido</div>
+      </div>
+      <a id="btn-back" href="partidos.html" class="topbar-back">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Volver
+      </a>
+    </div>
+
+    <!-- Content -->
+    <div class="content" id="page-content">
+      <div class="loading" id="loading-msg">Cargando análisis…</div>
+    </div>
+
+    <!-- Bottom nav (móvil) -->
+    <nav class="bottom-nav">
+      <div class="bnav-inner">
+        <a href="index.html" class="bnav-item">
+          <div class="bnav-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Inicio</div>
+        </a>
+        <a href="liga.html" class="bnav-item">
+          <div class="bnav-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Liga</div>
+        </a>
+        <a href="partidos.html" class="bnav-item active">
+          <div class="bnav-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Partidos</div>
+          <div class="bnav-dot"></div>
+        </a>
+        <a href="jugadores.html" class="bnav-item">
+          <div class="bnav-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="7" r="4"/><path d="M5.5 21a8.38 8.38 0 0 1 13 0"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Jugadores</div>
+        </a>
+        <a href="equipo.html" class="bnav-item">
+          <div class="bnav-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="bnav-label">Equipo</div>
+        </a>
+      </div>
+    </nav>
+  </div>
+</div>
+
+<script>
+// ─── CONSTANTES ──────────────────────────────────────────────────────────────
+const SAC = 'SAC';
+const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const day  = d.getDate();
+  const mes  = MESES[d.getMonth()];
+  const h    = d.getHours().toString().padStart(2,'0');
+  const m    = d.getMinutes().toString().padStart(2,'0');
+  const hora = (h === '00' && m === '00') ? '' : ` · ${h}:${m}`;
+  return `${day} ${mes}${hora}`;
+}
+function pct(made, att) {
+  if (!att) return null;
+  return (made / att * 100);
+}
+function fmtPct(v) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  return v.toFixed(1) + '%';
+}
+function fmtN(v, dec=1) {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  return v.toFixed(dec);
+}
+
+// ─── HEATMAP COLOR ───────────────────────────────────────────────────────────
+// Retorna un color CSS según el % y el tipo de zona (t2 o t3 o ft)
+function heatColor(pctVal, type) {
+  if (pctVal === null || isNaN(pctVal)) return '#333333';
+  let cold, warm, hot, fire;
+  if (type === 't2') {
+    // <40=azul, 40-45=amarillo, 45-50=naranja, >50=rojo
+    cold  = [53,  97, 180];  // #3561B4
+    warm  = [230, 185, 30];  // #E6B91E
+    hot   = [220, 100, 20];  // #DC6414
+    fire  = [204,  20, 20];  // var(--red)
+    if (pctVal < 40)       return blend(cold, warm, pctVal / 40);
+    if (pctVal < 45)       return blendArr(warm, hot, (pctVal-40)/5);
+    if (pctVal < 50)       return blendArr(hot, fire, (pctVal-45)/5);
+    return `rgb(${fire.join(',')})`;
+  } else if (type === 't3') {
+    // <28=azul, 28-33=amarillo, 33-38=naranja, >38=rojo
+    cold  = [53,  97, 180];
+    warm  = [230, 185, 30];
+    hot   = [220, 100, 20];
+    fire  = [204,  20, 20];
+    if (pctVal < 28)       return blend(cold, warm, pctVal / 28);
+    if (pctVal < 33)       return blendArr(warm, hot, (pctVal-28)/5);
+    if (pctVal < 38)       return blendArr(hot, fire, (pctVal-33)/5);
+    return `rgb(${fire.join(',')})`;
+  } else {
+    // ft: misma lógica que t2
+    cold  = [53,  97, 180];
+    warm  = [230, 185, 30];
+    hot   = [220, 100, 20];
+    fire  = [204,  20, 20];
+    if (pctVal < 50)       return blend(cold, warm, pctVal / 50);
+    if (pctVal < 65)       return blendArr(warm, hot, (pctVal-50)/15);
+    if (pctVal < 75)       return blendArr(hot, fire, (pctVal-65)/10);
+    return `rgb(${fire.join(',')})`;
+  }
+}
+function blend(a, b, t) {
+  t = Math.max(0, Math.min(1, t));
+  return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`;
+}
+function blendArr(a, b, t) { return blend(a, b, t); }
+
+// ─── PARSE TIROS "made/att" ───────────────────────────────────────────────────
+// La API devuelve t1/t2/t3 como strings "hechos/intentados" p.ej "3/8"
+function parseShotStr(s) {
+  if (typeof s === 'number') return { m: s, a: s };
+  if (!s || typeof s !== 'string') return { m: 0, a: 0 };
+  const parts = s.split('/');
+  return { m: parseInt(parts[0], 10) || 0, a: parseInt(parts[1], 10) || 0 };
+}
+
+// ─── CÁLCULO DE STATS ────────────────────────────────────────────────────────
+function calcStats(partidos, teamShort) {
+  // Devuelve stats acumuladas de un equipo a partir de sus partidos (ya filtrados, ya jugados)
+  let pj=0, pts=0, t2m=0, t2a=0, t3m=0, t3a=0, t1m=0, t1a=0;
+  let reb=0, ast=0, to=0, pir=0;
+
+  for (const p of partidos) {
+    const players = p.players && p.players[teamShort];
+    if (!players || !players.length) continue;
+    pj++;
+    for (const pl of players) {
+      pts += pl.pts || 0;
+      reb += pl.reb || 0;
+      ast += pl.ast || 0;
+      to  += pl.to  || 0;
+      pir += pl.pir || 0;
+      const t2 = parseShotStr(pl.t2);
+      const t3 = parseShotStr(pl.t3);
+      const t1 = parseShotStr(pl.t1);
+      t2m += t2.m; t2a += t2.a;
+      t3m += t3.m; t3a += t3.a;
+      t1m += t1.m; t1a += t1.a;
+    }
+  }
+
+  if (!pj) return null;
+  return {
+    pj,
+    ppg  : pts / pj,
+    rpg  : reb / pj,
+    apg  : ast / pj,
+    topg : to  / pj,
+    pirpg: pir / pj,
+    t2pct: pct(t2m, t2a),
+    t3pct: pct(t3m, t3a),
+    t1pct: pct(t1m, t1a),
+    t2m, t2a, t3m, t3a, t1m, t1a
+  };
+}
+
+// Stats por jugador del rival
+function calcPlayerStats(partidos, teamShort) {
+  const map = {}; // nombre → acumulado
+
+  for (const p of partidos) {
+    const players = p.players && p.players[teamShort];
+    if (!players || !players.length) continue;
+    for (const pl of players) {
+      const name = pl.name || 'Desconocido';
+      if (!map[name]) map[name] = { name, pj:0, pts:0, reb:0, ast:0, pir:0, t3m:0, t3a:0 };
+      map[name].pj  += 1;
+      map[name].pts += pl.pts || 0;
+      map[name].reb += pl.reb || 0;
+      map[name].ast += pl.ast || 0;
+      map[name].pir += pl.pir || 0;
+      const t3 = parseShotStr(pl.t3);
+      map[name].t3m += t3.m;
+      map[name].t3a += t3.a;
+    }
+  }
+
+  return Object.values(map).map(p => ({
+    ...p,
+    ppg  : p.pts / p.pj,
+    rpg  : p.reb / p.pj,
+    apg  : p.ast / p.pj,
+    pirpg: p.pir / p.pj,
+    t3pct: pct(p.t3m, p.t3a)
+  })).sort((a, b) => b.ppg - a.ppg);
+}
+
+// Puntos por cuarto del rival
+function calcQuarterStats(partidos, teamShort) {
+  const totals = [0, 0, 0, 0];
+  let count = 0;
+
+  for (const p of partidos) {
+    if (!p.cuartos) continue;
+    // Determinar si el rival es local o visitante en este partido
+    const isLocal = p.local && p.local.shortName === teamShort;
+    const arr = isLocal ? p.cuartos.local : p.cuartos.visit;
+    if (!arr || arr.length < 4) continue;
+    for (let i = 0; i < 4; i++) totals[i] += (arr[i] || 0);
+    count++;
+  }
+
+  if (!count) return null;
+  return totals.map(t => t / count);
+}
+
+// Últimos 5 resultados del rival
+function calcLastResults(partidos, teamShort) {
+  const played = partidos.filter(p => !p.isPendiente);
+  // Ordenar por fecha descendente
+  played.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
+  const last5 = played.slice(0, 5);
+
+  return last5.map(p => {
+    const isLocal = p.local && p.local.shortName === teamShort;
+    const teamPts = isLocal ? p.local.puntos : p.visit.puntos;
+    const oppPts  = isLocal ? p.visit.puntos : p.local.puntos;
+    const oppName = isLocal ? (p.visit.shortName || p.visit.nombre) : (p.local.shortName || p.local.nombre);
+    const win = teamPts > oppPts;
+    return { win, teamPts, oppPts, oppName };
+  });
+}
+
+// ─── SVG CANCHA ──────────────────────────────────────────────────────────────
+function buildCourtSVG(t2pct, t3pct) {
+  // Proporciones FIBA medio campo: 28m×15m → vista cenital
+  // Usamos un viewBox de 560×300 (relación ~1.87:1, similar a 28:15)
+  const W = 560, H = 300;
+  // Colores según eficiencia
+  const col2 = t2pct !== null ? heatColor(t2pct, 't2') : '#2a2a2a';
+  const col3 = t3pct !== null ? heatColor(t3pct, 't3') : '#2a2a2a';
+  const colRest = '#1e2535'; // zona restringida: azul oscuro neutro
+
+  // Medidas en píxeles (escala: 560px = 28m, 300px = 15m)
+  const scaleX = W / 28;  // 20px/m
+  const scaleY = H / 15;  // 20px/m
+
+  // Línea de fondo a x=0, canasta a x≈1.575m (el centro del aro)
+  const hoopX = 1.575 * scaleX;   // ~31.5px
+  const hoopY = H / 2;            // 150px (centro vertical)
+  const hoopR = 0.225 * scaleX;   // radio aro ~4.5px
+
+  // Zona pintada (rectángulo): 5.8m largo × 4.9m ancho
+  const paintW = 5.8  * scaleX;  // 116px
+  const paintH = 4.9  * scaleY;  // 98px
+  const paintY = (H - paintH) / 2; // centrado: 101px
+  const paintX = 0;
+
+  // Zona restringida: semicírculo de radio 1.25m centrado en el aro
+  const restrictR = 1.25 * scaleX; // 25px
+
+  // Arco de 3: radio 6.75m desde el aro (FIBA)
+  // Pero limitado por el campo: en córner la línea de 3 es a 0.9m de la línea lateral
+  const arc3R = 6.75 * scaleX; // 135px
+  // Las líneas de esquina van paralelas al fondo desde y=0.9m hasta que se unen con el arco
+  const corner3Y = 0.9 * scaleY; // 18px desde cada banda
+
+  // Línea de tiros libres a 5.8m de la línea de fondo
+  const ftLineX = 5.8 * scaleX; // 116px = paintW
+
+  // Círculo central en la línea de tiros libres (radio 1.8m)
+  const ftCircleR = 1.8 * scaleY; // 36px
+
+  // Arco de 3 puntos: ángulo de inicio / fin
+  // El arco parte desde las esquinas (corner lines) y forma un semicírculo
+  // Centro del arco: (hoopX, hoopY)
+  // Las líneas de corner son horizontales en y=corner3Y y y=H-corner3Y
+  // El ángulo donde el arco toca la línea lateral:
+  const arcCornerAngle = Math.asin((hoopY - corner3Y) / arc3R); // rad desde eje X
+  // El arco va desde -arcCornerAngle hasta +arcCornerAngle (pasando por el lado derecho)
+  const startAngle = arcCornerAngle;
+  const endAngle   = Math.PI - arcCornerAngle;
+  // Pero en SVG el eje Y va hacia abajo, y el aro está a la izquierda
+  // Calculamos los puntos del arco:
+  const arcStartX = hoopX + arc3R * Math.cos(Math.PI - startAngle);
+  const arcStartY = hoopY - arc3R * Math.sin(startAngle);  // parte superior
+  const arcEndX   = hoopX + arc3R * Math.cos(Math.PI - endAngle);
+  const arcEndY   = hoopY + arc3R * Math.sin(startAngle);  // parte inferior
+
+  // Para el path del arco de 3 (solo la parte curva, sin las líneas de corner)
+  // Usamos arc desde (arcStartX, arcStartY) hasta (arcEndX, arcEndY) con radio arc3R
+  // large-arc-flag=0, sweep-flag=0 (anti-horario en coords SVG)
+  const arcD = `M ${arcStartX.toFixed(1)} ${arcStartY.toFixed(1)} A ${arc3R.toFixed(1)} ${arc3R.toFixed(1)} 0 0 1 ${arcEndX.toFixed(1)} ${arcEndY.toFixed(1)}`;
+
+  // ─── Labels sobre zonas ───────────────────────────────────────────────────
+  const t2Label  = t2pct !== null ? `${t2pct.toFixed(1)}%` : '—';
+  const t3Label  = t3pct !== null ? `${t3pct.toFixed(1)}%` : '—';
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;border-radius:8px;">
+  <defs>
+    <clipPath id="court-clip">
+      <rect x="0" y="0" width="${W}" height="${H}" rx="8"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#court-clip)">
+
+  <!-- Fondo (fuera del arco = zona de 3) -->
+  <rect x="0" y="0" width="${W}" height="${H}" fill="${col3}" opacity="0.85"/>
+
+  <!-- Zona de 2 puntos: rectángulo de pintura -->
+  <rect x="${paintX}" y="${paintY.toFixed(1)}" width="${paintW.toFixed(1)}" height="${paintH.toFixed(1)}" fill="${col2}" opacity="0.9"/>
+
+  <!-- Zona restringida (semicírculo) -->
+  <path d="M ${hoopX.toFixed(1)} ${(hoopY - restrictR).toFixed(1)} A ${restrictR.toFixed(1)} ${restrictR.toFixed(1)} 0 0 1 ${hoopX.toFixed(1)} ${(hoopY + restrictR).toFixed(1)} Z" fill="${colRest}" opacity="0.95"/>
+
+  <!-- Líneas de la cancha -->
+  <!-- Borde del campo -->
+  <rect x="1" y="1" width="${W-2}" height="${H-2}" fill="none" stroke="#444" stroke-width="1.5" rx="6"/>
+
+  <!-- Línea de fondo -->
+  <line x1="0" y1="0" x2="0" y2="${H}" stroke="#555" stroke-width="2"/>
+
+  <!-- Zona pintada (contorno) -->
+  <rect x="${paintX}" y="${paintY.toFixed(1)}" width="${paintW.toFixed(1)}" height="${paintH.toFixed(1)}" fill="none" stroke="#555" stroke-width="1.2"/>
+
+  <!-- Línea de tiros libres -->
+  <line x1="${ftLineX.toFixed(1)}" y1="${paintY.toFixed(1)}" x2="${ftLineX.toFixed(1)}" y2="${(paintY + paintH).toFixed(1)}" stroke="#555" stroke-width="1.2"/>
+
+  <!-- Semicírculo zona restringida (línea) -->
+  <path d="M ${hoopX.toFixed(1)} ${(hoopY - restrictR).toFixed(1)} A ${restrictR.toFixed(1)} ${restrictR.toFixed(1)} 0 0 1 ${hoopX.toFixed(1)} ${(hoopY + restrictR).toFixed(1)}" fill="none" stroke="#777" stroke-width="1.2"/>
+
+  <!-- Arco tiros libres -->
+  <path d="M ${ftLineX.toFixed(1)} ${(hoopY - ftCircleR).toFixed(1)} A ${ftCircleR.toFixed(1)} ${ftCircleR.toFixed(1)} 0 0 1 ${ftLineX.toFixed(1)} ${(hoopY + ftCircleR).toFixed(1)}" fill="none" stroke="#555" stroke-width="1.2" stroke-dasharray="4 3"/>
+
+  <!-- Líneas de corner 3 -->
+  <line x1="0" y1="${corner3Y.toFixed(1)}" x2="${arcStartX.toFixed(1)}" y2="${corner3Y.toFixed(1)}" stroke="#555" stroke-width="1.2"/>
+  <line x1="0" y1="${(H - corner3Y).toFixed(1)}" x2="${arcEndX.toFixed(1)}" y2="${(H - corner3Y).toFixed(1)}" stroke="#555" stroke-width="1.2"/>
+
+  <!-- Arco de 3 -->
+  <path d="${arcD}" fill="none" stroke="#666" stroke-width="1.5"/>
+
+  <!-- Aro -->
+  <circle cx="${hoopX.toFixed(1)}" cy="${hoopY.toFixed(1)}" r="${(hoopR * 1.8).toFixed(1)}" fill="none" stroke="#e07b00" stroke-width="2"/>
+
+  <!-- ─── Labels ─── -->
+  <!-- Label zona 3 (derecha) -->
+  <text x="${(W * 0.72).toFixed(0)}" y="${(H * 0.5 - 10).toFixed(0)}" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="20" font-weight="500" fill="white" opacity="0.95">${t3Label}</text>
+  <text x="${(W * 0.72).toFixed(0)}" y="${(H * 0.5 + 14).toFixed(0)}" text-anchor="middle" font-family="'Barlow Condensed',sans-serif" font-size="13" font-weight="600" fill="white" opacity="0.7">3 PUNTOS</text>
+
+  <!-- Label zona 2 (pintura, centro) -->
+  <text x="${(paintW * 0.55).toFixed(0)}" y="${(H * 0.5 - 10).toFixed(0)}" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="18" font-weight="500" fill="white" opacity="0.95">${t2Label}</text>
+  <text x="${(paintW * 0.55).toFixed(0)}" y="${(H * 0.5 + 12).toFixed(0)}" text-anchor="middle" font-family="'Barlow Condensed',sans-serif" font-size="12" font-weight="600" fill="white" opacity="0.7">2 PUNTOS</text>
+
+  <!-- Label zona restringida -->
+  <text x="${(hoopX + restrictR * 0.1).toFixed(0)}" y="${(hoopY + 5).toFixed(0)}" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" fill="white" opacity="0.6">–</text>
+
+  <!-- Indicador de canasta / fondo -->
+  <text x="8" y="${(H - 8)}" text-anchor="start" font-family="'Barlow Condensed',sans-serif" font-size="10" fill="#666" opacity="0.8">FONDO</text>
+
+  </g>
+</svg>`;
+}
+
+// ─── RENDER PRINCIPAL ─────────────────────────────────────────────────────────
+function renderPage(data, rivalShort) {
+  const { partidos } = data;
+
+  // ── 1. Partido pendiente vs rival ──
+  const matchPendiente = partidos.find(p =>
+    p.isPendiente && p.esCabaneta &&
+    (p.local.shortName === rivalShort || p.visit.shortName === rivalShort)
+  );
+
+  const rivalNombre = matchPendiente
+    ? (matchPendiente.local.shortName === rivalShort ? matchPendiente.local.nombre : matchPendiente.visit.nombre)
+    : rivalShort;
+
+  document.title = `HoopStats · Pre-Partido vs ${rivalNombre}`;
+  document.getElementById('topbar-title').textContent = `vs ${rivalShort}`;
+
+  // ── Partidos del rival (todos, jugados) ──
+  const rivalPartidos = partidos.filter(p =>
+    !p.isPendiente &&
+    (p.local.shortName === rivalShort || p.visit.shortName === rivalShort)
+  );
+
+  // ── Partidos de SAC (jugados) ──
+  const sacPartidos = partidos.filter(p =>
+    !p.isPendiente && p.esCabaneta
+  );
+
+  // ── Stats ──
+  const statsSAC   = calcStats(sacPartidos, SAC);
+  const statsRival = calcStats(rivalPartidos, rivalShort);
+  const playerStats = calcPlayerStats(rivalPartidos, rivalShort);
+  const quarterStats = calcQuarterStats(rivalPartidos, rivalShort);
+  const lastResults  = calcLastResults(rivalPartidos, rivalShort);
+
+  // ── HTML ──
+  const content = document.getElementById('page-content');
+
+  // --- 1. Header ---
+  let headerHTML = '';
+  if (matchPendiente) {
+    const esCasa = matchPendiente.esCasa;
+    const tagCasaFuera = esCasa
+      ? '<span class="tag tag-casa">CASA</span>'
+      : '<span class="tag tag-fuera">FUERA</span>';
+    const tagFecha = matchPendiente.fecha
+      ? `<span class="tag">${fmtDate(matchPendiente.fecha)}</span>`
+      : '';
+    const tagJornada = `<span class="tag">Jornada ${matchPendiente.jornada}</span>`;
+    const tagCancha  = matchPendiente.cancha
+      ? `<span class="tag tag-cancha">${matchPendiente.cancha}</span>`
+      : '';
+    headerHTML = `
+    <div class="match-header-card">
+      <div class="match-header-accent"></div>
+      <div class="match-header-body">
+        <div class="match-vs-row">
+          <div class="team-block">
+            <div class="team-abbr-local">SAC</div>
+            <div class="team-fullname">Sa Cabaneta A</div>
+          </div>
+          <div class="vs-divider">VS</div>
+          <div class="team-block">
+            <div class="team-abbr-rival">${rivalShort}</div>
+            <div class="team-fullname">${rivalNombre}</div>
+          </div>
+        </div>
+        <div class="match-tags">
+          ${tagFecha}
+          ${tagJornada}
+          ${tagCasaFuera}
+          ${tagCancha}
+        </div>
+      </div>
+    </div>`;
+  } else {
+    headerHTML = `
+    <div class="match-header-card">
+      <div class="match-header-accent"></div>
+      <div class="match-header-body">
+        <div class="match-vs-row">
+          <div class="team-block">
+            <div class="team-abbr-local">SAC</div>
+            <div class="team-fullname">Sa Cabaneta A</div>
+          </div>
+          <div class="vs-divider">VS</div>
+          <div class="team-block">
+            <div class="team-abbr-rival">${rivalShort}</div>
+            <div class="team-fullname">${rivalNombre}</div>
+          </div>
+        </div>
+        <div class="match-tags">
+          <span class="tag" style="color:#ffb74d;border-color:rgba(255,183,77,.35);background:rgba(255,183,77,.06);">Sin partido pendiente encontrado</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // --- 2. Comparativa ---
+  function metricRow(label, sacVal, rivalVal, isPercent=false, lowerIsBetter=false) {
+    const sv = sacVal   !== null && !isNaN(sacVal)   ? sacVal   : 0;
+    const rv = rivalVal !== null && !isNaN(rivalVal) ? rivalVal : 0;
+    const max = Math.max(sv, rv, 0.001);
+    const sacW  = Math.round((sv / max) * 100);
+    const rivW  = Math.round((rv / max) * 100);
+    const sacDisplay  = isPercent ? fmtPct(sacVal)   : fmtN(sacVal);
+    const rivalDisplay = isPercent ? fmtPct(rivalVal) : fmtN(rivalVal);
+
+    return `
+    <div>
+      <div class="compare-metric-row">
+        <div class="cbar-left">
+          <span class="compare-val sac">${sacDisplay}</span>
+          <div class="bar-track"><div class="bar-sac" style="width:${sacW}%"></div></div>
+        </div>
+        <div class="cbar-center">${label}</div>
+        <div class="cbar-right">
+          <span class="compare-val">${rivalDisplay}</span>
+          <div class="bar-track"><div class="bar-rival" style="width:${rivW}%"></div></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const sac_pj = statsSAC  ? statsSAC.pj  : 0;
+  const riv_pj = statsRival ? statsRival.pj : 0;
+
+  let compareHTML = `
+  <div class="section-card">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Comparativa de Stats</div>
+        <div class="section-subtitle">SAC (${sac_pj} PJ) · ${rivalShort} (${riv_pj} PJ) — medias por partido</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div style="display:flex;justify-content:space-between;margin-bottom:12px;padding:0 2px;">
+        <span style="font-size:11px;font-weight:700;color:var(--red);font-family:var(--barlow);letter-spacing:0.5px;">SAC</span>
+        <span style="font-size:11px;font-weight:700;color:var(--text2);font-family:var(--barlow);letter-spacing:0.5px;">${rivalShort}</span>
+      </div>
+      <div class="compare-grid">
+        ${metricRow('PTS/PJ', statsSAC?.ppg, statsRival?.ppg)}
+        ${metricRow('T2%', statsSAC?.t2pct, statsRival?.t2pct, true)}
+        ${metricRow('T3%', statsSAC?.t3pct, statsRival?.t3pct, true)}
+        ${metricRow('TL%', statsSAC?.t1pct, statsRival?.t1pct, true)}
+        ${metricRow('REB/PJ', statsSAC?.rpg, statsRival?.rpg)}
+        ${metricRow('AST/PJ', statsSAC?.apg, statsRival?.apg)}
+        ${metricRow('PÉR/PJ', statsSAC?.topg, statsRival?.topg, false, true)}
+        ${metricRow('PIR/PJ', statsSAC?.pirpg, statsRival?.pirpg)}
+      </div>
+    </div>
+  </div>`;
+
+  // --- 3. Mapa de calor ---
+  const t2pct = statsRival?.t2pct ?? null;
+  const t3pct = statsRival?.t3pct ?? null;
+  const t1pct = statsRival?.t1pct ?? null;
+  const t2att = statsRival && riv_pj ? (statsRival.t2a / riv_pj) : null;
+  const t3att = statsRival && riv_pj ? (statsRival.t3a / riv_pj) : null;
+  const t1att = statsRival && riv_pj ? (statsRival.t1a / riv_pj) : null;
+
+  const ftColor = t1pct !== null ? heatColor(t1pct, 'ft') : '#333';
+
+  const courtSVG = buildCourtSVG(t2pct, t3pct);
+
+  const t2SubLabel = t2att !== null ? `${t2att.toFixed(1)} int/pj` : '';
+  const t3SubLabel = t3att !== null ? `${t3att.toFixed(1)} int/pj` : '';
+  const t1SubLabel = t1att !== null ? `${t1att.toFixed(1)} int/pj` : '';
+
+  let heatmapHTML = `
+  <div class="court-section">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Mapa de Tiro — ${rivalShort}</div>
+        <div class="section-subtitle">Eficiencia por zona · toda la temporada</div>
+      </div>
+    </div>
+    <div class="court-wrap">
+      <div class="court-svg-container">${courtSVG}</div>
+
+      <!-- FT separado -->
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;">
+        <div class="ft-box" style="border-color:${ftColor}22;background:${ftColor}18;">
+          <div class="ft-label">Tiros Libres</div>
+          <div class="ft-pct" style="color:${ftColor}">${fmtPct(t1pct)}</div>
+          <div class="ft-attempts">${t1SubLabel}</div>
+        </div>
+        <div style="max-width:220px;">
+          <div style="font-size:11px;color:var(--muted);font-family:var(--barlow);line-height:1.5;">
+            Zona 2PT: <strong style="color:${t2pct!==null?heatColor(t2pct,'t2'):'#666'}">${fmtPct(t2pct)}</strong>${t2SubLabel ? ` · ${t2SubLabel}` : ''}<br>
+            Zona 3PT: <strong style="color:${t3pct!==null?heatColor(t3pct,'t3'):'#666'}">${fmtPct(t3pct)}</strong>${t3SubLabel ? ` · ${t3SubLabel}` : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="court-legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#3561B4"></div>Frío (bajo %)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#E6B91E"></div>Moderado</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#DC6414"></div>Alto</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#cc1414"></div>Peligroso</div>
+      </div>
+      <div class="court-note">
+        Nota: Los colores representan la eficiencia global de T2 y T3 del rival sin distinción de zona específica dentro del campo, ya que los datos registran totales acumulados por partido.
+      </div>
+    </div>
+  </div>`;
+
+  // --- 4. Top 5 anotadores ---
+  const top5 = playerStats.slice(0, 5);
+
+  let scorersRows = '';
+  if (!top5.length) {
+    scorersRows = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px;">Sin datos de jugadores</td></tr>`;
+  } else {
+    for (const pl of top5) {
+      const isDanger = pl.ppg >= 15;
+      scorersRows += `
+      <tr>
+        <td class="${isDanger ? 'player-danger' : ''}">${pl.name}</td>
+        <td><span class="pj-badge">${pl.pj}</span></td>
+        <td class="pts-highlight">${fmtN(pl.ppg)}</td>
+        <td>${fmtPct(pl.t3pct)}</td>
+        <td>${fmtN(pl.rpg)}</td>
+        <td>${fmtN(pl.apg)}</td>
+        <td>${fmtN(pl.pirpg)}</td>
+      </tr>`;
+    }
+  }
+
+  let scorersHTML = `
+  <div class="section-card">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Top Anotadores — ${rivalShort}</div>
+        <div class="section-subtitle">Temporada completa · ordenado por Pts/PJ</div>
+      </div>
+    </div>
+    <div class="section-body" style="padding:0 0 4px;">
+      <table class="scorers-table">
+        <thead>
+          <tr>
+            <th>Jugador</th>
+            <th>PJ</th>
+            <th>Pts/PJ</th>
+            <th>T3%</th>
+            <th>Reb/PJ</th>
+            <th>Ast/PJ</th>
+            <th>PIR/PJ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${scorersRows}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+
+  // --- 5. Producción por cuarto ---
+  let quartersHTML = '';
+  if (quarterStats) {
+    const maxQ = Math.max(...quarterStats);
+    const qLabels = ['C1', 'C2', 'C3', 'C4'];
+    const cards = qLabels.map((lbl, i) => {
+      const isBest = quarterStats[i] === maxQ;
+      return `
+      <div class="quarter-card${isBest ? ' best' : ''}">
+        <div class="quarter-label">${lbl}</div>
+        <div class="quarter-pts">${quarterStats[i].toFixed(1)}</div>
+        <div class="quarter-sub">pts/pj</div>
+      </div>`;
+    }).join('');
+
+    quartersHTML = `
+    <div class="section-card">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Producción por Cuarto — ${rivalShort}</div>
+          <div class="section-subtitle">Puntos medios por cuarto · ${riv_pj} partidos</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="quarters-grid">${cards}</div>
+      </div>
+    </div>`;
+  } else {
+    quartersHTML = `
+    <div class="section-card">
+      <div class="section-header">
+        <div><div class="section-title">Producción por Cuarto — ${rivalShort}</div></div>
+      </div>
+      <div class="section-body"><div class="loading" style="padding:20px;">Sin datos de cuartos disponibles</div></div>
+    </div>`;
+  }
+
+  // --- 6. Últimos resultados ---
+  let resultsHTML = '';
+  if (lastResults.length) {
+    const pills = lastResults.map(r => `
+    <div class="result-pill ${r.win ? 'win' : 'loss'}">
+      <div class="result-letter">${r.win ? 'V' : 'D'}</div>
+      <div class="result-score">${r.teamPts}–${r.oppPts}</div>
+      <div class="result-rival">vs ${r.oppName}</div>
+    </div>`).join('');
+
+    resultsHTML = `
+    <div class="section-card">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Últimos 5 Resultados — ${rivalShort}</div>
+          <div class="section-subtitle">Orden cronológico inverso</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="results-row">${pills}</div>
+      </div>
+    </div>`;
+  } else {
+    resultsHTML = `
+    <div class="section-card">
+      <div class="section-header">
+        <div><div class="section-title">Últimos 5 Resultados — ${rivalShort}</div></div>
+      </div>
+      <div class="section-body"><div class="loading" style="padding:20px;">Sin resultados registrados para ${rivalShort}</div></div>
+    </div>`;
+  }
+
+  // ── Montar todo ──
+  content.innerHTML = `
+  <div class="sections">
+    ${headerHTML}
+    ${compareHTML}
+    ${heatmapHTML}
+    ${scorersHTML}
+    ${quartersHTML}
+    ${resultsHTML}
+  </div>`;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+async function init() {
+  // Leer parámetros de URL
+  const params    = new URLSearchParams(window.location.search);
+  const rivalShort = (params.get('rival') || '').toUpperCase().trim();
+  const fromParam  = params.get('from') || 'partidos';
+
+  // Configurar botón volver
+  const btnBack = document.getElementById('btn-back');
+  if (fromParam === 'index') {
+    btnBack.href = 'index.html';
+  } else {
+    btnBack.href = 'partidos.html';
+  }
+
+  if (!rivalShort) {
+    document.getElementById('page-content').innerHTML =
+      `<div class="loading error-msg">Parámetro ?rival= no especificado en la URL.</div>`;
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/matches?v=6');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderPage(data, rivalShort);
+  } catch (e) {
+    document.getElementById('page-content').innerHTML =
+      `<div class="loading error-msg">Error al cargar los datos: ${e.message}</div>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="js/rol.js"></script>
+<script>document.addEventListener('DOMContentLoaded', () => { if (typeof HoopRol !== 'undefined') HoopRol.init(); });</script>
+</body>
+</html>
