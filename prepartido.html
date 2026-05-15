@@ -832,8 +832,8 @@ function buildCourtSVG(t2pct, t3pct, ftpct, zones) {
   //   Elbow izq:  (144, 282)  → dist≈121 ✓   Elbow der:   (276, 282)
   // ─────────────────────────────────────────────────────────────────────────
 
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
-    style="width:100%;max-width:460px;height:auto;display:block;margin:0 auto;border-radius:14px;overflow:hidden;">
+  return `<svg id="court-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
+    style="width:100%;height:auto;display:block;border-radius:14px;overflow:hidden;">
   <defs>
     <mask id="court-mask">
       <rect x="0" y="${PT}" width="${W}" height="${BL-PT}" fill="white"/>
@@ -1013,6 +1013,9 @@ function buildCourtSVG(t2pct, t3pct, ftpct, zones) {
         font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700"
         fill="white" opacity="0.97">${lft}  TL</text>
 
+  <!-- Capa de puntos de tiro (se rellena dinámicamente por JS) -->
+  <g id="shot-dots-layer"></g>
+
 </svg>`;
 }
 
@@ -1183,8 +1186,9 @@ function renderPage(data, rivalShort, pbpRival) {
 
   const ftColor = t1pct !== null ? heatColor(t1pct, 'ft') : '#333';
 
-  const zones    = data.shotZones || null;
-  const courtSVG = buildCourtSVG(t2pct, t3pct, t1pct, zones);
+  const zones       = data.shotZones  || null;
+  const playerShots = data.playerShots || [];
+  const courtSVG    = buildCourtSVG(t2pct, t3pct, t1pct, zones);
 
   const t2SubLabel = t2att !== null ? `${t2att.toFixed(1)} int/pj` : '';
   const t3SubLabel = t3att !== null ? `${t3att.toFixed(1)} int/pj` : '';
@@ -1199,7 +1203,37 @@ function renderPage(data, rivalShort, pbpRival) {
       </div>
     </div>
     <div class="court-wrap">
-      <div class="court-svg-container">${courtSVG}</div>
+      <!-- Layout cancha + panel jugadores -->
+      <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px;">
+        <!-- Cancha -->
+        <div style="flex:1;min-width:220px;" id="court-svg-container">
+          ${courtSVG}
+        </div>
+        <!-- Panel selección de jugadores -->
+        <div style="flex:0 0 168px;min-width:140px;">
+          <div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:1px;font-family:var(--barlow);margin-bottom:6px;text-transform:uppercase;">Tiros por jugador</div>
+          <div id="player-shot-list" style="display:flex;flex-direction:column;gap:4px;max-height:420px;overflow-y:auto;">
+            ${playerShots.length
+              ? playerShots.map((p, i) => `
+                <div class="pshot-row" data-id="${p.actorId}" onclick="window._togglePlayer(${p.actorId})"
+                     style="display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:6px;cursor:pointer;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.03);transition:background 0.15s;">
+                  <div id="pshot-dot-${p.actorId}" style="width:9px;height:9px;border-radius:50%;border:2px solid #555;flex-shrink:0;transition:all 0.15s;"></div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:11px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--barlow);">#${p.dorsal} ${p.name}</div>
+                    <div style="font-size:9px;color:var(--muted);font-family:var(--barlow);">${p.t2a+p.t3a} int · ${p.t2mk+p.t3mk} anotados</div>
+                  </div>
+                </div>`).join('')
+              : '<div style="font-size:11px;color:var(--muted);font-family:var(--barlow);">Sin datos de tiro</div>'
+            }
+          </div>
+          ${playerShots.length ? `<div style="margin-top:8px;">
+            <button onclick="window._clearPlayers()" style="width:100%;padding:4px;background:transparent;border:1px solid rgba(255,255,255,0.12);border-radius:5px;color:var(--muted);font-size:10px;cursor:pointer;font-family:var(--barlow);">Limpiar selección</button>
+          </div>` : ''}
+        </div>
+      </div>
+
+      <!-- Leyenda de jugadores activos -->
+      <div id="player-legend" style="display:none;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:7px;"></div>
 
       <!-- FT separado -->
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;">
@@ -1226,7 +1260,118 @@ function renderPage(data, rivalShort, pbpRival) {
         Zonas calculadas desde coordenadas reales de cada tiro (temporada completa). Botella = dentro de la zona pintada · Media = 2PT fuera de botella · Frontal = triple ángulo ≥45° · Corner = triple ángulo &lt;45°.
       </div>
     </div>
-  </div>`;
+  </div>
+
+  <script>
+  (function() {
+    // ── Datos de tiros por jugador (inyectados desde el servidor) ────────────
+    const PLAYER_DATA = ${JSON.stringify(playerShots)};
+
+    // Paleta de colores distinguibles sobre fondo oscuro
+    const PALETTE = ['#f4c23b','#4fc3f7','#a5d6a7','#ef9a9a','#ce93d8','#ffcc80','#80cbc4','#ff8f00'];
+
+    // Estado: Map actorId → colorIndex
+    const selected = new Map();
+
+    // Conversión coordenadas normalizadas → píxeles SVG
+    // xnorm=0=línea de fondo, ynorm=0=banda izquierda
+    // SVG: W=420, BL=436, S=28
+    function normToSVG(xn, yn) {
+      return {
+        x: (yn / 100) * 420,
+        y: 436 - (xn / 100) * 28 * 28,
+      };
+    }
+
+    // Dibuja los puntos de todos los jugadores seleccionados
+    function renderDots() {
+      const layer = document.getElementById('shot-dots-layer');
+      if (!layer) return;
+      const parts = [];
+      for (const [actorId, colorIdx] of selected) {
+        const p = PLAYER_DATA.find(p => p.actorId === actorId);
+        if (!p) continue;
+        const col = PALETTE[colorIdx % PALETTE.length];
+
+        // Made 2PT: círculo relleno
+        for (const [xn, yn] of (p.shots.t2m || [])) {
+          const {x, y} = normToSVG(xn, yn);
+          parts.push(\`<circle cx="\${x.toFixed(1)}" cy="\${y.toFixed(1)}" r="4.5" fill="\${col}" stroke="rgba(0,0,0,0.5)" stroke-width="0.8" opacity="0.88"/>\`);
+        }
+        // Missed 2PT: círculo vacío con cruz
+        for (const [xn, yn] of (p.shots.t2x || [])) {
+          const {x, y} = normToSVG(xn, yn);
+          parts.push(\`<circle cx="\${x.toFixed(1)}" cy="\${y.toFixed(1)}" r="4" fill="none" stroke="\${col}" stroke-width="1.4" opacity="0.55"/>\`);
+          parts.push(\`<line x1="\${(x-3).toFixed(1)}" y1="\${(y-3).toFixed(1)}" x2="\${(x+3).toFixed(1)}" y2="\${(y+3).toFixed(1)}" stroke="\${col}" stroke-width="1.2" opacity="0.55"/>\`);
+          parts.push(\`<line x1="\${(x+3).toFixed(1)}" y1="\${(y-3).toFixed(1)}" x2="\${(x-3).toFixed(1)}" y2="\${(y+3).toFixed(1)}" stroke="\${col}" stroke-width="1.2" opacity="0.55"/>\`);
+        }
+        // Made 3PT: diamante relleno
+        for (const [xn, yn] of (p.shots.t3m || [])) {
+          const {x, y} = normToSVG(xn, yn);
+          parts.push(\`<polygon points="\${x.toFixed(1)},\${(y-5.5).toFixed(1)} \${(x+5).toFixed(1)},\${y.toFixed(1)} \${x.toFixed(1)},\${(y+5.5).toFixed(1)} \${(x-5).toFixed(1)},\${y.toFixed(1)}" fill="\${col}" stroke="rgba(0,0,0,0.5)" stroke-width="0.8" opacity="0.90"/>\`);
+        }
+        // Missed 3PT: diamante vacío
+        for (const [xn, yn] of (p.shots.t3x || [])) {
+          const {x, y} = normToSVG(xn, yn);
+          parts.push(\`<polygon points="\${x.toFixed(1)},\${(y-5).toFixed(1)} \${(x+4.5).toFixed(1)},\${y.toFixed(1)} \${x.toFixed(1)},\${(y+5).toFixed(1)} \${(x-4.5).toFixed(1)},\${y.toFixed(1)}" fill="none" stroke="\${col}" stroke-width="1.4" opacity="0.55"/>\`);
+        }
+      }
+      layer.innerHTML = parts.join('');
+    }
+
+    // Actualiza la leyenda de jugadores activos
+    function renderLegend() {
+      const leg = document.getElementById('player-legend');
+      if (!leg) return;
+      if (selected.size === 0) { leg.style.display = 'none'; return; }
+      leg.style.display = 'flex';
+      leg.innerHTML = [...selected].map(([id, ci]) => {
+        const p = PLAYER_DATA.find(p => p.actorId === id);
+        if (!p) return '';
+        const col = PALETTE[ci % PALETTE.length];
+        return \`<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);font-family:var(--barlow);">
+          <svg width="16" height="10"><circle cx="4" cy="5" r="3.5" fill="\${col}"/><polygon points="12,1 15,5 12,9 9,5" fill="\${col}"/></svg>
+          <span>#\${p.dorsal} \${p.name}</span>
+          <span style="color:var(--muted);">\${p.t2mk+p.t3mk}/\${p.t2a+p.t3a}</span>
+        </div>\`;
+      }).join('');
+    }
+
+    // Toggle jugador
+    window._togglePlayer = function(actorId) {
+      const row = document.querySelector(\`.pshot-row[data-id="\${actorId}"]\`);
+      const dot = document.getElementById(\`pshot-dot-\${actorId}\`);
+      if (selected.has(actorId)) {
+        selected.delete(actorId);
+        if (row) row.style.background = 'rgba(255,255,255,0.03)';
+        if (dot) { dot.style.background = 'transparent'; dot.style.borderColor = '#555'; }
+      } else {
+        // Asigna el siguiente índice de color libre
+        const usedIdxs = new Set([...selected.values()]);
+        let idx = 0;
+        while (usedIdxs.has(idx)) idx++;
+        selected.set(actorId, idx);
+        const col = PALETTE[idx % PALETTE.length];
+        if (row) row.style.background = col + '18';
+        if (dot) { dot.style.background = col; dot.style.borderColor = col; }
+      }
+      renderDots();
+      renderLegend();
+    };
+
+    window._clearPlayers = function() {
+      for (const id of [...selected.keys()]) {
+        const row = document.querySelector(\`.pshot-row[data-id="\${id}"]\`);
+        const dot = document.getElementById(\`pshot-dot-\${id}\`);
+        if (row) row.style.background = 'rgba(255,255,255,0.03)';
+        if (dot) { dot.style.background = 'transparent'; dot.style.borderColor = '#555'; }
+      }
+      selected.clear();
+      renderDots();
+      renderLegend();
+    };
+  })();
+  </script>`;
 
   // --- 4. Top 5 anotadores ---
   const top5 = playerStats.slice(0, 5);

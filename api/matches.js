@@ -290,8 +290,9 @@ export default async function handler(req, res) {
 
     // ── PBP shots + Shot Zones opcionales (?pbpTeam=SHORTNAME) ──────────────
     // Calcula T2%/T3%/FT% desde PBP y desglose por zona desde coordenadas stats
-    let pbpShots = null;
-    let shotZones = null;
+    let pbpShots    = null;
+    let shotZones   = null;
+    let playerShots = null;
     const pbpTeam = (req.query.pbpTeam || '').toUpperCase().trim();
     if (pbpTeam) {
       // ── 1. PBP: porcentajes globales ──────────────────────────────────────
@@ -410,6 +411,52 @@ export default async function handler(req, res) {
           c3_corner: fmtZ('c3_corner'),
           c3_top:    fmtZ('c3_top'),
         };
+
+        // ── Per-player shot coordinates para plotting en el frontend ──────────
+        // Cada jugador: { actorId, name, dorsal, t2a, t2mk, t3a, t3mk,
+        //                 shots: { t2m:[[xn,yn],...], t2x:[...], t3m:[...], t3x:[...] } }
+        const playerMap = {};
+        for (const doc of statsDocs) {
+          const team = (doc.teams || []).find(t => t.shortName === pbpTeam);
+          if (!team) continue;
+          for (const p of (team.players || [])) {
+            if (!p.gamePlayed || !p.data) continue;
+            const id = p.actorId;
+            if (!playerMap[id]) {
+              playerMap[id] = {
+                actorId: id,
+                name:    cleanPlayerName(p.name),
+                dorsal:  p.dorsal || '?',
+                t2a: 0, t2mk: 0, t3a: 0, t3mk: 0,
+                shots: { t2m: [], t2x: [], t3m: [], t3x: [] },
+              };
+            }
+            const ps = playerMap[id];
+            const d  = p.data;
+            ps.t2a  += d.shotsOfTwoAttempted    || 0;
+            ps.t2mk += d.shotsOfTwoSuccessful   || 0;
+            ps.t3a  += d.shotsOfThreeAttempted  || 0;
+            ps.t3mk += d.shotsOfThreeSuccessful || 0;
+            // Coordenadas comprimidas como [xn, yn] (1 decimal) para minimizar tamaño
+            const addPts = (arr, tgt) => {
+              for (const pt of (arr || [])) {
+                if (pt.xnormalize != null && pt.ynormalize != null)
+                  tgt.push([
+                    Math.round(pt.xnormalize * 10) / 10,
+                    Math.round(pt.ynormalize * 10) / 10,
+                  ]);
+              }
+            };
+            addPts(d.shootingOfTwoSuccessfulPoint,   ps.shots.t2m);
+            addPts(d.shootingOfTwoFailedPoint,       ps.shots.t2x);
+            addPts(d.shootingOfThreeSuccessfulPoint, ps.shots.t3m);
+            addPts(d.shootingOfThreeFailedPoint,     ps.shots.t3x);
+          }
+        }
+        playerShots = Object.values(playerMap)
+          .filter(p => p.t2a + p.t3a > 0)
+          .sort((a, b) => (b.t2a + b.t3a) - (a.t2a + a.t3a));
+
       } catch(_) { /* fallback silencioso */ }
     }
 
@@ -432,8 +479,9 @@ export default async function handler(req, res) {
         ultimoPartido,
         proximoPartido
       },
-      ...(pbpShots  ? { pbpShots  } : {}),
-      ...(shotZones ? { shotZones } : {}),
+      ...(pbpShots    ? { pbpShots    } : {}),
+      ...(shotZones   ? { shotZones   } : {}),
+      ...(playerShots?.length ? { playerShots } : {}),
     });
 
   } catch (err) {
