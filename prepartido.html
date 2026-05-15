@@ -1235,29 +1235,13 @@ function renderPage(data, rivalShort, pbpRival) {
       <!-- Leyenda de jugadores activos -->
       <div id="player-legend" style="display:none;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:7px;"></div>
 
-      <!-- FT separado -->
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;">
-        <div class="ft-box" style="border-color:${ftColor}22;background:${ftColor}18;">
-          <div class="ft-label">Tiros Libres</div>
-          <div class="ft-pct" style="color:${ftColor}">${fmtPct(t1pct)}</div>
-          <div class="ft-attempts">${t1SubLabel}</div>
-        </div>
-        <div style="max-width:220px;">
-          <div style="font-size:11px;color:var(--muted);font-family:var(--barlow);line-height:1.5;">
-            Zona 2PT: <strong style="color:${t2pct!==null?heatColor(t2pct,'t2'):'#666'}">${fmtPct(t2pct)}</strong>${t2SubLabel ? ` · ${t2SubLabel}` : ''}<br>
-            Zona 3PT: <strong style="color:${t3pct!==null?heatColor(t3pct,'t3'):'#666'}">${fmtPct(t3pct)}</strong>${t3SubLabel ? ` · ${t3SubLabel}` : ''}
-          </div>
-        </div>
-      </div>
-
       <div class="court-legend">
-        <div class="legend-item"><div class="legend-swatch" style="background:#3561B4"></div>Frío (bajo %)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#3561B4"></div>Frío</div>
         <div class="legend-item"><div class="legend-swatch" style="background:#E6B91E"></div>Moderado</div>
         <div class="legend-item"><div class="legend-swatch" style="background:#DC6414"></div>Alto</div>
         <div class="legend-item"><div class="legend-swatch" style="background:#cc1414"></div>Peligroso</div>
-      </div>
-      <div class="court-note">
-        Zonas calculadas desde coordenadas reales de cada tiro (temporada completa). Botella = dentro de la zona pintada · Media = 2PT fuera de botella · Frontal = triple ángulo ≥45° · Corner = triple ángulo &lt;45°.
+        <div class="legend-item"><div class="legend-swatch" style="background:transparent;border:1.5px solid #aaa;border-radius:50%;"></div>Fallado</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#aaa;border-radius:50%;"></div>Anotado</div>
       </div>
     </div>
   </div>`;
