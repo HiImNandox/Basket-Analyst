@@ -795,65 +795,6 @@ function buildCourtSVG(t2pct, t3pct, ftpct) {
   const lbl3Y  = CRNY - 34;                 // label zona 3
   const lbl2Y  = KY + KEY_H * 0.44;        // label zona 2 (dentro del key)
   const lblFTY = KY - 8;                   // label TL encima de la línea de TL
-  // Colores según eficiencia
-  const col2 = t2pct !== null ? heatColor(t2pct, 't2') : '#2a2a2a';
-  const col3 = t3pct !== null ? heatColor(t3pct, 't3') : '#2a2a2a';
-  const colRest = '#1e2535'; // zona restringida: azul oscuro neutro
-
-  // Medidas en píxeles (escala: 560px = 28m, 300px = 15m)
-  const scaleX = W / 28;  // 20px/m
-  const scaleY = H / 15;  // 20px/m
-
-  // Línea de fondo a x=0, canasta a x≈1.575m (el centro del aro)
-  const hoopX = 1.575 * scaleX;   // ~31.5px
-  const hoopY = H / 2;            // 150px (centro vertical)
-  const hoopR = 0.225 * scaleX;   // radio aro ~4.5px
-
-  // Zona pintada (rectángulo): 5.8m largo × 4.9m ancho
-  const paintW = 5.8  * scaleX;  // 116px
-  const paintH = 4.9  * scaleY;  // 98px
-  const paintY = (H - paintH) / 2; // centrado: 101px
-  const paintX = 0;
-
-  // Zona restringida: semicírculo de radio 1.25m centrado en el aro
-  const restrictR = 1.25 * scaleX; // 25px
-
-  // Arco de 3: radio 6.75m desde el aro (FIBA)
-  // Pero limitado por el campo: en córner la línea de 3 es a 0.9m de la línea lateral
-  const arc3R = 6.75 * scaleX; // 135px
-  // Las líneas de esquina van paralelas al fondo desde y=0.9m hasta que se unen con el arco
-  const corner3Y = 0.9 * scaleY; // 18px desde cada banda
-
-  // Línea de tiros libres a 5.8m de la línea de fondo
-  const ftLineX = 5.8 * scaleX; // 116px = paintW
-
-  // Círculo central en la línea de tiros libres (radio 1.8m)
-  const ftCircleR = 1.8 * scaleY; // 36px
-
-  // Arco de 3 puntos: ángulo de inicio / fin
-  // El arco parte desde las esquinas (corner lines) y forma un semicírculo
-  // Centro del arco: (hoopX, hoopY)
-  // Las líneas de corner son horizontales en y=corner3Y y y=H-corner3Y
-  // El ángulo donde el arco toca la línea lateral:
-  const arcCornerAngle = Math.asin((hoopY - corner3Y) / arc3R); // rad desde eje X
-  // El arco va desde -arcCornerAngle hasta +arcCornerAngle (pasando por el lado derecho)
-  const startAngle = arcCornerAngle;
-  const endAngle   = Math.PI - arcCornerAngle;
-  // Pero en SVG el eje Y va hacia abajo, y el aro está a la izquierda
-  // Calculamos los puntos del arco:
-  const arcStartX = hoopX + arc3R * Math.cos(Math.PI - startAngle);
-  const arcStartY = hoopY - arc3R * Math.sin(startAngle);  // parte superior
-  const arcEndX   = hoopX + arc3R * Math.cos(Math.PI - endAngle);
-  const arcEndY   = hoopY + arc3R * Math.sin(startAngle);  // parte inferior
-
-  // Para el path del arco de 3 (solo la parte curva, sin las líneas de corner)
-  // Usamos arc desde (arcStartX, arcStartY) hasta (arcEndX, arcEndY) con radio arc3R
-  // large-arc-flag=0, sweep-flag=0 (anti-horario en coords SVG)
-  const arcD = `M ${arcStartX.toFixed(1)} ${arcStartY.toFixed(1)} A ${arc3R.toFixed(1)} ${arc3R.toFixed(1)} 0 0 1 ${arcEndX.toFixed(1)} ${arcEndY.toFixed(1)}`;
-
-  // ─── Labels sobre zonas ───────────────────────────────────────────────────
-  const t2Label  = t2pct !== null ? `${t2pct.toFixed(1)}%` : '—';
-  const t3Label  = t3pct !== null ? `${t3pct.toFixed(1)}%` : '—';
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
     style="width:100%;max-width:460px;height:auto;display:block;margin:0 auto;border-radius:14px;overflow:hidden;">
