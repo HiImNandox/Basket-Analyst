@@ -245,7 +245,7 @@
   /* --- 3. SHOT HEATMAP --- */
   .court-section { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
   .court-wrap { padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
-  .court-svg-container { width:100%; }
+  .court-svg-container { width:100%; } /* width overridden by inline style on desktop */
   .court-note {
     font-size:11px;
     color:var(--muted);
@@ -389,6 +389,10 @@
     .quarters-grid { grid-template-columns:repeat(2,1fr); }
     .match-vs-row { gap:16px; }
     .team-abbr-local, .team-abbr-rival { font-size:34px; }
+  }
+  /* En móvil la cancha ocupa todo el ancho y la tabla de jugadores se coloca debajo */
+  @media (max-width:600px) {
+    #court-svg-container { width:100% !important; flex-basis:100% !important; }
   }
 </style>
 </head>
@@ -1204,15 +1208,15 @@ function renderPage(data, rivalShort, pbpRival) {
     </div>
     <div class="court-wrap">
       <!-- Layout cancha + panel jugadores -->
-      <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
-        <!-- Cancha: ocupa todo el espacio disponible -->
-        <div style="flex:1 1 0;min-width:0;" id="court-svg-container">
+      <div style="display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;">
+        <!-- Cancha: ancho controlado -->
+        <div style="flex:0 0 auto;width:clamp(260px,55%,360px);" id="court-svg-container">
           ${courtSVG}
         </div>
         <!-- Panel selección de jugadores -->
-        <div style="flex:0 0 168px;min-width:140px;">
+        <div style="flex:1;min-width:140px;display:flex;flex-direction:column;overflow:hidden;">
           <div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:1px;font-family:var(--barlow);margin-bottom:6px;text-transform:uppercase;">Tiros por jugador</div>
-          <div id="player-shot-list" style="display:flex;flex-direction:column;gap:4px;max-height:420px;overflow-y:auto;">
+          <div id="player-shot-list" style="display:flex;flex-direction:column;gap:4px;flex:1;overflow-y:auto;">
             ${playerShots.length
               ? playerShots.map((p, i) => `
                 <div class="pshot-row" data-id="${p.actorId}" onclick="window._togglePlayer(${p.actorId})"
