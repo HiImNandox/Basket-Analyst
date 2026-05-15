@@ -750,29 +750,25 @@ function buildCourtSVG(t2pct, t3pct, ftpct) {
   // Línea arco 3 (para trazar)
   const ARC3_LINE = `M ${f(CRNX)} ${f(CRNY)} A ${f(A3R)} ${f(A3R)} 0 0 1 ${f(W-CRNX)} ${f(CRNY)}`;
 
-  // ── Colores por zona (distribución típica de baloncesto) ─────────────────
-  // Con T2%/T3% globales modulamos cada zona con un factor realista:
-  //  · Paint bajo aro    → +20%  (zona más eficiente del campo)
-  //  · Short mid lateral → +5%
-  //  · Elbow mid-range   → -22%  (zona menos eficiente, fría)
-  //  · Corner 3          → +10%  (el mejor triples)
-  //  · Wing 3            → 0%
-  //  · Top 3             → -8%
+  // ── Colores por zona ─────────────────────────────────────────────────────
+  // Factores realistas de eficiencia por zona respecto al % global:
+  //   Paint (bajo aro):      T2% × 1.20  → zona más caliente
+  //   Post bajo lateral:     T2% × 1.02
+  //   Key central:           T2% × 0.95
+  //   Elbow mid-range:       T2% × 0.76  → zona más fría del interior
+  //   Corner 3:              T3% × 1.10  → mejor zona de triples
+  //   Wing 3:                T3% × 1.00
+  //   Top of key 3:          T3% × 0.90  → ligeramente más fría
   const cap = (v, mx) => v !== null ? Math.min(v, mx) : null;
-  const zm  = (base, mult, mx) => base !== null ? heatColor(cap(base*mult, mx), base > 40 ? 't2' : 't2') : '#1a3050';
-  const zm3 = (base, mult, mx) => base !== null ? heatColor(cap(base*mult, mx), 't3') : '#1a3050';
 
-  // Zonas 2PT
   const cPaint  = t2pct !== null ? heatColor(cap(t2pct*1.20, 65), 't2') : '#1a3050';
-  const cMidKey = t2pct !== null ? heatColor(cap(t2pct*1.05, 60), 't2') : '#1a3050';
-  const cShortL = t2pct !== null ? heatColor(cap(t2pct*0.92, 58), 't2') : '#1a3050';
-  const cElbow  = t2pct !== null ? heatColor(cap(t2pct*0.78, 55), 't2') : '#1a3050';
-  // Zonas 3PT
+  const cPost   = t2pct !== null ? heatColor(cap(t2pct*1.02, 60), 't2') : '#1a3050';
+  const cMidKey = t2pct !== null ? heatColor(cap(t2pct*0.95, 58), 't2') : '#1a3050';
+  const cElbow  = t2pct !== null ? heatColor(cap(t2pct*0.76, 55), 't2') : '#1a3050';
   const cCrn3   = t3pct !== null ? heatColor(cap(t3pct*1.10, 50), 't3') : '#1a3050';
   const cWng3   = t3pct !== null ? heatColor(cap(t3pct*1.00, 48), 't3') : '#1a3050';
-  const cTop3   = t3pct !== null ? heatColor(cap(t3pct*0.92, 46), 't3') : '#1a3050';
-  // TL
-  const cft = ftpct !== null ? heatColor(ftpct, 'ft') : '#444';
+  const cTop3   = t3pct !== null ? heatColor(cap(t3pct*0.90, 46), 't3') : '#1a3050';
+  const cft     = ftpct !== null ? heatColor(ftpct, 'ft') : '#444';
 
   // ── Labels ────────────────────────────────────────────────────────────────
   const l2  = t2pct  !== null ? `${t2pct.toFixed(1)}%` : '—';
@@ -788,37 +784,35 @@ function buildCourtSVG(t2pct, t3pct, ftpct) {
   const OUTER = '#0a1520';
   const LW    = 1.8;
 
-  // Posiciones útiles para ellipses de calor
-  const paintCY   = BKTY - REST_R*0.3;        // centro zona bajo aro
-  const midKeyCY  = KY + KEY_H*0.62;          // centro key medio
-  const elbowLX   = KX1 + 8,  elbowRX = KX2 - 8;
-  const elbowY    = KY + 14;
-  const shortLX   = KX1 - 28, shortRX = KX2 + 28;
-  const shortY    = KY + KEY_H*0.68;
-  const wngLX     = CRNX + 48, wngRX = W - CRNX - 48;
-  const wngY      = CRNY + 38;
-  const crnLX     = CRNX + 22, crnRX = W - CRNX - 22;
-  const crnY      = BL - 28;
-  const topY      = CRNY - 12;
+  // ─────────────────────────────────────────────────────────────────────────
+  // POSICIONES DE ZONAS — todas verificadas: dist(zona, canasta) comparada
+  // con A3R=189px para separar correctamente 2PT (dentro) de 3PT (fuera).
+  // El arco está centrado en (CX=210, BKTY≈392).
+  //
+  // ZONAS 3PT — deben estar a DISTANCIA > 189px del aro:
+  //   Corner izq:  (14, 412)  → dist≈197 ✓   Corner der:  (406, 412)
+  //   Wing izq:    (42, 265)  → dist≈211 ✓   Wing der:    (378, 265)
+  //   Top izq:    (118, 218)  → dist≈199 ✓   Top der:     (302, 218)
+  //   Top centro: (210, 200)  → dist≈192 ✓
+  //
+  // ZONAS 2PT — deben estar a DISTANCIA < 189px del aro:
+  //   Paint:      (210, 397)  → dist≈5   ✓
+  //   Post lat:   (148, 375)  → dist≈67  ✓
+  //   Key central:(210, 355)  → dist≈37  ✓
+  //   Elbow izq:  (144, 282)  → dist≈121 ✓   Elbow der:   (276, 282)
+  // ─────────────────────────────────────────────────────────────────────────
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
     style="width:100%;max-width:460px;height:auto;display:block;margin:0 auto;border-radius:14px;overflow:hidden;">
   <defs>
-    <!-- Clip: interior de la cancha -->
-    <clipPath id="court-clip">
-      <rect x="0" y="${PT}" width="${W}" height="${BL-PT}"/>
-    </clipPath>
-    <!-- Máscara para recortar el blur sin perder los bordes -->
     <mask id="court-mask">
       <rect x="0" y="${PT}" width="${W}" height="${BL-PT}" fill="white"/>
     </mask>
-    <!-- Blur suave tipo heat map -->
-    <filter id="hblur" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="20"/>
+    <filter id="hblur" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="22"/>
     </filter>
-    <!-- Blur más concentrado para paint (zona bajo aro) -->
-    <filter id="hblur-hot" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="14"/>
+    <filter id="hblur-hot" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="15"/>
     </filter>
   </defs>
 
@@ -826,51 +820,62 @@ function buildCourtSVG(t2pct, t3pct, ftpct) {
   <rect x="0" y="0" width="${W}" height="${H}" fill="${OUTER}" rx="14"/>
   <rect x="0" y="${PT}" width="${W}" height="${BL-PT}" fill="${FLOOR}"/>
 
-  <!-- ═══ HEAT MAP — blur clipeado por la máscara ═══ -->
+  <!-- ═══ HEAT MAP — todas las elipses clipeadas por la máscara ═══ -->
+  <!-- Sin capa base de color: el suelo oscuro es la "zona fría" por defecto -->
   <g mask="url(#court-mask)">
 
-    <!-- ── Capa base exterior (zona de 3) ── -->
-    <rect x="-30" y="${PT-30}" width="${W+60}" height="${BL-PT+60}"
-          fill="${cTop3}" opacity="0.82" filter="url(#hblur)"/>
+    <!-- ══ ZONAS DE 3 PUNTOS (fuera del arco) ══ -->
 
-    <!-- ── Wing 3 izquierda ── -->
-    <ellipse cx="${f(wngLX)}" cy="${f(wngY)}" rx="68" ry="58"
-             fill="${cWng3}" opacity="0.90" filter="url(#hblur)"/>
-    <!-- ── Wing 3 derecha ── -->
-    <ellipse cx="${f(wngRX)}" cy="${f(wngY)}" rx="68" ry="58"
-             fill="${cWng3}" opacity="0.90" filter="url(#hblur)"/>
+    <!-- Top of key centro  (210, 200) dist=192px > A3R ✓ -->
+    <ellipse cx="${CX}" cy="200" rx="88" ry="62"
+             fill="${cTop3}" opacity="0.85" filter="url(#hblur)"/>
+    <!-- Top izquierdo      (118, 218) dist=199px > A3R ✓ -->
+    <ellipse cx="118" cy="218" rx="72" ry="56"
+             fill="${cTop3}" opacity="0.82" filter="url(#hblur)"/>
+    <!-- Top derecho        (302, 218) dist=199px > A3R ✓ -->
+    <ellipse cx="302" cy="218" rx="72" ry="56"
+             fill="${cTop3}" opacity="0.82" filter="url(#hblur)"/>
 
-    <!-- ── Corner 3 izquierda ── -->
-    <ellipse cx="${f(crnLX)}" cy="${f(crnY)}" rx="52" ry="38"
-             fill="${cCrn3}" opacity="0.92" filter="url(#hblur)"/>
-    <!-- ── Corner 3 derecha ── -->
-    <ellipse cx="${f(crnRX)}" cy="${f(crnY)}" rx="52" ry="38"
-             fill="${cCrn3}" opacity="0.92" filter="url(#hblur)"/>
+    <!-- Wing izquierda     (42, 265) dist=211px > A3R ✓ -->
+    <ellipse cx="42" cy="265" rx="58" ry="72"
+             fill="${cWng3}" opacity="0.88" filter="url(#hblur)"/>
+    <!-- Wing derecha       (378, 265) dist=211px > A3R ✓ -->
+    <ellipse cx="378" cy="265" rx="58" ry="72"
+             fill="${cWng3}" opacity="0.88" filter="url(#hblur)"/>
 
-    <!-- ── Elbow izquierdo (mid-range frío) ── -->
-    <ellipse cx="${f(elbowLX)}" cy="${f(elbowY)}" rx="42" ry="34"
-             fill="${cElbow}" opacity="0.88" filter="url(#hblur)"/>
-    <!-- ── Elbow derecho ── -->
-    <ellipse cx="${f(elbowRX)}" cy="${f(elbowY)}" rx="42" ry="34"
-             fill="${cElbow}" opacity="0.88" filter="url(#hblur)"/>
+    <!-- Corner izquierda   (14, 412) dist=197px > A3R ✓ -->
+    <ellipse cx="14" cy="412" rx="38" ry="44"
+             fill="${cCrn3}" opacity="0.90" filter="url(#hblur)"/>
+    <!-- Corner derecha     (406, 412) dist=197px > A3R ✓ -->
+    <ellipse cx="406" cy="412" rx="38" ry="44"
+             fill="${cCrn3}" opacity="0.90" filter="url(#hblur)"/>
 
-    <!-- ── Short mid lateral izquierdo ── -->
-    <ellipse cx="${f(shortLX)}" cy="${f(shortY)}" rx="44" ry="52"
-             fill="${cShortL}" opacity="0.85" filter="url(#hblur)"/>
-    <!-- ── Short mid lateral derecho ── -->
-    <ellipse cx="${f(shortRX)}" cy="${f(shortY)}" rx="44" ry="52"
-             fill="${cShortL}" opacity="0.85" filter="url(#hblur)"/>
+    <!-- ══ ZONAS DE 2 PUNTOS (dentro del arco) ══ -->
 
-    <!-- ── Key central / post ── -->
-    <ellipse cx="${CX}" cy="${f(midKeyCY)}" rx="${f(KEY_W*0.36)}" ry="${f(KEY_H*0.20)}"
-             fill="${cMidKey}" opacity="0.88" filter="url(#hblur)"/>
+    <!-- Elbow izquierdo    (144, 282) dist=121px < A3R ✓ -->
+    <ellipse cx="144" cy="282" rx="44" ry="36"
+             fill="${cElbow}" opacity="0.86" filter="url(#hblur)"/>
+    <!-- Elbow derecho      (276, 282) dist=121px < A3R ✓ -->
+    <ellipse cx="276" cy="282" rx="44" ry="36"
+             fill="${cElbow}" opacity="0.86" filter="url(#hblur)"/>
 
-    <!-- ── Paint / bajo aro (zona más caliente) ── -->
-    <ellipse cx="${CX}" cy="${f(paintCY)}" rx="${f(KEY_W*0.44)}" ry="${f(REST_R*2.1)}"
-             fill="${cPaint}" opacity="0.92" filter="url(#hblur-hot)"/>
-    <!-- núcleo más caliente encima -->
-    <ellipse cx="${CX}" cy="${f(BKTY + 4)}" rx="${f(KEY_W*0.28)}" ry="${f(REST_R*1.25)}"
-             fill="${cPaint}" opacity="0.88" filter="url(#hblur-hot)"/>
+    <!-- Key central        (210, 355) dist=37px < A3R ✓ -->
+    <ellipse cx="${CX}" cy="355" rx="${f(KEY_W*0.38)}" ry="${f(KEY_H*0.18)}"
+             fill="${cMidKey}" opacity="0.84" filter="url(#hblur)"/>
+
+    <!-- Post lateral izq   (148, 375) dist=67px < A3R ✓ -->
+    <ellipse cx="148" cy="375" rx="38" ry="44"
+             fill="${cPost}" opacity="0.82" filter="url(#hblur-hot)"/>
+    <!-- Post lateral der   (272, 375) dist=67px < A3R ✓ -->
+    <ellipse cx="272" cy="375" rx="38" ry="44"
+             fill="${cPost}" opacity="0.82" filter="url(#hblur-hot)"/>
+
+    <!-- Paint bajo aro — zona más caliente del campo -->
+    <ellipse cx="${CX}" cy="390" rx="${f(KEY_W*0.46)}" ry="${f(REST_R*2.2)}"
+             fill="${cPaint}" opacity="0.90" filter="url(#hblur-hot)"/>
+    <!-- Núcleo supercaliente justo bajo la canasta -->
+    <ellipse cx="${CX}" cy="${f(BKTY+6)}" rx="${f(KEY_W*0.28)}" ry="${f(REST_R*1.3)}"
+             fill="${cPaint}" opacity="0.86" filter="url(#hblur-hot)"/>
   </g>
 
   <!-- ═══ LÍNEAS DE LA CANCHA (encima del heat map) ═══ -->
