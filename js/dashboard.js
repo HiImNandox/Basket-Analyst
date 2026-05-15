@@ -156,7 +156,9 @@ function renderUltimoResultado(sac) {
 }
 
 // ─── CLASIFICACIÓN ──────────────────────────────────────────
-function renderClasificacion(clasificacion) {
+function renderClasificacion(clasificacion, ultimaJornada) {
+  const head = el('clasificacion-head');
+  if (head) head.textContent = `Clasificación · Jornada ${ultimaJornada}`;
   const tbody = el('standing-tbody');
   if (!tbody) return;
 
@@ -185,7 +187,7 @@ async function init() {
     renderTopbar(data.sac, data.totalJornadas);
     renderProximoPartido(data.sac);
     renderUltimoResultado(data.sac);
-    renderClasificacion(data.clasificacion);
+    renderClasificacion(data.clasificacion, data.sac.ultimaJornada);
 
   } catch (err) {
     console.error('[dashboard]', err);

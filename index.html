@@ -896,39 +896,8 @@
     <!-- Content -->
     <div class="content">
 
-      <!-- CHIPS de resumen -->
-      <div class="chips-row" id="chips-row">
-        <div class="stat-chip accent">
-          <div class="chip-label">Posición</div>
-          <div class="chip-value">4º</div>
-          <div class="chip-sub">de 10 equipos</div>
-          <div class="racha-dots">
-            <div class="rd d">D</div>
-            <div class="rd v">V</div>
-            <div class="rd v">V</div>
-            <div class="rd d">D</div>
-            <div class="rd v">V</div>
-          </div>
-        </div>
-        <div class="stat-chip">
-          <div class="chip-label">Balance</div>
-          <div class="chip-value" style="color: var(--green)">5–3</div>
-          <div class="chip-sub">victorias – derrotas</div>
-          <div class="ratio-wrap">
-            <div class="ratio-fill" style="width: 62.5%"></div>
-          </div>
-        </div>
-        <div class="stat-chip">
-          <div class="chip-label">PIR medio</div>
-          <div class="chip-value">68.4</div>
-          <div class="chip-sub" style="color: var(--green)">↑ +6.4% temporada</div>
-        </div>
-        <div class="stat-chip">
-          <div class="chip-label">Pts/partido</div>
-          <div class="chip-value">71.2</div>
-          <div class="chip-sub">67.8 en contra</div>
-        </div>
-      </div>
+      <!-- CHIPS de resumen — poblado dinámicamente por dashboard.js -->
+      <div class="chips-row" id="chips-row"></div>
 
       <!-- Grid principal -->
       <div class="main-grid">
@@ -954,7 +923,7 @@
         <!-- Columna derecha: Clasificación -->
         <div class="col-right">
           <div class="card" style="height: 100%;">
-            <div class="card-head" style="padding-bottom: 12px;">Clasificación · Jornada 8</div>
+            <div class="card-head" id="clasificacion-head" style="padding-bottom: 12px;">Clasificación</div>
             <div style="padding: 0 18px;">
               <table class="standing-table">
                 <thead>
@@ -966,48 +935,7 @@
                     <th>Pts</th>
                   </tr>
                 </thead>
-                <tbody id="standing-tbody">
-                  <tr>
-                    <td><span class="pos-num">1</span>CB Molinar</td>
-                    <td>8</td><td>7</td><td>1</td><td>15</td>
-                  </tr>
-                  <tr>
-                    <td><span class="pos-num">2</span>J. Mariana</td>
-                    <td>8</td><td>6</td><td>2</td><td>14</td>
-                  </tr>
-                  <tr>
-                    <td><span class="pos-num">3</span>CB Perelló</td>
-                    <td>8</td><td>5</td><td>3</td><td>13</td>
-                  </tr>
-                  <tr class="my-team">
-                    <td><span class="pos-num" style="color:var(--red)">4</span>Sa Cabaneta</td>
-                    <td>8</td><td>5</td><td>3</td><td>13</td>
-                  </tr>
-                  <tr>
-                    <td><span class="pos-num">5</span>CB Palma B</td>
-                    <td>8</td><td>4</td><td>4</td><td>12</td>
-                  </tr>
-                  <tr>
-                    <td><span class="pos-num">6</span>Espanyolet</td>
-                    <td>8</td><td>3</td><td>5</td><td>11</td>
-                  </tr>
-                  <tr>
-                    <td><span class="pos-num">7</span>CB Arenal</td>
-                    <td>8</td><td>3</td><td>5</td><td>11</td>
-                  </tr>
-                  <tr>
-                    <td><span class="pos-num">8</span>CB Calvià</td>
-                    <td>8</td><td>2</td><td>6</td><td>10</td>
-                  </tr>
-                  <tr>
-                    <td><span class="pos-num">9</span>Son Rapinya</td>
-                    <td>8</td><td>1</td><td>7</td><td>9</td>
-                  </tr>
-                  <tr>
-                    <td><span class="pos-num">10</span>CB Binissalem</td>
-                    <td>8</td><td>0</td><td>8</td><td>8</td>
-                  </tr>
-                </tbody>
+                <tbody id="standing-tbody"></tbody>
               </table>
             </div>
             <div class="table-footer" onclick="window.location='liga.html'">Ver clasificación completa →</div>
