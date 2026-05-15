@@ -1273,15 +1273,11 @@ async function init() {
   }
 
   try {
-    // Carga datos de partidos y PBP del rival en paralelo
-    const [matchRes, pbpRes] = await Promise.all([
-      fetch('/api/matches?v=6'),
-      fetch(`/api/pbp-shots?team=${encodeURIComponent(rivalShort)}`),
-    ]);
-    if (!matchRes.ok) throw new Error(`HTTP ${matchRes.status}`);
-    const data     = await matchRes.json();
-    const pbpRival = pbpRes.ok ? await pbpRes.json() : {};
-    renderPage(data, rivalShort, pbpRival);
+    // Un solo fetch — pbpTeam incluye los stats PBP del rival en la respuesta
+    const res = await fetch(`/api/matches?v=6&pbpTeam=${encodeURIComponent(rivalShort)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderPage(data, rivalShort, data.pbpShots || {});
   } catch (e) {
     document.getElementById('page-content').innerHTML =
       `<div class="loading error-msg">Error al cargar los datos: ${e.message}</div>`;

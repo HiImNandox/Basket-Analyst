@@ -288,6 +288,49 @@ export default async function handler(req, res) {
         ) / 10
       : null;
 
+    // ── PBP shots opcionales (?pbpTeam=SHORTNAME) ────────────────────────────
+    // Si se pide, calcula T2%/T3%/FT% del equipo desde los eventos PBP de MongoDB
+    let pbpShots = null;
+    const pbpTeam = (req.query.pbpTeam || '').toUpperCase().trim();
+    if (pbpTeam) {
+      try {
+        const PBP_ID = { T2_MADE:93, DUNK:100, T2_MISS:97, T3_MADE:94, T3_MISS:98, FT_MADE:92, FT_MISS:96 };
+        const pbpStats = await db.collection('stats')
+          .find({ 'teams.shortName': pbpTeam })
+          .project({ matchId: 1, teams: 1 })
+          .toArray();
+        const matchTeamId = {};
+        for (const d of pbpStats) {
+          const t = (d.teams || []).find(t => t.shortName === pbpTeam);
+          if (t?.teamIdExtern) matchTeamId[d.matchId] = parseInt(t.teamIdExtern, 10);
+        }
+        const pbpDocs = await db.collection('pbp')
+          .find({ matchId: { $in: Object.keys(matchTeamId) } })
+          .project({ matchId: 1, events: 1 })
+          .toArray();
+        let t2m=0,t2a=0,t3m=0,t3a=0,ftm=0,fta=0;
+        for (const pbp of pbpDocs) {
+          const fbibId = matchTeamId[pbp.matchId];
+          if (!fbibId) continue;
+          for (const e of (pbp.events || [])) {
+            if (e.idTeam !== fbibId) continue;
+            switch(e.idMove) {
+              case PBP_ID.T2_MADE: t2m++;t2a++;break;
+              case PBP_ID.DUNK:    t2m++;t2a++;break;
+              case PBP_ID.T2_MISS: t2a++;break;
+              case PBP_ID.T3_MADE: t3m++;t3a++;break;
+              case PBP_ID.T3_MISS: t3a++;break;
+              case PBP_ID.FT_MADE: ftm++;fta++;break;
+              case PBP_ID.FT_MISS: fta++;break;
+            }
+          }
+        }
+        const pct = (m,a) => a>0 ? Math.round(m/a*1000)/10 : null;
+        pbpShots = { team:pbpTeam, gamesPlayed:pbpDocs.length,
+          t2m,t2a,t2pct:pct(t2m,t2a), t3m,t3a,t3pct:pct(t3m,t3a), ftm,fta,ftpct:pct(ftm,fta) };
+      } catch(_) { /* fallback silencioso */ }
+    }
+
     // Sin caché edge — los datos cambian al ingestar partidos
     res.setHeader('Cache-Control', 'no-store');
 
@@ -306,7 +349,8 @@ export default async function handler(req, res) {
         ultimaJornada,
         ultimoPartido,
         proximoPartido
-      }
+      },
+      ...(pbpShots ? { pbpShots } : {})
     });
 
   } catch (err) {
