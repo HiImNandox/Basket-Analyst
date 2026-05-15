@@ -446,9 +446,9 @@ function renderStandings(){
         </tr></thead>
         <tbody>${STANDINGS.map((row,idx)=>{
           const t=getTeam(row.teamId);
-          const isTop=idx<2,isLast=idx>=STANDINGS.length-2;
-          const posBg=isTop?'#cc1414':isLast?'#333':'#2a2a2a';
-          const posClr=isTop?'#fff':'#aaaaaa';
+          const isTop4=idx<4,isLast=idx>=STANDINGS.length-2;
+          const posBg=isTop4?'#cc1414':isLast?'#333':'#2a2a2a';
+          const posClr=isTop4?'#fff':'#aaaaaa';
           const difStr=row.dif>0?`+${row.dif}`:row.dif;
           const difClr=row.dif>0?'#27ae60':row.dif<0?'#e74c3c':'#aaaaaa';
           const rachaHTML=row.racha.map(w=>`<div class="racha-dot" style="background:${w?'#27ae60':'#e74c3c'}"></div>`).join('');
@@ -468,7 +468,7 @@ function renderStandings(){
       </table>
     </div>
     <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#cc1414"></div>Playoffs</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#cc1414"></div>Final Four (Top 4)</div>
       <div class="legend-item"><div class="legend-dot" style="background:#333"></div>Descenso</div>
       <div class="legend-item"><div class="racha-dot" style="background:#27ae60;display:inline-block"></div>&nbsp;Victoria</div>
       <div class="legend-item"><div class="racha-dot" style="background:#e74c3c;display:inline-block"></div>&nbsp;Derrota</div>

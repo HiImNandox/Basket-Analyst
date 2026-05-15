@@ -155,6 +155,61 @@ function renderUltimoResultado(sac) {
   }
 }
 
+// ─── FINAL FOUR BRACKET ─────────────────────────────────────
+function renderFinalFour(clasificacion) {
+  const section = el('ff-section');
+  if (!section || clasificacion.length < 4) return;
+
+  const t = (i) => clasificacion[i];
+  const isSac = (e) => e.esSac;
+
+  function teamRow(seed, equipo) {
+    const esSac = isSac(equipo);
+    return `<div class="ff-team${esSac ? ' sac' : ''}">
+      <span class="ff-seed">${seed}º</span>
+      <span class="ff-team-name">${equipo.nombre}</span>
+    </div>`;
+  }
+
+  function semifinal(seed1, seed2, label) {
+    return `<div class="ff-match">
+      <div class="ff-match-date">${label}</div>
+      ${teamRow(seed1, t(seed1-1))}
+      ${teamRow(seed2, t(seed2-1))}
+    </div>`;
+  }
+
+  section.style.display = '';
+  section.innerHTML = `
+    <div class="ff-card">
+      <div class="ff-head">
+        <span>Final Four</span>
+        <span class="ff-head-accent">JUN 2026</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--muted)">Al mejor de un partido</span>
+      </div>
+      <div class="ff-bracket">
+        <div class="ff-semis">
+          ${semifinal(1, 4, 'Semifinal · 12 Jun')}
+          ${semifinal(2, 3, 'Semifinal · 12 Jun')}
+        </div>
+        <div class="ff-connector">
+          <div class="ff-connector-h"></div>
+          <div class="ff-connector-line"></div>
+          <div class="ff-connector-h"></div>
+          <div class="ff-connector-line"></div>
+          <div class="ff-connector-h"></div>
+        </div>
+        <div class="ff-final">
+          <div class="ff-final-match">
+            <div class="ff-match-date">Final · 14 Jun</div>
+            <div class="ff-winner"><span class="ff-winner-label">Ganador Semi 1</span></div>
+            <div class="ff-winner"><span class="ff-winner-label">Ganador Semi 2</span></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ─── CLASIFICACIÓN ──────────────────────────────────────────
 function renderClasificacion(clasificacion, ultimaJornada) {
   const head = el('clasificacion-head');
@@ -188,6 +243,7 @@ async function init() {
     renderProximoPartido(data.sac);
     renderUltimoResultado(data.sac);
     renderClasificacion(data.clasificacion, data.sac.ultimaJornada);
+    renderFinalFour(data.clasificacion);
 
   } catch (err) {
     console.error('[dashboard]', err);

@@ -617,6 +617,30 @@
     transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
   }
 
+  /* ─── FINAL FOUR BRACKET ─── */
+  .ff-section { margin-top: 20px; }
+  .ff-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .ff-head { padding: 11px 18px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .ff-head-accent { color: var(--red); font-family: var(--mono); }
+  .ff-bracket { display: flex; align-items: center; gap: 0; padding: 16px 18px; }
+  .ff-semis { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .ff-connector { display: flex; flex-direction: column; align-items: center; justify-content: space-around; width: 32px; align-self: stretch; }
+  .ff-connector-line { width: 1px; flex: 1; background: var(--border2); }
+  .ff-connector-h { width: 16px; height: 1px; background: var(--border2); }
+  .ff-final { flex: 1; }
+  .ff-match { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .ff-match-date { font-size: 9px; font-family: var(--mono); letter-spacing: 1px; color: var(--muted); padding: 5px 10px 3px; border-bottom: 1px solid var(--border); text-transform: uppercase; }
+  .ff-team { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  .ff-team:last-child { border-bottom: none; }
+  .ff-seed { font-size: 9px; font-family: var(--mono); color: var(--muted); width: 14px; }
+  .ff-team-name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .ff-team.sac .ff-team-name { color: var(--red); }
+  .ff-final-match { background: var(--panel2); border: 1px solid var(--red-border); border-radius: 8px; overflow: hidden; }
+  .ff-final-match .ff-match-date { color: var(--red); border-bottom-color: var(--red-border); }
+  .ff-winner { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border2); }
+  .ff-winner:last-child { border-bottom: none; }
+  .ff-winner-label { font-size: 11px; color: var(--muted); font-style: italic; }
+
   /* ─── ANIMACIONES ─── */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(12px); }
@@ -943,6 +967,10 @@
         </div>
 
       </div>
+
+      <!-- Final Four bracket -->
+      <div class="ff-section" id="ff-section" style="display:none"></div>
+
     </div><!-- /content -->
 
     <!-- Bottom nav (móvil) — populated dynamically by rol.js -->
