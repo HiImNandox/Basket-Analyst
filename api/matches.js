@@ -288,11 +288,13 @@ export default async function handler(req, res) {
         ) / 10
       : null;
 
-    // ── PBP shots opcionales (?pbpTeam=SHORTNAME) ────────────────────────────
-    // Si se pide, calcula T2%/T3%/FT% del equipo desde los eventos PBP de MongoDB
+    // ── PBP shots + Shot Zones opcionales (?pbpTeam=SHORTNAME) ──────────────
+    // Calcula T2%/T3%/FT% desde PBP y desglose por zona desde coordenadas stats
     let pbpShots = null;
+    let shotZones = null;
     const pbpTeam = (req.query.pbpTeam || '').toUpperCase().trim();
     if (pbpTeam) {
+      // ── 1. PBP: porcentajes globales ──────────────────────────────────────
       try {
         const PBP_ID = { T2_MADE:93, DUNK:100, T2_MISS:97, T3_MADE:94, T3_MISS:98, FT_MADE:92, FT_MISS:96 };
         const pbpStats = await db.collection('stats')
@@ -329,6 +331,86 @@ export default async function handler(req, res) {
         pbpShots = { team:pbpTeam, gamesPlayed:pbpDocs.length,
           t2m,t2a,t2pct:pct(t2m,t2a), t3m,t3a,t3pct:pct(t3m,t3a), ftm,fta,ftpct:pct(ftm,fta) };
       } catch(_) { /* fallback silencioso */ }
+
+      // ── 2. Shot Zones: desglose por zona desde coordenadas en stats ───────
+      // Sistema de coordenadas (normalizado 0-100 sobre pista completa 28m×15m):
+      //   xnormalize: 0=línea de fondo atacante, ~5.6=canasta, ~30=arco 3PT, 50=centro
+      //   ynormalize: 0=banda izquierda, 50=centro, 100=banda derecha
+      //
+      // Zonas:
+      //   paint     → dentro de la botella (key 5.8m×4.9m)
+      //   midrange  → dentro del arco pero fuera de la botella
+      //   c3_corner → triple de esquina (ángulo < 45° desde la línea de fondo)
+      //   c3_top    → triple frontal/ala (ángulo ≥ 45° desde la línea de fondo)
+      try {
+        const statsDocs = await db.collection('stats')
+          .find({ 'teams.shortName': pbpTeam })
+          .project({ teams: 1 })
+          .toArray();
+
+        const z = {
+          paint:     { m:0, a:0 },
+          midrange:  { m:0, a:0 },
+          c3_corner: { m:0, a:0 },
+          c3_top:    { m:0, a:0 },
+        };
+
+        // Clasifica un tiro por zona
+        function classifyShot(xn, yn) {
+          const xm = xn / 100 * 28;   // metros desde línea de fondo
+          const ym = yn / 100 * 15;   // metros desde banda
+          const dx = xm - 1.575;      // profundidad desde canasta
+          const dy = ym - 7.5;        // lateral desde centro
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist >= 6.75) {
+            // Triple: corner (ángulo < 45°) vs frontal/ala (≥ 45°)
+            return Math.abs(dy) > Math.abs(dx) ? 'c3_corner' : 'c3_top';
+          }
+          // Doble: dentro o fuera de la botella
+          // Botella FIBA: 5.8m de profundidad desde fondo, 4.9m de ancho (±2.45m del centro)
+          if (xm <= 5.8 && Math.abs(dy) <= 2.45) return 'paint';
+          return 'midrange';
+        }
+
+        // Acumula tiros de los arrays de coordenadas
+        function addCoords(pts, made) {
+          for (const pt of (pts || [])) {
+            if (pt.xnormalize == null || pt.ynormalize == null) continue;
+            const zone = classifyShot(pt.xnormalize, pt.ynormalize);
+            z[zone].a++;
+            if (made) z[zone].m++;
+          }
+        }
+
+        const gp = statsDocs.length;
+        for (const doc of statsDocs) {
+          const team = (doc.teams || []).find(t => t.shortName === pbpTeam);
+          if (!team) continue;
+
+          // Preferir datos de equipo agregados; si no, sumar jugadores
+          const src = team.data
+            ? [team.data]
+            : (team.players || []).filter(p => p.gamePlayed).map(p => p.data).filter(Boolean);
+
+          for (const d of src) {
+            addCoords(d.shootingOfTwoSuccessfulPoint,   true);
+            addCoords(d.shootingOfTwoFailedPoint,       false);
+            addCoords(d.shootingOfThreeSuccessfulPoint, true);
+            addCoords(d.shootingOfThreeFailedPoint,     false);
+          }
+        }
+
+        const pctZ = (m, a) => a > 0 ? Math.round(m / a * 1000) / 10 : null;
+        const fmtZ = k => ({ m: z[k].m, a: z[k].a, pct: pctZ(z[k].m, z[k].a) });
+        shotZones = {
+          gamesPlayed: gp,
+          paint:     fmtZ('paint'),
+          midrange:  fmtZ('midrange'),
+          c3_corner: fmtZ('c3_corner'),
+          c3_top:    fmtZ('c3_top'),
+        };
+      } catch(_) { /* fallback silencioso */ }
     }
 
     // Sin caché edge — los datos cambian al ingestar partidos
@@ -350,7 +432,8 @@ export default async function handler(req, res) {
         ultimoPartido,
         proximoPartido
       },
-      ...(pbpShots ? { pbpShots } : {})
+      ...(pbpShots  ? { pbpShots  } : {}),
+      ...(shotZones ? { shotZones } : {}),
     });
 
   } catch (err) {

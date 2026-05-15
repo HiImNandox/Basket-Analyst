@@ -724,7 +724,8 @@ function calcLastResults(partidos, teamShort) {
 }
 
 // ─── SVG CANCHA (media pista portrait, heat map por zonas con blur) ──────────
-function buildCourtSVG(t2pct, t3pct, ftpct) {
+// zones: { paint, midrange, c3_corner, c3_top, gamesPlayed } — cada zona tiene { m, a, pct }
+function buildCourtSVG(t2pct, t3pct, ftpct, zones) {
   // Vista cenital media pista FIBA · portrait · canasta abajo
   // Escala 28px/m → 420px = 15m ancho
   const W=420, H=450, S=28, PT=16, BL=H-14, CX=W/2;
@@ -770,13 +771,42 @@ function buildCourtSVG(t2pct, t3pct, ftpct) {
   const cTop3   = t3pct !== null ? heatColor(cap(t3pct*0.90, 46), 't3') : '#1a3050';
   const cft     = ftpct !== null ? heatColor(ftpct, 'ft') : '#444';
 
-  // ── Labels ────────────────────────────────────────────────────────────────
-  const l2  = t2pct  !== null ? `${t2pct.toFixed(1)}%` : '—';
-  const l3  = t3pct  !== null ? `${t3pct.toFixed(1)}%` : '—';
-  const lft = ftpct  !== null ? `${ftpct.toFixed(1)}%` : '—';
-  const lbl3Y  = PT + 52;    // zona alta de la cancha, bien separado del label de 2PT
-  const lbl2Y  = KY + KEY_H*0.44;
+  // ── Labels con desglose por zona (si hay datos de shotZones) ────────────
+  const gp = zones?.gamesPlayed || 1;
+
+  // Zona PAINT (botella): usa zones.paint si existe, si no t2pct global
+  const paintPct  = zones?.paint?.pct  ?? t2pct;
+  const paintAtt  = zones?.paint?.a    != null ? (zones.paint.a  / gp).toFixed(1) : null;
+  const paintMade = zones?.paint?.m    != null ? zones.paint.m  : null;
+  const lPaint    = paintPct !== null ? `${paintPct.toFixed(1)}%` : '—';
+  const lPaintSub = paintAtt ? `BOTELLA · ${paintAtt}/pj` : '2 PUNTOS';
+
+  // Zona MID-RANGE: fuera botella pero dentro arco
+  const midPct    = zones?.midrange?.pct ?? null;
+  const midAtt    = zones?.midrange?.a   != null ? (zones.midrange.a / gp).toFixed(1) : null;
+  const lMid      = midPct !== null ? `${midPct.toFixed(1)}%` : null;
+  const cMidLabel = midPct !== null ? heatColor(midPct, 't2') : '#8aaccc';
+
+  // Zona TRIPLE FRONTAL (c3_top): cubre wings + top-of-key
+  const top3Pct   = zones?.c3_top?.pct  ?? t3pct;
+  const top3Att   = zones?.c3_top?.a    != null ? (zones.c3_top.a  / gp).toFixed(1) : null;
+  const lTop3     = top3Pct !== null ? `${top3Pct.toFixed(1)}%` : '—';
+  const lTop3Sub  = top3Att ? `FRONTAL · ${top3Att}/pj` : '3 PUNTOS';
+
+  // Zona CORNER 3
+  const crnPct    = zones?.c3_corner?.pct ?? null;
+  const crnAtt    = zones?.c3_corner?.a   != null ? (zones.c3_corner.a / gp).toFixed(1) : null;
+  const lCrn      = crnPct !== null ? `${crnPct.toFixed(1)}%` : (t3pct !== null ? `${t3pct.toFixed(1)}%` : '—');
+  const cCrnLabel = (crnPct ?? t3pct) !== null ? heatColor(crnPct ?? t3pct, 't3') : '#8aaccc';
+
+  const lft = ftpct !== null ? `${ftpct.toFixed(1)}%` : '—';
+  const lbl3Y  = PT + 52;
+  const lbl2Y  = KY + KEY_H * 0.44;
   const lblFTY = KY - 8;
+  // Mid-range pills: a cada lado del semicírculo FT, encima del key
+  const lblMidLX = KX1 - 18;    // ≈ 124 — lado izquierdo
+  const lblMidRX = KX2 + 18;    // ≈ 296 — lado derecho
+  const lblMidY  = KY + 32;     // ≈ 306 — dentro del arc, zona elbow
 
   // ── Colores cancha ────────────────────────────────────────────────────────
   const FLOOR = '#0f1e30';
@@ -918,28 +948,69 @@ function buildCourtSVG(t2pct, t3pct, ftpct) {
   <line x1="${CX}" y1="${f(BRD_Y+0.15*S)}" x2="${CX}" y2="${f(BKTY-HOOP_R)}"
         stroke="#e87c20" stroke-width="1.2" opacity="0.6"/>
 
-  <!-- ═══ ETIQUETAS ═══ -->
-  <!-- 3PT -->
+  <!-- ═══ ETIQUETAS DE ZONAS ═══ -->
+
+  <!-- ── Triple frontal / ala (zona superior) ── -->
   <text x="${CX}" y="${f(lbl3Y-4)}" text-anchor="middle"
-        font-family="'JetBrains Mono',monospace" font-size="28" font-weight="700"
-        fill="white" opacity="0.97">${l3}</text>
-  <text x="${CX}" y="${f(lbl3Y+18)}" text-anchor="middle"
-        font-family="'Barlow Condensed',sans-serif" font-size="13" font-weight="700"
-        fill="white" opacity="0.65" letter-spacing="2">3 PUNTOS</text>
-
-  <!-- 2PT -->
-  <text x="${CX}" y="${f(lbl2Y-4)}" text-anchor="middle"
         font-family="'JetBrains Mono',monospace" font-size="26" font-weight="700"
-        fill="white" opacity="0.97">${l2}</text>
-  <text x="${CX}" y="${f(lbl2Y+18)}" text-anchor="middle"
-        font-family="'Barlow Condensed',sans-serif" font-size="13" font-weight="700"
-        fill="white" opacity="0.65" letter-spacing="2">2 PUNTOS</text>
+        fill="white" opacity="0.97">${lTop3}</text>
+  <text x="${CX}" y="${f(lbl3Y+16)}" text-anchor="middle"
+        font-family="'Barlow Condensed',sans-serif" font-size="11" font-weight="700"
+        fill="white" opacity="0.65" letter-spacing="1.5">${lTop3Sub}</text>
 
-  <!-- TL pastilla -->
-  <rect x="${f(CX-42)}" y="${f(lblFTY-22)}" width="84" height="24"
+  <!-- ── Corner 3 izquierdo ── -->
+  <text x="${f(CRNX/2+1)}" y="${f((CRNY+BL)/2-8)}" text-anchor="middle"
+        font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700"
+        fill="${cCrnLabel}" opacity="0.95">${lCrn}</text>
+  ${crnAtt ? `<text x="${f(CRNX/2+1)}" y="${f((CRNY+BL)/2+6)}" text-anchor="middle"
+        font-family="'Barlow Condensed',sans-serif" font-size="8" font-weight="600"
+        fill="white" opacity="0.55">${crnAtt}/pj</text>` : ''}
+
+  <!-- ── Corner 3 derecho ── -->
+  <text x="${f(W-CRNX/2-1)}" y="${f((CRNY+BL)/2-8)}" text-anchor="middle"
+        font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700"
+        fill="${cCrnLabel}" opacity="0.95">${lCrn}</text>
+  ${crnAtt ? `<text x="${f(W-CRNX/2-1)}" y="${f((CRNY+BL)/2+6)}" text-anchor="middle"
+        font-family="'Barlow Condensed',sans-serif" font-size="8" font-weight="600"
+        fill="white" opacity="0.55">${crnAtt}/pj</text>` : ''}
+
+  <!-- ── Mid-range / elbow (pastilla izquierda) ── -->
+  ${lMid ? `
+  <rect x="${f(lblMidLX-28)}" y="${f(lblMidY-14)}" width="56" height="22" rx="4"
+        fill="${cMidLabel}" opacity="0.22"/>
+  <text x="${f(lblMidLX)}" y="${f(lblMidY-2)}" text-anchor="middle"
+        font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700"
+        fill="${cMidLabel}" opacity="0.95">${lMid}</text>
+  <text x="${f(lblMidLX)}" y="${f(lblMidY+9)}" text-anchor="middle"
+        font-family="'Barlow Condensed',sans-serif" font-size="8" font-weight="600"
+        fill="white" opacity="0.5">${midAtt ? `${midAtt}/pj` : 'MEDIA'}</text>
+  ` : ''}
+
+  <!-- ── Mid-range / elbow (pastilla derecha) ── -->
+  ${lMid ? `
+  <rect x="${f(lblMidRX-28)}" y="${f(lblMidY-14)}" width="56" height="22" rx="4"
+        fill="${cMidLabel}" opacity="0.22"/>
+  <text x="${f(lblMidRX)}" y="${f(lblMidY-2)}" text-anchor="middle"
+        font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700"
+        fill="${cMidLabel}" opacity="0.95">${lMid}</text>
+  <text x="${f(lblMidRX)}" y="${f(lblMidY+9)}" text-anchor="middle"
+        font-family="'Barlow Condensed',sans-serif" font-size="8" font-weight="600"
+        fill="white" opacity="0.5">${midAtt ? `${midAtt}/pj` : 'MEDIA'}</text>
+  ` : ''}
+
+  <!-- ── Botella (zona pintada) ── -->
+  <text x="${CX}" y="${f(lbl2Y-4)}" text-anchor="middle"
+        font-family="'JetBrains Mono',monospace" font-size="24" font-weight="700"
+        fill="white" opacity="0.97">${lPaint}</text>
+  <text x="${CX}" y="${f(lbl2Y+15)}" text-anchor="middle"
+        font-family="'Barlow Condensed',sans-serif" font-size="11" font-weight="700"
+        fill="white" opacity="0.65" letter-spacing="1.5">${lPaintSub}</text>
+
+  <!-- ── TL pastilla (encima de la línea de TL) ── -->
+  <rect x="${f(CX-38)}" y="${f(lblFTY-21)}" width="76" height="22"
         fill="${cft}" opacity="0.85" rx="5"/>
   <text x="${CX}" y="${f(lblFTY-5)}" text-anchor="middle"
-        font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700"
+        font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700"
         fill="white" opacity="0.97">${lft}  TL</text>
 
 </svg>`;
@@ -1112,7 +1183,8 @@ function renderPage(data, rivalShort, pbpRival) {
 
   const ftColor = t1pct !== null ? heatColor(t1pct, 'ft') : '#333';
 
-  const courtSVG = buildCourtSVG(t2pct, t3pct, t1pct);
+  const zones    = data.shotZones || null;
+  const courtSVG = buildCourtSVG(t2pct, t3pct, t1pct, zones);
 
   const t2SubLabel = t2att !== null ? `${t2att.toFixed(1)} int/pj` : '';
   const t3SubLabel = t3att !== null ? `${t3att.toFixed(1)} int/pj` : '';
@@ -1151,7 +1223,7 @@ function renderPage(data, rivalShort, pbpRival) {
         <div class="legend-item"><div class="legend-swatch" style="background:#cc1414"></div>Peligroso</div>
       </div>
       <div class="court-note">
-        Calculado a partir de los eventos de juego (PBP) de toda la temporada. Las zonas 2PT e interior del arco no se distinguen espacialmente al no haber coordenadas en los datos FBIB.
+        Zonas calculadas desde coordenadas reales de cada tiro (temporada completa). Botella = dentro de la zona pintada · Media = 2PT fuera de botella · Frontal = triple ángulo ≥45° · Corner = triple ángulo &lt;45°.
       </div>
     </div>
   </div>`;
