@@ -200,10 +200,15 @@ function renderFinalFour(clasificacion) {
           <div class="ff-connector-h"></div>
         </div>
         <div class="ff-final">
-          <div class="ff-final-match">
+          <div class="ff-final-match" style="margin-bottom:10px">
             <div class="ff-match-date">Final · 14 Jun</div>
             <div class="ff-winner"><span class="ff-winner-label">Ganador Semi 1</span></div>
             <div class="ff-winner"><span class="ff-winner-label">Ganador Semi 2</span></div>
+          </div>
+          <div class="ff-match">
+            <div class="ff-match-date">3º y 4º puesto · 14 Jun</div>
+            <div class="ff-winner"><span class="ff-winner-label">Perdedor Semi 1</span></div>
+            <div class="ff-winner"><span class="ff-winner-label">Perdedor Semi 2</span></div>
           </div>
         </div>
       </div>
