@@ -250,9 +250,7 @@
   /* SVG en desktop escala por altura (height:100% + width:auto) */
   #court-svg-container { flex:0 0 auto; height:100%; }
   #court-svg-container svg { height:100%; width:auto; display:block; border-radius:14px; overflow:hidden; }
-  /* Panel jugadores: flex col, ocupa el espacio restante a la misma altura */
-  .court-player-layout > div:last-child { flex:1; min-width:140px; display:flex; flex-direction:column; overflow:hidden; }
-  /* CRÍTICO: min-height:0 permite que el flex child con overflow-y:auto haga scroll */
+  /* CRÍTICO: min-height:0 en el contenedor de la lista para que overflow-y:auto funcione */
   #player-shot-list { min-height:0; }
   .court-note {
     font-size:11px;
@@ -1224,9 +1222,9 @@ function renderPage(data, rivalShort, pbpRival) {
           ${courtSVG}
         </div>
         <!-- Panel selección de jugadores -->
-        <div style="flex:1;min-width:140px;display:flex;flex-direction:column;overflow:hidden;">
-          <div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:1px;font-family:var(--barlow);margin-bottom:6px;text-transform:uppercase;">Tiros por jugador</div>
-          <div id="player-shot-list" style="display:flex;flex-direction:column;gap:4px;flex:1;overflow-y:auto;">
+        <div style="flex:1;min-width:140px;height:100%;display:flex;flex-direction:column;">
+          <div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:1px;font-family:var(--barlow);margin-bottom:6px;text-transform:uppercase;flex-shrink:0;">Tiros por jugador</div>
+          <div id="player-shot-list" style="display:flex;flex-direction:column;gap:4px;flex:1;min-height:0;overflow-y:auto;">
             ${playerShots.length
               ? playerShots.map((p, i) => `
                 <div class="pshot-row" data-id="${p.actorId}" onclick="window._togglePlayer(${p.actorId})"
@@ -1240,7 +1238,7 @@ function renderPage(data, rivalShort, pbpRival) {
               : '<div style="font-size:11px;color:var(--muted);font-family:var(--barlow);">Sin datos de tiro</div>'
             }
           </div>
-          ${playerShots.length ? `<div style="margin-top:8px;">
+          ${playerShots.length ? `<div style="margin-top:8px;flex-shrink:0;">
             <button onclick="window._clearPlayers()" style="width:100%;padding:4px;background:transparent;border:1px solid rgba(255,255,255,0.12);border-radius:5px;color:var(--muted);font-size:10px;cursor:pointer;font-family:var(--barlow);">Limpiar selección</button>
           </div>` : ''}
         </div>
