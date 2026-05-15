@@ -632,7 +632,7 @@ function parseShotStr(s) {
 function calcStats(partidos, teamShort) {
   // Devuelve stats acumuladas de un equipo a partir de sus partidos (ya filtrados, ya jugados)
   let pj=0, pts=0, t2m=0, t2a=0, t3m=0, t3a=0, t1m=0, t1a=0;
-  let reb=0, ast=0, to=0, pir=0;
+  let reb=0, ast=0, to=0, pir=0, stl=0, blk=0, pf=0;
 
   for (const p of partidos) {
     const players = p.players && p.players[teamShort];
@@ -644,6 +644,9 @@ function calcStats(partidos, teamShort) {
       ast += pl.ast || 0;
       to  += pl.to  || 0;
       pir += pl.pir || 0;
+      stl += pl.stl || 0;
+      blk += pl.blk || 0;
+      pf  += pl.pf  || 0;
       const t2 = parseShotStr(pl.t2);
       const t3 = parseShotStr(pl.t3);
       const t1 = parseShotStr(pl.t1);
@@ -661,6 +664,9 @@ function calcStats(partidos, teamShort) {
     apg  : ast / pj,
     topg : to  / pj,
     pirpg: pir / pj,
+    stlpg: stl / pj,
+    blkpg: blk / pj,
+    pfpg : pf  / pj,
     t2pct: pct(t2m, t2a),
     t3pct: pct(t3m, t3a),
     t1pct: pct(t1m, t1a),
@@ -1178,8 +1184,8 @@ function renderPage(data, rivalShort, pbpRival) {
         ${metricRow('T2%', statsSAC?.t2pct, statsRival?.t2pct, true)}
         ${metricRow('T3%', statsSAC?.t3pct, statsRival?.t3pct, true)}
         ${metricRow('TL%', statsSAC?.t1pct, statsRival?.t1pct, true)}
-        ${metricRow('REB/PJ', statsSAC?.rpg, statsRival?.rpg)}
-        ${metricRow('AST/PJ', statsSAC?.apg, statsRival?.apg)}
+        ${metricRow('ROB/PJ', statsSAC?.stlpg, statsRival?.stlpg)}
+        ${metricRow('TAP/PJ', statsSAC?.blkpg, statsRival?.blkpg)}
         ${metricRow('PÉR/PJ', statsSAC?.topg, statsRival?.topg, false, true)}
         ${metricRow('PIR/PJ', statsSAC?.pirpg, statsRival?.pirpg)}
       </div>
