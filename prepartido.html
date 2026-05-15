@@ -723,182 +723,219 @@ function calcLastResults(partidos, teamShort) {
   });
 }
 
-// ─── SVG CANCHA (media pista portrait, estilo entrenamiento) ─────────────────
+// ─── SVG CANCHA (media pista portrait, heat map por zonas con blur) ──────────
 function buildCourtSVG(t2pct, t3pct, ftpct) {
-  // Vista cenital de media pista FIBA (15m ancho × 14m profundidad)
-  // Portrait: canasta abajo, línea de medio campo arriba
-  // Escala: 28 px = 1 metro  →  420px = 15m
-  const W  = 420;          // ancho SVG = 15m
-  const H  = 450;          // alto SVG  (≈ 14m + márgenes)
-  const S  = 28;           // px / metro
-  const PT = 16;           // padding top (línea de medio campo)
-  const BL = H - 14;       // y de la línea de fondo = 436
-  const CX = W / 2;        // 210 — centro horizontal
-
+  // Vista cenital media pista FIBA · portrait · canasta abajo
+  // Escala 28px/m → 420px = 15m ancho
+  const W=420, H=450, S=28, PT=16, BL=H-14, CX=W/2;
   const f = v => v.toFixed(1);
 
-  // ── Canasta ──────────────────────────────────────────────────────────────
-  const BKTY   = BL - 1.575 * S;          // centro aro ≈ 392
-  const HOOP_R = 0.225 * S;               // ≈ 6.3px
-  const BRD_W  = 1.83  * S;               // tablero ≈ 51px
-  const BRD_Y  = BL - 1.12 * S;          // ≈ 405
+  // ── Geometría FIBA ────────────────────────────────────────────────────────
+  const BKTY   = BL - 1.575*S;           // centro aro  ≈ 392
+  const HOOP_R = 0.225*S;
+  const BRD_W  = 1.83*S;
+  const BRD_Y  = BL - 1.12*S;
 
-  // ── Zona pintada ─────────────────────────────────────────────────────────
-  const KEY_W = 4.9 * S;                  // ≈ 137px
-  const KEY_H = 5.8 * S;                  // ≈ 162px
-  const KX1   = CX - KEY_W / 2;          // ≈ 142
-  const KX2   = CX + KEY_W / 2;          // ≈ 278
-  const KY    = BL - KEY_H;              // top of key ≈ 274
+  const KEY_W = 4.9*S,  KEY_H = 5.8*S;
+  const KX1   = CX - KEY_W/2, KX2 = CX + KEY_W/2, KY = BL - KEY_H;
 
-  // ── Círculo de tiros libres ───────────────────────────────────────────────
-  const FT_R = 1.8 * S;                   // ≈ 50px, centrado en KY
+  const FT_R   = 1.8*S;
+  const REST_R = 1.25*S;
+  const A3R    = 6.75*S;
+  const CRNX   = 0.9*S;
+  const crnDX  = CX - CRNX;
+  const crnDY  = Math.sqrt(Math.max(0, A3R*A3R - crnDX*crnDX));
+  const CRNY   = BKTY - crnDY;           // ≈ 352
 
-  // ── Zona restringida ─────────────────────────────────────────────────────
-  const REST_R = 1.25 * S;               // ≈ 35px
+  // Línea arco 3 (para trazar)
+  const ARC3_LINE = `M ${f(CRNX)} ${f(CRNY)} A ${f(A3R)} ${f(A3R)} 0 0 1 ${f(W-CRNX)} ${f(CRNY)}`;
 
-  // ── Arco de 3 puntos FIBA ────────────────────────────────────────────────
-  const A3R    = 6.75 * S;               // ≈ 189px
-  const CRNX   = 0.9  * S;              // líneas de corner a 0.9m de banda ≈ 25px
-  const crnDX  = CX  - CRNX;            // distancia horizontal aro → corner ≈ 185px
-  const crnDY  = Math.sqrt(Math.max(0, A3R * A3R - crnDX * crnDX)); // ≈ 40px
-  const CRNY   = BKTY - crnDY;          // y donde el arco toca la línea de corner ≈ 352
+  // ── Colores por zona (distribución típica de baloncesto) ─────────────────
+  // Con T2%/T3% globales modulamos cada zona con un factor realista:
+  //  · Paint bajo aro    → +20%  (zona más eficiente del campo)
+  //  · Short mid lateral → +5%
+  //  · Elbow mid-range   → -22%  (zona menos eficiente, fría)
+  //  · Corner 3          → +10%  (el mejor triples)
+  //  · Wing 3            → 0%
+  //  · Top 3             → -8%
+  const cap = (v, mx) => v !== null ? Math.min(v, mx) : null;
+  const zm  = (base, mult, mx) => base !== null ? heatColor(cap(base*mult, mx), base > 40 ? 't2' : 't2') : '#1a3050';
+  const zm3 = (base, mult, mx) => base !== null ? heatColor(cap(base*mult, mx), 't3') : '#1a3050';
 
-  // Path zonas de color
-  // Zona interior al arco (toda la "D" desde las líneas de corner hasta el arco)
-  const ZONE2_PATH =
-    `M ${f(CRNX)} ${f(BL)} ` +
-    `L ${f(CRNX)} ${f(CRNY)} ` +
-    `A ${f(A3R)} ${f(A3R)} 0 0 1 ${f(W - CRNX)} ${f(CRNY)} ` +
-    `L ${f(W - CRNX)} ${f(BL)} Z`;
+  // Zonas 2PT
+  const cPaint  = t2pct !== null ? heatColor(cap(t2pct*1.20, 65), 't2') : '#1a3050';
+  const cMidKey = t2pct !== null ? heatColor(cap(t2pct*1.05, 60), 't2') : '#1a3050';
+  const cShortL = t2pct !== null ? heatColor(cap(t2pct*0.92, 58), 't2') : '#1a3050';
+  const cElbow  = t2pct !== null ? heatColor(cap(t2pct*0.78, 55), 't2') : '#1a3050';
+  // Zonas 3PT
+  const cCrn3   = t3pct !== null ? heatColor(cap(t3pct*1.10, 50), 't3') : '#1a3050';
+  const cWng3   = t3pct !== null ? heatColor(cap(t3pct*1.00, 48), 't3') : '#1a3050';
+  const cTop3   = t3pct !== null ? heatColor(cap(t3pct*0.92, 46), 't3') : '#1a3050';
+  // TL
+  const cft = ftpct !== null ? heatColor(ftpct, 'ft') : '#444';
 
-  // Path arco de 3 (solo línea)
-  const ARC3_LINE =
-    `M ${f(CRNX)} ${f(CRNY)} A ${f(A3R)} ${f(A3R)} 0 0 1 ${f(W - CRNX)} ${f(CRNY)}`;
+  // ── Labels ────────────────────────────────────────────────────────────────
+  const l2  = t2pct  !== null ? `${t2pct.toFixed(1)}%` : '—';
+  const l3  = t3pct  !== null ? `${t3pct.toFixed(1)}%` : '—';
+  const lft = ftpct  !== null ? `${ftpct.toFixed(1)}%` : '—';
+  const lbl3Y  = CRNY - 30;
+  const lbl2Y  = KY + KEY_H*0.44;
+  const lblFTY = KY - 8;
 
-  // ── Colores ───────────────────────────────────────────────────────────────
-  const c2  = t2pct  !== null ? heatColor(t2pct,  't2') : '#4a6080';
-  const c3  = t3pct  !== null ? heatColor(t3pct,  't3') : '#4a6080';
-  const cft = ftpct  !== null ? heatColor(ftpct,  'ft') : '#555';
+  // ── Colores cancha ────────────────────────────────────────────────────────
+  const FLOOR = '#0f1e30';
+  const LINE  = '#9bbbd4';
+  const OUTER = '#0a1520';
+  const LW    = 1.8;
 
-  const l2  = t2pct  !== null ? `${t2pct.toFixed(1)}%`  : '—';
-  const l3  = t3pct  !== null ? `${t3pct.toFixed(1)}%`  : '—';
-  const lft = ftpct  !== null ? `${ftpct.toFixed(1)}%`  : '—';
-
-  // ── Estilo visual: pizarra táctica oscura (igual que jugadas/entrenos) ──────
-  const FLOOR  = '#0f1e30';   // azul marino oscuro — fondo cancha
-  const LINE   = '#9bbbd4';   // azul-gris claro — líneas cancha
-  const OUTER  = '#0a1520';   // casi negro — marco exterior
-  const LW     = 1.8;
-
-  // ── Posiciones de texto ───────────────────────────────────────────────────
-  const lbl3Y  = CRNY - 34;                 // label zona 3
-  const lbl2Y  = KY + KEY_H * 0.44;        // label zona 2 (dentro del key)
-  const lblFTY = KY - 8;                   // label TL encima de la línea de TL
+  // Posiciones útiles para ellipses de calor
+  const paintCY   = BKTY - REST_R*0.3;        // centro zona bajo aro
+  const midKeyCY  = KY + KEY_H*0.62;          // centro key medio
+  const elbowLX   = KX1 + 8,  elbowRX = KX2 - 8;
+  const elbowY    = KY + 14;
+  const shortLX   = KX1 - 28, shortRX = KX2 + 28;
+  const shortY    = KY + KEY_H*0.68;
+  const wngLX     = CRNX + 48, wngRX = W - CRNX - 48;
+  const wngY      = CRNY + 38;
+  const crnLX     = CRNX + 22, crnRX = W - CRNX - 22;
+  const crnY      = BL - 28;
+  const topY      = CRNY - 12;
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
     style="width:100%;max-width:460px;height:auto;display:block;margin:0 auto;border-radius:14px;overflow:hidden;">
   <defs>
+    <!-- Clip: interior de la cancha -->
     <clipPath id="court-clip">
-      <rect x="0" y="${PT}" width="${W}" height="${BL - PT}"/>
+      <rect x="0" y="${PT}" width="${W}" height="${BL-PT}"/>
     </clipPath>
+    <!-- Máscara para recortar el blur sin perder los bordes -->
+    <mask id="court-mask">
+      <rect x="0" y="${PT}" width="${W}" height="${BL-PT}" fill="white"/>
+    </mask>
+    <!-- Blur suave tipo heat map -->
+    <filter id="hblur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="20"/>
+    </filter>
+    <!-- Blur más concentrado para paint (zona bajo aro) -->
+    <filter id="hblur-hot" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
   </defs>
 
-  <!-- ─── Fondo exterior ─── -->
+  <!-- ─── Fondo ─────────────────────────────────────────────────────────── -->
   <rect x="0" y="0" width="${W}" height="${H}" fill="${OUTER}" rx="14"/>
+  <rect x="0" y="${PT}" width="${W}" height="${BL-PT}" fill="${FLOOR}"/>
 
-  <!-- ─── Fondo cancha ─── -->
-  <rect x="0" y="${PT}" width="${W}" height="${BL - PT}" fill="${FLOOR}" clip-path="url(#court-clip)"/>
+  <!-- ═══ HEAT MAP — blur clipeado por la máscara ═══ -->
+  <g mask="url(#court-mask)">
 
-  <!-- ═══ ZONAS DE CALOR ═══ -->
-  <!-- Zona de 3 (flancos fuera del arco) — toda la cancha como base -->
-  <rect x="0" y="${PT}" width="${W}" height="${BL - PT}"
-        fill="${c3}" opacity="0.72" clip-path="url(#court-clip)"/>
+    <!-- ── Capa base exterior (zona de 3) ── -->
+    <rect x="-30" y="${PT-30}" width="${W+60}" height="${BL-PT+60}"
+          fill="${cTop3}" opacity="0.82" filter="url(#hblur)"/>
 
-  <!-- Zona interior al arco de 3 (toda la "D" = zona de 2) -->
-  <path d="${ZONE2_PATH}" fill="${c2}" opacity="0.78"/>
+    <!-- ── Wing 3 izquierda ── -->
+    <ellipse cx="${f(wngLX)}" cy="${f(wngY)}" rx="68" ry="58"
+             fill="${cWng3}" opacity="0.90" filter="url(#hblur)"/>
+    <!-- ── Wing 3 derecha ── -->
+    <ellipse cx="${f(wngRX)}" cy="${f(wngY)}" rx="68" ry="58"
+             fill="${cWng3}" opacity="0.90" filter="url(#hblur)"/>
 
-  <!-- ═══ LÍNEAS DE LA CANCHA ═══ -->
-  <!-- Líneas de fondo -->
-  <line x1="0"  y1="${f(BL)}" x2="${W}"  y2="${f(BL)}" stroke="${LINE}" stroke-width="${LW + 0.5}"/>
-  <!-- Bandas (laterales) -->
-  <line x1="0"  y1="${PT}"    x2="0"    y2="${f(BL)}"  stroke="${LINE}" stroke-width="${LW}"/>
-  <line x1="${W}" y1="${PT}"  x2="${W}"  y2="${f(BL)}"  stroke="${LINE}" stroke-width="${LW}"/>
-  <!-- Línea de medio campo (arriba) — punteada para indicar que es el límite del SVG -->
-  <line x1="0" y1="${PT}" x2="${W}" y2="${PT}"
-        stroke="${LINE}" stroke-width="1.2" stroke-dasharray="8 6" opacity="0.5"/>
+    <!-- ── Corner 3 izquierda ── -->
+    <ellipse cx="${f(crnLX)}" cy="${f(crnY)}" rx="52" ry="38"
+             fill="${cCrn3}" opacity="0.92" filter="url(#hblur)"/>
+    <!-- ── Corner 3 derecha ── -->
+    <ellipse cx="${f(crnRX)}" cy="${f(crnY)}" rx="52" ry="38"
+             fill="${cCrn3}" opacity="0.92" filter="url(#hblur)"/>
 
-  <!-- Zona pintada (rectángulo) -->
+    <!-- ── Elbow izquierdo (mid-range frío) ── -->
+    <ellipse cx="${f(elbowLX)}" cy="${f(elbowY)}" rx="42" ry="34"
+             fill="${cElbow}" opacity="0.88" filter="url(#hblur)"/>
+    <!-- ── Elbow derecho ── -->
+    <ellipse cx="${f(elbowRX)}" cy="${f(elbowY)}" rx="42" ry="34"
+             fill="${cElbow}" opacity="0.88" filter="url(#hblur)"/>
+
+    <!-- ── Short mid lateral izquierdo ── -->
+    <ellipse cx="${f(shortLX)}" cy="${f(shortY)}" rx="44" ry="52"
+             fill="${cShortL}" opacity="0.85" filter="url(#hblur)"/>
+    <!-- ── Short mid lateral derecho ── -->
+    <ellipse cx="${f(shortRX)}" cy="${f(shortY)}" rx="44" ry="52"
+             fill="${cShortL}" opacity="0.85" filter="url(#hblur)"/>
+
+    <!-- ── Key central / post ── -->
+    <ellipse cx="${CX}" cy="${f(midKeyCY)}" rx="${f(KEY_W*0.36)}" ry="${f(KEY_H*0.20)}"
+             fill="${cMidKey}" opacity="0.88" filter="url(#hblur)"/>
+
+    <!-- ── Paint / bajo aro (zona más caliente) ── -->
+    <ellipse cx="${CX}" cy="${f(paintCY)}" rx="${f(KEY_W*0.44)}" ry="${f(REST_R*2.1)}"
+             fill="${cPaint}" opacity="0.92" filter="url(#hblur-hot)"/>
+    <!-- núcleo más caliente encima -->
+    <ellipse cx="${CX}" cy="${f(BKTY + 4)}" rx="${f(KEY_W*0.28)}" ry="${f(REST_R*1.25)}"
+             fill="${cPaint}" opacity="0.88" filter="url(#hblur-hot)"/>
+  </g>
+
+  <!-- ═══ LÍNEAS DE LA CANCHA (encima del heat map) ═══ -->
+  <line x1="0"   y1="${f(BL)}" x2="${W}"   y2="${f(BL)}" stroke="${LINE}" stroke-width="${LW+0.5}"/>
+  <line x1="0"   y1="${PT}"    x2="0"      y2="${f(BL)}" stroke="${LINE}" stroke-width="${LW}"/>
+  <line x1="${W}" y1="${PT}"   x2="${W}"    y2="${f(BL)}" stroke="${LINE}" stroke-width="${LW}"/>
+  <line x1="0"   y1="${PT}"   x2="${W}"    y2="${PT}"
+        stroke="${LINE}" stroke-width="1.2" stroke-dasharray="8 6" opacity="0.45"/>
+
+  <!-- Zona pintada -->
   <rect x="${f(KX1)}" y="${f(KY)}" width="${f(KEY_W)}" height="${f(KEY_H)}"
         fill="none" stroke="${LINE}" stroke-width="${LW}"/>
 
-  <!-- Semicírculo TL — mitad superior exterior (punteada) -->
-  <path d="M ${f(CX - FT_R)} ${f(KY)} A ${f(FT_R)} ${f(FT_R)} 0 0 0 ${f(CX + FT_R)} ${f(KY)}"
+  <!-- Semicírculo TL arriba (dashed) -->
+  <path d="M ${f(CX-FT_R)} ${f(KY)} A ${f(FT_R)} ${f(FT_R)} 0 0 0 ${f(CX+FT_R)} ${f(KY)}"
         fill="none" stroke="${LINE}" stroke-width="${LW}" stroke-dasharray="5 4"/>
-  <!-- Semicírculo TL — mitad inferior interior (sólida) -->
-  <path d="M ${f(CX - FT_R)} ${f(KY)} A ${f(FT_R)} ${f(FT_R)} 0 0 1 ${f(CX + FT_R)} ${f(KY)}"
+  <!-- Semicírculo TL abajo (sólido) -->
+  <path d="M ${f(CX-FT_R)} ${f(KY)} A ${f(FT_R)} ${f(FT_R)} 0 0 1 ${f(CX+FT_R)} ${f(KY)}"
         fill="none" stroke="${LINE}" stroke-width="${LW}"/>
 
-  <!-- Zona restringida (semicírculo) -->
-  <path d="M ${f(CX - REST_R)} ${f(BKTY)} A ${f(REST_R)} ${f(REST_R)} 0 0 1 ${f(CX + REST_R)} ${f(BKTY)}"
+  <!-- Zona restringida -->
+  <path d="M ${f(CX-REST_R)} ${f(BKTY)} A ${f(REST_R)} ${f(REST_R)} 0 0 1 ${f(CX+REST_R)} ${f(BKTY)}"
         fill="none" stroke="${LINE}" stroke-width="${LW}"/>
 
-  <!-- Líneas de corner (3 puntos esquina) -->
+  <!-- Corner lines -->
   <line x1="${f(CRNX)}"     y1="${f(BL)}" x2="${f(CRNX)}"     y2="${f(CRNY)}" stroke="${LINE}" stroke-width="${LW}"/>
-  <line x1="${f(W - CRNX)}" y1="${f(BL)}" x2="${f(W - CRNX)}" y2="${f(CRNY)}" stroke="${LINE}" stroke-width="${LW}"/>
+  <line x1="${f(W-CRNX)}"   y1="${f(BL)}" x2="${f(W-CRNX)}"   y2="${f(CRNY)}" stroke="${LINE}" stroke-width="${LW}"/>
 
-  <!-- Arco de 3 puntos -->
+  <!-- Arco de 3 -->
   <path d="${ARC3_LINE}" fill="none" stroke="${LINE}" stroke-width="${LW}"/>
 
   <!-- Tablero -->
-  <line x1="${f(CX - BRD_W / 2)}" y1="${f(BRD_Y)}"
-        x2="${f(CX + BRD_W / 2)}" y2="${f(BRD_Y)}"
+  <line x1="${f(CX-BRD_W/2)}" y1="${f(BRD_Y)}" x2="${f(CX+BRD_W/2)}" y2="${f(BRD_Y)}"
         stroke="${LINE}" stroke-width="3.5"/>
-  <!-- Rectángulo interior tablero -->
-  <rect x="${f(CX - 0.45 * S)}" y="${f(BRD_Y)}" width="${f(0.9 * S)}" height="${f(0.15 * S)}"
+  <rect x="${f(CX-0.45*S)}" y="${f(BRD_Y)}" width="${f(0.9*S)}" height="${f(0.15*S)}"
         fill="none" stroke="${LINE}" stroke-width="1.2"/>
 
   <!-- Aro -->
   <circle cx="${CX}" cy="${f(BKTY)}" r="${f(HOOP_R)}" fill="none" stroke="#e87c20" stroke-width="2.5"/>
-  <!-- Tablero → aro (apoyo visual) -->
-  <line x1="${CX}" y1="${f(BRD_Y + 0.15 * S)}" x2="${CX}" y2="${f(BKTY - HOOP_R)}"
+  <line x1="${CX}" y1="${f(BRD_Y+0.15*S)}" x2="${CX}" y2="${f(BKTY-HOOP_R)}"
         stroke="#e87c20" stroke-width="1.2" opacity="0.6"/>
 
-  <!-- ═══ ETIQUETAS DE ESTADÍSTICAS ═══ -->
-
-  <!-- Zona de 3 — texto centrado en la parte alta -->
-  <text x="${CX}" y="${f(lbl3Y - 4)}"  text-anchor="middle"
+  <!-- ═══ ETIQUETAS ═══ -->
+  <!-- 3PT -->
+  <text x="${CX}" y="${f(lbl3Y-4)}" text-anchor="middle"
         font-family="'JetBrains Mono',monospace" font-size="28" font-weight="700"
         fill="white" opacity="0.97">${l3}</text>
-  <text x="${CX}" y="${f(lbl3Y + 18)}" text-anchor="middle"
+  <text x="${CX}" y="${f(lbl3Y+18)}" text-anchor="middle"
         font-family="'Barlow Condensed',sans-serif" font-size="13" font-weight="700"
         fill="white" opacity="0.65" letter-spacing="2">3 PUNTOS</text>
-  <!-- Flancos: corner labels -->
-  <text x="${f(CRNX / 2 + 2)}" y="${f(BL - 10)}" text-anchor="middle"
-        font-family="'Barlow Condensed',sans-serif" font-size="9" font-weight="700"
-        fill="white" opacity="0.55" letter-spacing="1">3PT</text>
-  <text x="${f(W - CRNX / 2 - 2)}" y="${f(BL - 10)}" text-anchor="middle"
-        font-family="'Barlow Condensed',sans-serif" font-size="9" font-weight="700"
-        fill="white" opacity="0.55" letter-spacing="1">3PT</text>
 
-  <!-- Zona de 2 — texto en la zona pintada -->
-  <text x="${CX}" y="${f(lbl2Y - 4)}"  text-anchor="middle"
+  <!-- 2PT -->
+  <text x="${CX}" y="${f(lbl2Y-4)}" text-anchor="middle"
         font-family="'JetBrains Mono',monospace" font-size="26" font-weight="700"
         fill="white" opacity="0.97">${l2}</text>
-  <text x="${CX}" y="${f(lbl2Y + 18)}" text-anchor="middle"
+  <text x="${CX}" y="${f(lbl2Y+18)}" text-anchor="middle"
         font-family="'Barlow Condensed',sans-serif" font-size="13" font-weight="700"
         fill="white" opacity="0.65" letter-spacing="2">2 PUNTOS</text>
 
-  <!-- Tiros libres — pastilla encima de la línea de TL -->
-  <rect x="${f(CX - 42)}" y="${f(lblFTY - 22)}" width="84" height="24"
-        fill="${cft}" opacity="0.82" rx="5"/>
-  <text x="${CX}" y="${f(lblFTY - 5)}" text-anchor="middle"
+  <!-- TL pastilla -->
+  <rect x="${f(CX-42)}" y="${f(lblFTY-22)}" width="84" height="24"
+        fill="${cft}" opacity="0.85" rx="5"/>
+  <text x="${CX}" y="${f(lblFTY-5)}" text-anchor="middle"
         font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700"
         fill="white" opacity="0.97">${lft}  TL</text>
-
-  <!-- Etiqueta "FONDO" junto a la canasta -->
-  <text x="${f(CX + HOOP_R + 9)}" y="${f(BKTY + 4)}"
-        font-family="'Barlow Condensed',sans-serif" font-size="9" font-weight="600"
-        fill="white" opacity="0.45" letter-spacing="1">CANASTA</text>
 
 </svg>`;
 }
